@@ -7,7 +7,7 @@ website: https://github.com/bitrise-io/steps-gradle-runner
 source_code_url: https://github.com/bitrise-io/steps-gradle-runner
 support_url: https://github.com/bitrise-io/steps-gradle-runner/issues
 host_os_tags:
-  - "osx-10.10"
+  - "ubuntu"
 project_type_tags:
   - android
 type_tags:
@@ -29,5 +29,5 @@ inputs:
       title: "Gradle task to run"
       description: |
         Gradle task to run
-      is_required: false
+      is_required: true
       is_expand: true
