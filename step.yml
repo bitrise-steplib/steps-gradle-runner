@@ -2,7 +2,7 @@ title: Gradle Runner
 summary: |-
   Runs a gradle task
 description: |-
-  Runs a gradle task
+  Runs a gradle task and copies all - or specified - generated APKs to `$BITRISE_DEPLOY_DIR`
 website: https://github.com/bitrise-io/steps-gradle-runner
 source_code_url: https://github.com/bitrise-io/steps-gradle-runner
 support_url: https://github.com/bitrise-io/steps-gradle-runner/issues
@@ -37,4 +37,14 @@ inputs:
       description: |
         Gradle task to run
       is_required: true
+      is_expand: true
+  - apk_file_filter:
+    opts:
+      title: "APK file filter"
+      description: |
+        The steps moves all the found apk files under `$BITRISE_DEPLOY_DIR`.
+        You can specify a filter to move only the selected APKs.
+
+        Example: `*release*.apk`
+      is_required: false
       is_expand: true
