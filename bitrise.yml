@@ -5,6 +5,7 @@ app:
   envs:
   # define these in your .bitrise.secrets.yml
   - SOURCE_ROOT_PATH:
+  - GRADLE_FILE:
 workflows:
   test:
     steps:
@@ -17,3 +18,5 @@ workflows:
         inputs:
         - content: envman add --key BITRISE_SOURCE_DIR --value "${SOURCE_ROOT_PATH}"
     - path::./:
+        inputs:
+        - gradle_file: $GRADLE_FILE
