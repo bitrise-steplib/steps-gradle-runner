@@ -3,7 +3,7 @@ summary: |-
   Runs the specified gradle task.
 description: |-
   Runs the specified gradle task and copies the generated APKs into
-  the Bitrise Deploy Directory.
+  the Bitrise Deploy Directory (`$BITRISE_DEPLOY_DIR`).
 website: https://github.com/bitrise-io/steps-gradle-runner
 source_code_url: https://github.com/bitrise-io/steps-gradle-runner
 support_url: https://github.com/bitrise-io/steps-gradle-runner/issues
