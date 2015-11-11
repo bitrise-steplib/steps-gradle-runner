@@ -6,6 +6,7 @@ app:
   # define these in your .bitrise.secrets.yml
   - SOURCE_ROOT_PATH:
   - GRADLE_FILE:
+  - GRADLE_TASK:
 workflows:
   test:
     steps:
@@ -20,3 +21,5 @@ workflows:
     - path::./:
         inputs:
         - gradle_file: $GRADLE_FILE
+        - gradle_task: $GRADLE_TASK
+        - apk_file_filter:
