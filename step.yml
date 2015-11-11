@@ -38,13 +38,23 @@ inputs:
         Gradle task to run
       is_required: true
       is_expand: true
-  - apk_file_filter:
+  - apk_file_include_filter:
     opts:
-      title: "APK file filter"
+      title: "APK file include filter"
       description: |
-        The steps moves all the found apk files under `$BITRISE_DEPLOY_DIR`.
-        You can specify a filter to move only the selected APKs.
+        The step moves apk files that matches with include filter under `$BITRISE_DEPLOY_DIR`.
+        Default include filter is "*.apk".
 
         Example: `*release*.apk`
+      is_required: false
+      is_expand: true
+  - apk_file_exclude_filter:
+    opts:
+      title: "APK file exclude filter"
+      description: |
+        The step does not move apk files that matches with exclude filter under `$BITRISE_DEPLOY_DIR`.
+        Default exclude filter is "". You can use this step to avoid moving unalinged or unsigned apk files to `$BITRISE_DEPLOY_DIR`.
+
+        Example: `*unaligned*.apk`
       is_required: false
       is_expand: true
