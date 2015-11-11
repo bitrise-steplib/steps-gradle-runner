@@ -7,6 +7,8 @@ app:
   - SOURCE_ROOT_PATH:
   - GRADLE_FILE:
   - GRADLE_TASK:
+  - APK_FILE_INCLUDE_FILTER: # default "*.apk"
+  - APK_FILE_EXCLUDE_FILTER: # default ""
 workflows:
   test:
     steps:
@@ -22,4 +24,5 @@ workflows:
         inputs:
         - gradle_file: $GRADLE_FILE
         - gradle_task: $GRADLE_TASK
-        - apk_file_filter:
+        - apk_file_include_filter: $APK_FILE_INCLUDE_FILTER
+        - apk_file_exclude_filter: $APK_FILE_EXCLUDE_FILTER

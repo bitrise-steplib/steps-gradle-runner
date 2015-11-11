@@ -12,16 +12,20 @@ if [ -z "${gradle_task}" ]; then
 	exit 1
 fi
 
-if [ -z "${apk_file_filter}" ]; then
-	apk_file_filter="*.apk"
+if [ -z "${apk_file_include_filter}" ]; then
+	apk_file_include_filter="*.apk"
+fi
+
+if [ -z "${apk_file_exclude_filter}" ]; then
+	apk_file_exclude_filter=""
 fi
 
 echo "$" gradle --build-file "${gradle_file}" ${gradle_task}
 gradle --build-file "${gradle_file}" ${gradle_task}
 
 echo ""
-echo "Moving APK files with filter: ${apk_file_filter}"
-find . -name "${apk_file_filter}" | while IFS= read -r apk; do 
+echo "Moving APK files with filter: include-> '${apk_file_include_filter}', exclude-> '${apk_file_exclude_filter}'"
+find . -name "${apk_file_include_filter}" ! -name "${apk_file_exclude_filter}" | while IFS= read -r apk; do 
 	deploy_path="${BITRISE_DEPLOY_DIR}/$(basename "$apk")"
 	
 	printf "🚀  \e[32mCopy ${apk} to ${deploy_path}\e[0m\n"
