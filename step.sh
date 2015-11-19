@@ -28,7 +28,9 @@ if [ -z "${apk_file_exclude_filter}" ]; then
 fi
 
 gradle_tool=gradle
-if [ -x "./gradlew" ] ; then
+if [ ! -z "$gradlew_path" ] ; then
+	gradle_tool="$gradlew_path"
+elif [ -x "./gradlew" ] ; then
 	gradle_tool="./gradlew"
 fi
 
@@ -36,14 +38,19 @@ echo
 echo " (i) Using gradle tool: ${gradle_tool}"
 
 echo
-echo "$" ${gradle_tool} --build-file "${gradle_file}" ${gradle_task}
+echo "=> Running gradle task ..."
+set -x
 ${gradle_tool} --build-file "${gradle_file}" ${gradle_task}
+set +x
 
 echo
-echo "Moving APK files with filter: include-> '${apk_file_include_filter}', exclude-> '${apk_file_exclude_filter}'"
+echo "=> Moving APK files with filter: include-> '${apk_file_include_filter}', exclude-> '${apk_file_exclude_filter}'"
 find . -name "${apk_file_include_filter}" ! -name "${apk_file_exclude_filter}" | while IFS= read -r apk; do
 	deploy_path="${BITRISE_DEPLOY_DIR}/$(basename "$apk")"
 
 	printf "🚀  \e[32mCopy ${apk} to ${deploy_path}\e[0m\n"
 	cp "${apk}" "${deploy_path}"
 done
+
+echo
+echo "=> DONE"

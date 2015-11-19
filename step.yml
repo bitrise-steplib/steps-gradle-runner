@@ -25,7 +25,7 @@ inputs:
         You can leave it empty to don't change it.
       is_required: false
       is_expand: true
-  - gradle_file:
+  - gradle_file: $GRADLE_BUILD_FILE_PATH
     opts:
       title: Path to the gradle file to use
       description: |
@@ -42,6 +42,20 @@ inputs:
         Gradle project directory to get the list of available tasks.
       is_required: true
       is_expand: true
+  - gradlew_path: $GRADLEW_PATH
+    opts:
+      title: gradlew file path
+      description: |
+        **Optional**
+
+        If specified the `gradle` commands will be
+        executed with this `gradlew` file, instead of with `gradle` directly;
+        for example: `./gradlew assemble` instead of `gradle assemble`.
+
+        **The path should be relative** to the repository root / `workdir`,
+        for example: `./gradlew`.
+      is_required: false
+      is_expand: true
   - apk_file_include_filter: "*.apk"
     opts:
       title: "APK file include filter"
@@ -52,7 +66,7 @@ inputs:
         Example: `*release*.apk`
       is_required: false
       is_expand: true
-  - apk_file_exclude_filter:
+  - apk_file_exclude_filter: "*-unaligned.apk"
     opts:
       title: "APK file exclude filter"
       description: |
