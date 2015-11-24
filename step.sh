@@ -35,12 +35,16 @@ elif [ -x "./gradlew" ] ; then
 fi
 
 echo
-echo " (i) Using gradle tool: ${gradle_tool}"
+echo "=== CONFIGURATION ==="
+echo " * Using gradle tool: ${gradle_tool}"
+echo " * Gradle build file: ${gradle_file}"
+echo " * Gradle task: ${gradle_task}"
+echo " * Gradle options: ${gradle_options}"
 
 echo
 echo "=> Running gradle task ..."
 set -x
-${gradle_tool} --build-file "${gradle_file}" ${gradle_task}
+${gradle_tool} --build-file "${gradle_file}" ${gradle_task} ${gradle_options}
 set +x
 
 echo

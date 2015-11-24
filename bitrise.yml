@@ -6,6 +6,7 @@ app:
   # define these here, or in your .bitrise.secrets.yml
   - GRADLE_FILE: ./src/build.gradle
   - GRADLE_TASK: assemble
+  - GRADLEW_PATH: ./src/gradlew
   - APK_FILE_INCLUDE_FILTER: "*release*.apk"
   - APK_FILE_EXCLUDE_FILTER: "*unaligned*"
 workflows:
@@ -39,6 +40,7 @@ workflows:
         - workdir: ./sample-apps-android-sdk22-subdir
         - gradle_file: $GRADLE_FILE
         - gradle_task: $GRADLE_TASK
+        - gradlew_path: $GRADLEW_PATH
         - apk_file_include_filter: $APK_FILE_INCLUDE_FILTER
         - apk_file_exclude_filter: $APK_FILE_EXCLUDE_FILTER
 

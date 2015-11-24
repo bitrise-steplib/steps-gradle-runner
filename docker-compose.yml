@@ -4,3 +4,6 @@ app:
   volumes:
     - .:/bitrise/step-test
   working_dir: /bitrise/step-test
+  environment:
+    CI: true
+    BITRISE_SOURCE_DIR: /bitrise/src
