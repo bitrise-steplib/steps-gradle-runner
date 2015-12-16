@@ -49,12 +49,25 @@ set +x
 
 echo
 echo "=> Moving APK files with filter: include-> '${apk_file_include_filter}', exclude-> '${apk_file_exclude_filter}'"
-find . -name "${apk_file_include_filter}" ! -name "${apk_file_exclude_filter}" | while IFS= read -r apk; do
-	deploy_path="${BITRISE_DEPLOY_DIR}/$(basename "$apk")"
+last_moved_apk_pth=""
+find_apks_output="$(find . -name "${apk_file_include_filter}" ! -name "${apk_file_exclude_filter}")"
+if [[ "${find_apks_output}" != "" ]] ; then
+	while IFS= read -r apk
+	do
+		deploy_path="${BITRISE_DEPLOY_DIR}/$(basename "$apk")"
 
-	printf "🚀  \e[32mCopy ${apk} to ${deploy_path}\e[0m\n"
-	cp "${apk}" "${deploy_path}"
-done
+		printf "🚀  \e[32mCopy ${apk} to ${deploy_path}\e[0m\n"
+		cp "${apk}" "${deploy_path}"
+		last_moved_apk_pth="${deploy_path}"
+	done <<< "${find_apks_output}"
+fi
+
+if [[ "${last_moved_apk_pth}" != "" ]] ; then
+	echo 'Exporting output: $BITRISE_APK_PATH =>' "${last_moved_apk_pth}"
+	envman add --key "BITRISE_APK_PATH" --value "${last_moved_apk_pth}"
+else
+	echo " (!) No APK matched the filters."
+fi
 
 echo
 echo "=> DONE"

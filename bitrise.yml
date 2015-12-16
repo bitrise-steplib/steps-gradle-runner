@@ -5,10 +5,12 @@ app:
   envs:
   # define these here, or in your .bitrise.secrets.yml
   - GRADLE_FILE: ./src/build.gradle
-  - GRADLE_TASK: assemble
+  - GRADLE_TASK: assembleDebug
+  # - GRADLE_TASK: assemble
   - GRADLEW_PATH: ./src/gradlew
-  - APK_FILE_INCLUDE_FILTER: "*release*.apk"
-  - APK_FILE_EXCLUDE_FILTER: "*unaligned*"
+  # - APK_FILE_INCLUDE_FILTER: "*release*.apk"
+  # - APK_FILE_INCLUDE_FILTER: "*debug*.apk"
+  - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
 workflows:
   test:
     steps:
@@ -43,6 +45,11 @@ workflows:
         - gradlew_path: $GRADLEW_PATH
         - apk_file_include_filter: $APK_FILE_INCLUDE_FILTER
         - apk_file_exclude_filter: $APK_FILE_EXCLUDE_FILTER
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/bash
+            echo "[output] BITRISE_APK_PATH: ${BITRISE_APK_PATH}"
 
 
   # ----------------------------------------------------------------
@@ -50,7 +57,7 @@ workflows:
   share-this-step:
     envs:
       # if you want to share this step into a StepLib
-      - MY_STEPLIB_REPO_FORK_GIT_URL:
+      - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
       - STEP_ID_IN_STEPLIB: gradle-runner
       - STEP_GIT_VERION_TAG_TO_SHARE: 1.1.1
       - STEP_GIT_CLONE_URL: https://github.com/bitrise-io/steps-gradle-runner.git
