@@ -73,5 +73,26 @@ else
 	echo " (!) No APK matched the filters."
 fi
 
+last_moved_mapping_pth=""
+find_mappings_output="$(find . -name mapping.txt)"
+if [[ "${find_mappings_output}" != "" ]] ; then
+	echo
+	echo "=> Moving mapping.txt file"
+
+	while IFS= read -r mapping
+	do
+		deploy_path="${BITRISE_DEPLOY_DIR}/$(basename "$mapping")"
+
+		printf "🚀  \e[32mCopy ${mapping} to ${deploy_path}\e[0m\n"
+		cp "${mapping}" "${deploy_path}"
+		last_moved_mapping_pth="${deploy_path}"
+	done <<< "${find_mappings_output}"
+fi
+
+if [[ "${last_moved_mapping_pth}" != "" ]] ; then
+	echo 'Exporting output: $BITRISE_MAPPING_PATH =>' "${last_moved_mapping_pth}"
+	envman add --key "BITRISE_MAPPING_PATH" --value "${last_moved_mapping_pth}"
+fi
+
 echo
 echo "=> DONE"
