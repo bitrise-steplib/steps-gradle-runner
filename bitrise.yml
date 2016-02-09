@@ -50,6 +50,7 @@ workflows:
         - content: |-
             #!/bin/bash
             echo "[output] BITRISE_APK_PATH: ${BITRISE_APK_PATH}"
+            echo "[output] BITRISE_MAPPING_PATH: ${BITRISE_MAPPING_PATH}"
 
 
   # ----------------------------------------------------------------

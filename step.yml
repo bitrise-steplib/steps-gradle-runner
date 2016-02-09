@@ -99,3 +99,11 @@ outputs:
 
         If the build generates more than one APK which fulfills the
         filter inputs this output will contain the last one's path.
+  - BITRISE_MAPPING_PATH: ""
+    opts:
+      title: "Path of the generated mapping.txt"
+      summary: "Path of the generated (and moved) mapping.txt."
+      description: |-
+        This output will include the path of the generated mapping.txt.
+
+        If more than one mapping.txt exist in project this output will contain the last one's path.
