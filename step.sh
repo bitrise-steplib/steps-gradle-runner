@@ -31,8 +31,9 @@ gradle_tool=gradle
 if [ ! -z "$gradlew_path" ] ; then
 	gradle_tool="$gradlew_path"
 
-	echo "  (i)$gradlew_path hasn't executable permissin, adding it..."
 	if [ ! -x "$gradlew_path" ] ; then
+		echo " (i) Missing executable permission on gradlew file, adding it now. Path: $gradlew_path"
+
 		chmod +x "$gradlew_path"
 	fi
 fi
