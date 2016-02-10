@@ -74,10 +74,10 @@ else
 fi
 
 last_moved_mapping_pth=""
-find_mappings_output="$(find . -name mapping.txt)"
+find_mappings_output="$(find . -path "${mapping_file_include_filter}" ! -path "${mapping_file_exclude_filter}")"
 if [[ "${find_mappings_output}" != "" ]] ; then
 	echo
-	echo "=> Moving mapping.txt file"
+	echo "=> Moving mapping with filter: include-> '${mapping_file_include_filter}', exclude-> '${mapping_file_exclude_filter}'"
 
 	while IFS= read -r mapping
 	do

@@ -11,6 +11,8 @@ app:
   # - APK_FILE_INCLUDE_FILTER: "*release*.apk"
   # - APK_FILE_INCLUDE_FILTER: "*debug*.apk"
   - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+  - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+  # - MAPPING_FILE_EXCLUDE_FILTER: "*/beta/mapping.txt"
 workflows:
   test:
     steps:
@@ -45,6 +47,8 @@ workflows:
         - gradlew_path: $GRADLEW_PATH
         - apk_file_include_filter: $APK_FILE_INCLUDE_FILTER
         - apk_file_exclude_filter: $APK_FILE_EXCLUDE_FILTER
+        - mapping_file_include_filter: $MAPPING_FILE_INCLUDE_FILTER
+        - mapping_file_exclude_filter: $MAPPING_FILE_EXCLUDE_FILTER
     - script:
         inputs:
         - content: |-
