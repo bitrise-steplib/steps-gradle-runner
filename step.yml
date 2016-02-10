@@ -23,15 +23,12 @@ inputs:
       description: |
         Working directory of the step.
         You can leave it empty to don't change it.
-      is_required: false
-      is_expand: true
   - gradle_file: $GRADLE_BUILD_FILE_PATH
     opts:
       title: Path to the gradle file to use
       description: |
         Path to the gradle file to use
       is_required: true
-      is_expand: true
   - gradle_task: assemble
     opts:
       title: Gradle task to run
@@ -41,7 +38,6 @@ inputs:
         You can call `gradle tasks` or `gradle tasks --all` in your
         Gradle project directory to get the list of available tasks.
       is_required: true
-      is_expand: true
   - gradle_options: "--stacktrace"
     opts:
       title: Additional options for Gradle call
@@ -50,8 +46,6 @@ inputs:
 
         You can use multiple options, separated by a space
         character. Example: `--stacktrace --debug`
-      is_required: false
-      is_expand: true
   - gradlew_path: $GRADLEW_PATH
     opts:
       title: gradlew file path
@@ -64,30 +58,50 @@ inputs:
 
         **The path should be relative** to the repository root / `workdir`,
         for example: `./gradlew`.
-      is_required: false
-      is_expand: true
   - apk_file_include_filter: "*.apk"
     opts:
       title: "APK file include filter"
       description: |
-        The step will moves generated apk files that match with this filter
+        The step will move the generated apk files that match this filter
         into the Bitrise Deploy Directory.
 
+        This filter is a standerd bash find commands -name pattern, see: http://linux.die.net/man/1/find
+
         Example: `*release*.apk`
-      is_required: false
-      is_expand: true
   - apk_file_exclude_filter: "*-unaligned.apk"
     opts:
       title: "APK file exclude filter"
       description: |
-        The step will **not** moves generated apk files that match with this filter
+        The step will **not** move the generated apk files that match this filter
         into the Bitrise Deploy Directory.
 
         You can use this step to avoid moving unalinged or unsigned apk files.
 
+        This filter is a standerd bash find commands negated -name pattern, see: http://linux.die.net/man/1/find
+
         Example: `*unaligned*.apk`
-      is_required: false
-      is_expand: true
+  - mapping_file_include_filter: "*/mapping.txt"
+    opts:
+      title: "Mapping file include filter"
+      description: |
+        The step will move the generated mapping files that match this filter
+        into the Bitrise Deploy Directory.
+
+        This filter is a standerd bash find commands -path pattern, see: http://linux.die.net/man/1/find
+
+        Example: `*/release/mapping.txt`
+  - mapping_file_exclude_filter:
+    opts:
+      title: "Mapping file exclude filter"
+      description: |
+        The step will **not** move the generated mapping files that match this filter
+        into the Bitrise Deploy Directory.
+
+        You can use this step to avoid moving beta mapping file.
+
+        This filter is a standerd bash find commands negated -path pattern, see: http://linux.die.net/man/1/find
+
+        Example: `*/beta/mapping.txt`
 outputs:
   - BITRISE_APK_PATH: ""
     opts:
