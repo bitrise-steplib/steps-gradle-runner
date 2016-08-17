@@ -4,10 +4,10 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 app:
   envs:
   # define these here, or in your .bitrise.secrets.yml
-  - GRADLE_FILE: ./src/build.gradle
+  - GRADLE_FILE: ./build.gradle
   - GRADLE_TASK: assembleDebug
   # - GRADLE_TASK: assemble
-  - GRADLEW_PATH: ./src/gradlew
+  - GRADLEW_PATH: ./gradlew
   # - APK_FILE_INCLUDE_FILTER: "*release*.apk"
   # - APK_FILE_INCLUDE_FILTER: "*debug*.apk"
   - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
@@ -26,7 +26,8 @@ workflows:
     - git-clone:
         run_if: true
         inputs:
-        - repository_url: https://github.com/bitrise-samples/sample-apps-android-sdk22-subdir.git
+        - repository_url: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+        # - repository_url: https://github.com/bitrise-samples/android-sdk22-no-gradlew.git
         - branch: master
         - commit: ""
         - tag: ""
