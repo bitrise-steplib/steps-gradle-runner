@@ -28,6 +28,9 @@ workflows:
         inputs:
         - repository_url: https://github.com/bitrise-samples/sample-apps-android-sdk22-subdir.git
         - branch: master
+        - commit: ""
+        - tag: ""
+        - pull_request_id: ""
         - clone_into_dir: ./_tmp/sample-apps-android-sdk22-subdir
     - change-workdir:
         title: Switch working dir to test/_tmp dir
