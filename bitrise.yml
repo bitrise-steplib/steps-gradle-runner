@@ -7,6 +7,12 @@ app:
   - ANDROID_HOME: $ANDROID_HOME
 
 workflows:
+
+  ci:
+    after_run:
+    - test
+    - test-subdir
+
   test:
     description: "CI workflow - this should always pass!"
     envs:
@@ -30,7 +36,7 @@ workflows:
     after_run:
     - _common
 
-  test-no-gradlew:
+  test-no-gradlew-error:
     envs:
     - SAMPLE_APP_GIT_CLONE_URL: https://github.com/bitrise-samples/android-sdk22-no-gradlew.git
     - GRADLE_FILE: ./build.gradle
