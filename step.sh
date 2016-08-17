@@ -33,13 +33,6 @@ if [ -z "${apk_file_exclude_filter}" ]; then
 fi
 
 
-if [ ! -z "${workdir}" ] ; then
-	echo
-	echo "=> Switching to specified workdir"
-	echo '$' cd "${workdir}"
-	cd "${workdir}"
-fi
-
 gradle_tool=""
 if [ ! -f "$gradlew_path" ] ; then
 	echo " [!] gradlew_path specified, but no file exists at the specified path: ${gradlew_path}"
@@ -58,7 +51,6 @@ echo " * Using gradle tool: ${gradle_tool}"
 echo " * Gradle build file: ${gradle_file}"
 echo " * Gradle task: ${gradle_task}"
 echo " * Gradle options: ${gradle_options}"
-echo " * Workdir: ${workdir}"
 
 echo
 echo "=> Running gradle task ..."

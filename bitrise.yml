@@ -7,6 +7,12 @@ app:
   - ANDROID_HOME: $ANDROID_HOME
 
 workflows:
+
+  ci:
+    after_run:
+    - test
+    - test-subdir
+
   test:
     description: "CI workflow - this should always pass!"
     envs:
@@ -18,8 +24,19 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+  
+  test-subdir:
+    envs:
+    - SAMPLE_APP_GIT_CLONE_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22-subdir.git
+    - GRADLE_FILE: ./src/build.gradle
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: ./src/gradlew
+    - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+    - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+    - _common
 
-  test-no-gradlew:
+  test-no-gradlew-error:
     envs:
     - SAMPLE_APP_GIT_CLONE_URL: https://github.com/bitrise-samples/android-sdk22-no-gradlew.git
     - GRADLE_FILE: ./build.gradle
@@ -55,11 +72,10 @@ workflows:
           but not if the step is included in another bitrise.yml!
         run_if: true
         inputs:
-        - path: ./_tmp
+        - path: ./_tmp/sample-app-repo
         - is_create_path: true
     - path::./:
         inputs:
-        - workdir: ./sample-app-repo
         - gradle_file: $GRADLE_FILE
         - gradle_task: $GRADLE_TASK
         - gradlew_path: $GRADLEW_PATH

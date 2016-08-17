@@ -17,12 +17,6 @@ is_requires_admin_user: false
 is_always_run: false
 is_skippable: false
 inputs:
-  - workdir: $BITRISE_SOURCE_DIR
-    opts:
-      title: "Working directory"
-      description: |
-        Working directory of the step.
-        You can leave it empty to don't change it.
   - gradle_file: $GRADLE_BUILD_FILE_PATH
     opts:
       title: Path to the gradle file to use
@@ -38,14 +32,6 @@ inputs:
         You can call `gradle tasks` or `gradle tasks --all` in your
         Gradle project directory to get the list of available tasks.
       is_required: true
-  - gradle_options: "--stacktrace"
-    opts:
-      title: Additional options for Gradle call
-      description: |-
-        Options added to the end of the Gradle call.
-
-        You can use multiple options, separated by a space
-        character. Example: `--stacktrace --debug`
   - gradlew_path: $GRADLEW_PATH
     opts:
       title: gradlew file path
@@ -57,8 +43,17 @@ inputs:
         and about how you can generate one (if you would not have one already)__
         in the official guide at: [https://docs.gradle.org/current/userguide/gradle_wrapper.html](https://docs.gradle.org/current/userguide/gradle_wrapper.html).
 
-        **The path should be relative** to the repository root / `workdir`, for example: `./gradlew`.
+        **The path should be relative** to the repository root, for example: `./gradlew`,
+        or if it's in a sub directory: `./sub/dir/gradlew`.
       is_required: true
+  - gradle_options: "--stacktrace"
+    opts:
+      title: Additional options for Gradle call
+      description: |-
+        Options added to the end of the Gradle call.
+
+        You can use multiple options, separated by a space
+        character. Example: `--stacktrace --debug`
   - apk_file_include_filter: "*.apk"
     opts:
       title: "APK file include filter"
