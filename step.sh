@@ -12,11 +12,16 @@ if [ -z "${gradle_task}" ]; then
 	exit 1
 fi
 
-if [ ! -z "${workdir}" ] ; then
+if [ -z "$gradlew_path" ] ; then
+	printf "\e[31m [!] No gradlew_path specified\e[0m\n"
 	echo
-	echo "=> Switching to specified workdir"
-	echo '$' cd "${workdir}"
-	cd "${workdir}"
+	echo "Using a Gradle Wrapper (gradlew) is required, as the wrapper is what makes sure"
+	echo "that the right Gradle version is installed and used for the build."
+	echo
+	echo "You can find more information about the Gradle Wrapper (gradlew),"
+	echo "and about how you can generate one (if you would not have one already)"
+	echo "in the official guide at: https://docs.gradle.org/current/userguide/gradle_wrapper.html"
+	exit 1
 fi
 
 if [ -z "${apk_file_include_filter}" ]; then
@@ -27,16 +32,25 @@ if [ -z "${apk_file_exclude_filter}" ]; then
 	apk_file_exclude_filter=""
 fi
 
-gradle_tool=gradle
-if [ ! -z "$gradlew_path" ] ; then
-	gradle_tool="$gradlew_path"
 
-	if [ ! -x "$gradlew_path" ] ; then
-		echo " (i) Missing executable permission on gradlew file, adding it now. Path: $gradlew_path"
-
-		chmod +x "$gradlew_path"
-	fi
+if [ ! -z "${workdir}" ] ; then
+	echo
+	echo "=> Switching to specified workdir"
+	echo '$' cd "${workdir}"
+	cd "${workdir}"
 fi
+
+gradle_tool=""
+if [ ! -f "$gradlew_path" ] ; then
+	echo " [!] gradlew_path specified, but no file exists at the specified path: ${gradlew_path}"
+	exit 1
+fi
+if [ ! -x "$gradlew_path" ] ; then
+	echo " (i) Missing executable permission on gradlew file, adding it now. (path: $gradlew_path)"
+
+	chmod +x "$gradlew_path"
+fi
+gradle_tool="$gradlew_path"
 
 echo
 echo "=== CONFIGURATION ==="
@@ -44,6 +58,7 @@ echo " * Using gradle tool: ${gradle_tool}"
 echo " * Gradle build file: ${gradle_file}"
 echo " * Gradle task: ${gradle_task}"
 echo " * Gradle options: ${gradle_options}"
+echo " * Workdir: ${workdir}"
 
 echo
 echo "=> Running gradle task ..."
