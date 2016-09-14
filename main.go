@@ -62,16 +62,16 @@ func (configs ConfigsModel) print() {
 func (configs ConfigsModel) validate() (string, error) {
 	// required
 	if configs.GradleFile == "" {
-		return "", errors.New("No gradle_file parameter specified!")
+		return "", errors.New("No GradleFile parameter specified!")
 	}
 	if exist, err := pathutil.IsPathExists(configs.GradleFile); err != nil {
-		return "", fmt.Errorf("Failed to check if gradle_file exist at: %s, error: %s", configs.GradleFile, err)
+		return "", fmt.Errorf("Failed to check if GradleFile exist at: %s, error: %s", configs.GradleFile, err)
 	} else if !exist {
-		return "", fmt.Errorf("gradle_file not exist at: %s", configs.GradleFile)
+		return "", fmt.Errorf("GradleFile not exist at: %s", configs.GradleFile)
 	}
 
 	if configs.GradleTask == "" {
-		return "", errors.New("No gradle_task parameter specified!")
+		return "", errors.New("No GradleTask parameter specified!")
 	}
 
 	if configs.GradlewPath == "" {
@@ -83,12 +83,12 @@ You can find more information about the Gradle Wrapper (gradlew),
 and about how you can generate one (if you would not have one already
 in the official guide at: https://docs.gradle.org/current/userguide/gradle_wrapper.html`
 
-		return explanation, errors.New("No gradlew_path parameter specified!")
+		return explanation, errors.New("No GradlewPath parameter specified!")
 	}
 	if exist, err := pathutil.IsPathExists(configs.GradlewPath); err != nil {
-		return "", fmt.Errorf("Failed to check if gradlew_path exist at: %s, error: %s", configs.GradlewPath, err)
+		return "", fmt.Errorf("Failed to check if GradlewPath exist at: %s, error: %s", configs.GradlewPath, err)
 	} else if !exist {
-		return "", fmt.Errorf("gradlew_path not exist at: %s", configs.GradlewPath)
+		return "", fmt.Errorf("GradlewPath not exist at: %s", configs.GradlewPath)
 	}
 
 	return "", nil
@@ -112,8 +112,6 @@ func runGradleTask(gradleTool, buildFile, task, options string) error {
 }
 
 func find(dir, nameInclude, nameExclude string) ([]string, error) {
-	// find . -name "${apk_file_include_filter}" ! -name "${apk_file_exclude_filter}"
-
 	cmdSlice := []string{"find", dir}
 
 	if nameInclude != "" {
