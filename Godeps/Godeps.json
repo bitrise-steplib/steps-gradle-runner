@@ -1,0 +1,30 @@
+{
+	"ImportPath": "github.com/bitrise-io/steps-gradle-runner",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/cmdex",
+			"Rev": "1c148012aaf6c7ae16dad4570d70fd8cb4e78638"
+		},
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/errorutil",
+			"Rev": "1c148012aaf6c7ae16dad4570d70fd8cb4e78638"
+		},
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/pathutil",
+			"Rev": "1c148012aaf6c7ae16dad4570d70fd8cb4e78638"
+		},
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/retry",
+			"Rev": "1c148012aaf6c7ae16dad4570d70fd8cb4e78638"
+		},
+		{
+			"ImportPath": "github.com/kballard/go-shellquote",
+			"Rev": "d8ec1a69a250a17bb0e419c386eac1f3711dc142"
+		}
+	]
+}
