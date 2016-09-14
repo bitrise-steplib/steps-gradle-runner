@@ -2,7 +2,7 @@
 set -ex
 THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-tmp_gopath_dir="$(/usr/bin/mktemp -d -t steps-gradle-runner)"
+tmp_gopath_dir="$(mktemp -d)"
 
 go_package_name="github.com/bitrise-io/steps-gradle-runner"
 full_package_path="${tmp_gopath_dir}/src/${go_package_name}"
