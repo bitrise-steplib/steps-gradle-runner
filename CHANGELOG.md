@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.5.0)
+## Changelog (Current version: 1.5.1)
 
 -----------------
+
+### 1.5.1 (2016 Sep 16)
+
+* [b8b89c6] prepare for 1.5.1
+* [54eadf7] shell quote gradle tasks (#16)
 
 ### 1.5.0 (2016 Sep 14)
 
@@ -81,4 +86,4 @@
 
 -----------------
 
-Updated: 2016 Sep 14
+Updated: 2016 Sep 16
