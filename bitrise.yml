@@ -12,6 +12,7 @@ workflows:
   ci:
     after_run:
     - test
+    - test-multiple-tasks
     - test-subdir
 
   test:
@@ -20,6 +21,17 @@ workflows:
     - SAMPLE_APP_GIT_CLONE_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: ./gradlew
+    - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+    - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+    - _common
+
+  test-multiple-tasks:
+    envs:
+    - SAMPLE_APP_GIT_CLONE_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+    - GRADLE_FILE: ./build.gradle
+    - GRADLE_TASK: assembleDebug assembleRelease
     - GRADLEW_PATH: ./gradlew
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
