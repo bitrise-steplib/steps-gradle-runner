@@ -19,7 +19,7 @@ import (
 type ConfigsModel struct {
 	// Gradle Inputs
 	GradleFile               string
-	GradleTask               string
+	GradleTasks              string
 	GradlewPath              string
 	GradleOptions            string
 	ApkFileIncludeFilter     string
@@ -33,7 +33,7 @@ type ConfigsModel struct {
 func createConfigsModelFromEnvs() ConfigsModel {
 	return ConfigsModel{
 		GradleFile:               os.Getenv("gradle_file"),
-		GradleTask:               os.Getenv("gradle_task"),
+		GradleTasks:              os.Getenv("gradle_task"),
 		GradlewPath:              os.Getenv("gradlew_path"),
 		GradleOptions:            os.Getenv("gradle_options"),
 		ApkFileIncludeFilter:     os.Getenv("apk_file_include_filter"),
@@ -48,9 +48,9 @@ func createConfigsModelFromEnvs() ConfigsModel {
 func (configs ConfigsModel) print() {
 
 	log.Info("Configs:")
-	log.Detail("- GradleFile: %s", configs.GradleFile)
-	log.Detail("- GradleTask: %s", configs.GradleTask)
 	log.Detail("- GradlewPath: %s", configs.GradlewPath)
+	log.Detail("- GradleFile: %s", configs.GradleFile)
+	log.Detail("- GradleTasks: %s", configs.GradleTasks)
 	log.Detail("- GradleOptions: %s", configs.GradleOptions)
 	log.Detail("- ApkFileIncludeFilter: %s", configs.ApkFileIncludeFilter)
 	log.Detail("- ApkFileExcludeFilter: %s", configs.ApkFileExcludeFilter)
@@ -70,7 +70,7 @@ func (configs ConfigsModel) validate() (string, error) {
 		return "", fmt.Errorf("GradleFile not exist at: %s", configs.GradleFile)
 	}
 
-	if configs.GradleTask == "" {
+	if configs.GradleTasks == "" {
 		return "", errors.New("No GradleTask parameter specified!")
 	}
 
@@ -94,13 +94,20 @@ in the official guide at: https://docs.gradle.org/current/userguide/gradle_wrapp
 	return "", nil
 }
 
-func runGradleTask(gradleTool, buildFile, task, options string) error {
-	split, err := shellquote.Split(options)
+func runGradleTask(gradleTool, buildFile, tasks, options string) error {
+	optionSlice, err := shellquote.Split(options)
 	if err != nil {
 		return err
 	}
 
-	cmdSlice := append([]string{gradleTool, "--build-file", buildFile, task}, split...)
+	taskSlice, err := shellquote.Split(tasks)
+	if err != nil {
+		return err
+	}
+
+	cmdSlice := []string{gradleTool, "--build-file", buildFile}
+	cmdSlice = append(cmdSlice, taskSlice...)
+	cmdSlice = append(cmdSlice, optionSlice...)
 
 	log.Detail(cmdex.PrintableCommandArgs(false, cmdSlice))
 	fmt.Println()
@@ -210,7 +217,7 @@ func main() {
 	}
 
 	log.Info("Running gradle task...")
-	if err := runGradleTask(configs.GradlewPath, configs.GradleFile, configs.GradleTask, configs.GradleOptions); err != nil {
+	if err := runGradleTask(configs.GradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions); err != nil {
 		log.Fail("Gradle task failed, error: %s", err)
 	}
 
