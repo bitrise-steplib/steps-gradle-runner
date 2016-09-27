@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.5.1)
+## Changelog (Current version: 1.5.2)
 
 -----------------
+
+### 1.5.2 (2016 Sep 27)
+
+* [103870d] prepare for 1.5.2
+* [f339afc] find fix (#19)
 
 ### 1.5.1 (2016 Sep 16)
 
@@ -86,4 +91,4 @@
 
 -----------------
 
-Updated: 2016 Sep 16
+Updated: 2016 Sep 27
