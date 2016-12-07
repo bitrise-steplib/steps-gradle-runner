@@ -26,6 +26,7 @@ type ConfigsModel struct {
 	ApkFileExcludeFilter     string
 	MappingFileIncludeFilter string
 	MappingFileExcludeFilter string
+
 	// Other configs
 	DeployDir string
 }
