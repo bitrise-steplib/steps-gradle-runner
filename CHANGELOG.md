@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.5.2)
+## Changelog (Current version: 1.5.3)
 
 -----------------
+
+### 1.5.3 (2017 Jan 26)
+
+* [a9ada0c] prepare for 1.5.3
+* [00c3bc4] Changed find option `-name` to `-path` in mapping.txt include/exclude filters (#23)
+* [a106b31] updates
 
 ### 1.5.2 (2016 Sep 27)
 
@@ -91,4 +97,4 @@
 
 -----------------
 
-Updated: 2016 Sep 27
+Updated: 2017 Jan 26
