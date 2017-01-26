@@ -121,8 +121,8 @@ func runGradleTask(gradleTool, buildFile, tasks, options string) error {
 
 func find(dir, nameInclude, nameExclude string) ([]string, error) {
 	cmdSlice := []string{"find", dir}
-	cmdSlice = append(cmdSlice, "-name", nameInclude)
-	cmdSlice = append(cmdSlice, "!", "-name", nameExclude)
+	cmdSlice = append(cmdSlice, "-path", nameInclude)
+	cmdSlice = append(cmdSlice, "!", "-path", nameExclude)
 
 	log.Detail(cmdex.PrintableCommandArgs(false, cmdSlice))
 
