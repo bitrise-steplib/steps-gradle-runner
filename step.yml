@@ -67,57 +67,57 @@ inputs:
     opts:
       title: "APK file include filter"
       description: |
-        The step will move the generated apk files that match this filter into the Bitrise Deploy Directory.
+        The step will copy the generated apk files that match this filter into the Bitrise Deploy Directory.
 
-        This filter is a standard bash find commands -path pattern, see: http://linux.die.net/man/1/find 
+        This filter is a standard find commands -path pattern, see: http://linux.die.net/man/1/find 
 
-        If you specify empty filter, the step will set this filter to: `*.apk`.
+        If you specify an empty filter, the step will set this filter to: `*.apk`.
 
         Example: 
 
-        - `*release*.apk` - Move every apk which filename contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`).
+        - `*release*.apk` - Copy every apk which filename contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`).
   - apk_file_exclude_filter: "*-unaligned.apk"
     opts:
       title: "APK file exclude filter"
       description: |
-        The step will **not** move the generated apk files that match this filter into the Bitrise Deploy Directory.
+        The step will **not** copy the generated apk files that match this filter into the Bitrise Deploy Directory.
         You can use this filter to avoid moving unalinged or unsigned apk files.
 
-        This filter is a standard bash find commands negated -path pattern, see: http://linux.die.net/man/1/find
+        This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
 
-        If you specify empty filter, every apk files (selected by `apk_file_include_filter`) will be moved.
+        If you specify an empty filter, every apk file (selected by `apk_file_include_filter`) will be copied.
 
         Example: 
         
-        - `*unaligned*.apk` - Avoid to move apk which filename contains `unaligned`.
+        - `*unaligned*.apk` - Avoid to copy apk if filename contains `unaligned`.
   - mapping_file_include_filter: "*/mapping.txt"
     opts:
       title: "Mapping file include filter"
       description: |
-        The step will move the generated mapping files that match this filter into the Bitrise Deploy Directory.
+        The step will copy the generated mapping files that match this filter into the Bitrise Deploy Directory.
 
-        This filter is a standard bash find commands -path pattern, see: http://linux.die.net/man/1/find
+        This filter is a standard find commands -path pattern, see: http://linux.die.net/man/1/find
 
-        If you specify empty filter, no mapping files will be moved.
+        If you specify an empty filter, no mapping files will be copied.
 
-        Example: `*mapping.txt` - Move every mapping.txt file.
+        Example: `*mapping.txt` - Copy every mapping.txt file.
   - mapping_file_exclude_filter:
     opts:
       title: "Mapping file exclude filter"
       description: |
-        The step will **not** move the generated mapping files that match this filter into the Bitrise Deploy Directory.
+        The step will **not** copy the generated mapping files that match this filter into the Bitrise Deploy Directory.
         You can use this step to avoid moving beta mapping file.
 
-        This filter is a standard bash find commands negated -path pattern, see: http://linux.die.net/man/1/find
+        This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
 
-        If you specify empty filter, every mapping files (selected by `mapping_file_include_filter`) will be moved.
+        If you specify an empty filter, every mapping files (selected by `mapping_file_include_filter`) will be copied.
 
-        Example: `*/beta/mapping.txt` - Avoid to move mapping.txt file in a `beta` directoy.
+        Example: `*/beta/mapping.txt` - Avoid to copy mapping.txt file in a `beta` directoy.
 outputs:
   - BITRISE_APK_PATH: ""
     opts:
       title: "Path of the generated APK"
-      summary: "Path of the generated (and moved) APK - after filtering."
+      summary: "Path of the generated (and copied) APK - after filtering."
       description: |-
         This output will include the path of the generated APK,
         after filtering based on the filter inputs.
@@ -127,7 +127,7 @@ outputs:
   - BITRISE_MAPPING_PATH: ""
     opts:
       title: "Path of the generated mapping.txt"
-      summary: "Path of the generated (and moved) mapping.txt."
+      summary: "Path of the generated (and copied) mapping.txt."
       description: |-
         This output will include the path of the generated mapping.txt.
 
