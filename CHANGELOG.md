@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.5.3)
+## Changelog (Current version: 1.5.4)
 
 -----------------
+
+### 1.5.4 (2017 Jan 30)
+
+* [e77a176] prepare for 1.5.4
+* [56c5620] filter input clarifications (#24)
 
 ### 1.5.3 (2017 Jan 26)
 
@@ -97,4 +102,4 @@
 
 -----------------
 
-Updated: 2017 Jan 26
+Updated: 2017 Jan 30
