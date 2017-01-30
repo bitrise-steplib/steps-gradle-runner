@@ -67,46 +67,52 @@ inputs:
     opts:
       title: "APK file include filter"
       description: |
-        The step will move the generated apk files that match this filter
-        into the Bitrise Deploy Directory.
+        The step will move the generated apk files that match this filter into the Bitrise Deploy Directory.
 
-        This filter is a standerd bash find commands -name pattern, see: http://linux.die.net/man/1/find
+        This filter is a standard bash find commands -path pattern, see: http://linux.die.net/man/1/find 
 
-        Example: `*release*.apk`
+        If you specify empty filter, the step will set this filter to: `*.apk`.
+
+        Example: 
+
+        - `*release*.apk` - Move every apk which filename contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`).
   - apk_file_exclude_filter: "*-unaligned.apk"
     opts:
       title: "APK file exclude filter"
       description: |
-        The step will **not** move the generated apk files that match this filter
-        into the Bitrise Deploy Directory.
+        The step will **not** move the generated apk files that match this filter into the Bitrise Deploy Directory.
+        You can use this filter to avoid moving unalinged or unsigned apk files.
 
-        You can use this step to avoid moving unalinged or unsigned apk files.
+        This filter is a standard bash find commands negated -path pattern, see: http://linux.die.net/man/1/find
 
-        This filter is a standerd bash find commands negated -name pattern, see: http://linux.die.net/man/1/find
+        If you specify empty filter, every apk files (selected by `apk_file_include_filter`) will be moved.
 
-        Example: `*unaligned*.apk`
+        Example: 
+        
+        - `*unaligned*.apk` - Avoid to move apk which filename contains `unaligned`.
   - mapping_file_include_filter: "*/mapping.txt"
     opts:
       title: "Mapping file include filter"
       description: |
-        The step will move the generated mapping files that match this filter
-        into the Bitrise Deploy Directory.
+        The step will move the generated mapping files that match this filter into the Bitrise Deploy Directory.
 
-        This filter is a standerd bash find commands -path pattern, see: http://linux.die.net/man/1/find
+        This filter is a standard bash find commands -path pattern, see: http://linux.die.net/man/1/find
 
-        Example: `*/release/mapping.txt`
+        If you specify empty filter, no mapping files will be moved.
+
+        Example: `*mapping.txt` - Move every mapping.txt file.
   - mapping_file_exclude_filter:
     opts:
       title: "Mapping file exclude filter"
       description: |
-        The step will **not** move the generated mapping files that match this filter
-        into the Bitrise Deploy Directory.
-
+        The step will **not** move the generated mapping files that match this filter into the Bitrise Deploy Directory.
         You can use this step to avoid moving beta mapping file.
 
-        This filter is a standerd bash find commands negated -path pattern, see: http://linux.die.net/man/1/find
+        This filter is a standard bash find commands negated -path pattern, see: http://linux.die.net/man/1/find
 
-        Example: `*/beta/mapping.txt`
+        If you specify empty filter, every mapping files (selected by `mapping_file_include_filter`) will be moved.
+
+        Example: `*/beta/mapping.txt` - Avoid to move mapping.txt file in a `beta` directoy.
 outputs:
   - BITRISE_APK_PATH: ""
     opts:
