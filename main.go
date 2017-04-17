@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bitrise-io/go-utils/cmdex"
+	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
 	log "github.com/bitrise-io/steps-gradle-runner/logger"
@@ -110,10 +110,10 @@ func runGradleTask(gradleTool, buildFile, tasks, options string) error {
 	cmdSlice = append(cmdSlice, taskSlice...)
 	cmdSlice = append(cmdSlice, optionSlice...)
 
-	log.Detail(cmdex.PrintableCommandArgs(false, cmdSlice))
+	log.Detail(command.PrintableCommandArgs(false, cmdSlice))
 	fmt.Println()
 
-	cmd := cmdex.NewCommand(cmdSlice[0], cmdSlice[1:]...)
+	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
 	cmd.SetStdout(os.Stdout)
 	cmd.SetStderr(os.Stderr)
 	return cmd.Run()
@@ -124,9 +124,9 @@ func find(dir, nameInclude, nameExclude string) ([]string, error) {
 	cmdSlice = append(cmdSlice, "-path", nameInclude)
 	cmdSlice = append(cmdSlice, "!", "-path", nameExclude)
 
-	log.Detail(cmdex.PrintableCommandArgs(false, cmdSlice))
+	log.Detail(command.PrintableCommandArgs(false, cmdSlice))
 
-	out, err := cmdex.NewCommand(cmdSlice[0], cmdSlice[1:]...).RunAndReturnTrimmedOutput()
+	out, err := command.New(cmdSlice[0], cmdSlice[1:]...).RunAndReturnTrimmedOutput()
 	if err != nil {
 		return []string{}, err
 	}
@@ -181,7 +181,7 @@ func findDeployPth(deployDir, baseName, ext string) (string, error) {
 }
 
 func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
-	cmd := cmdex.NewCommand("envman", "add", "--key", keyStr)
+	cmd := command.New("envman", "add", "--key", keyStr)
 	cmd.SetStdin(strings.NewReader(valueStr))
 	return cmd.Run()
 }
@@ -239,7 +239,7 @@ func main() {
 		}
 
 		log.Detail("copy %s to %s", apkFile, deployPth)
-		cmdex.CopyFile(apkFile, deployPth)
+		command.CopyFile(apkFile, deployPth)
 
 		lastCopiedApkFile = deployPth
 	}
@@ -274,7 +274,7 @@ func main() {
 		}
 
 		log.Detail("copy %s to %s", mappingFile, deployPth)
-		cmdex.CopyFile(mappingFile, deployPth)
+		command.CopyFile(mappingFile, deployPth)
 
 		lastCopiedMappingFile = deployPth
 	}
