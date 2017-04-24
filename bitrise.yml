@@ -14,6 +14,7 @@ workflows:
     - test
     - test-multiple-tasks
     - test-subdir
+    - test-no-root-buildfile
 
   test:
     description: "CI workflow - this should always pass!"
@@ -60,6 +61,16 @@ workflows:
     after_run:
     - _common
 
+  test-no-root-buildfile:
+    envs:
+    - SAMPLE_APP_GIT_CLONE_URL: https://github.com/DroidsOnRoids/android-empty-library.git
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: "./gradlew"
+    - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+    - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+    - _common
+    
   _common:
     steps:
     - script:

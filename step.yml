@@ -28,10 +28,9 @@ toolkit:
 inputs:
   - gradle_file: $GRADLE_BUILD_FILE_PATH
     opts:
-      title: Path to the gradle file to use
+      title: Optional path to the gradle build file to use
       description: |
-        Path to the gradle file to use
-      is_required: true
+        Optional path to the gradle build file to use
   - gradle_task: assemble
     opts:
       title: Gradle task to run
