@@ -1,26 +1,26 @@
 {
 	"ImportPath": "github.com/bitrise-io/steps-gradle-runner",
-	"GoVersion": "go1.7",
-	"GodepVersion": "v74",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
-			"ImportPath": "github.com/bitrise-io/go-utils/cmdex",
-			"Rev": "1c148012aaf6c7ae16dad4570d70fd8cb4e78638"
+			"ImportPath": "github.com/bitrise-io/go-utils/command",
+			"Rev": "c8163959178ae89a3829ce02e485eef6b2befd22"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/errorutil",
-			"Rev": "1c148012aaf6c7ae16dad4570d70fd8cb4e78638"
+			"Rev": "c8163959178ae89a3829ce02e485eef6b2befd22"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/pathutil",
-			"Rev": "1c148012aaf6c7ae16dad4570d70fd8cb4e78638"
+			"Rev": "c8163959178ae89a3829ce02e485eef6b2befd22"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/retry",
-			"Rev": "1c148012aaf6c7ae16dad4570d70fd8cb4e78638"
+			"Rev": "c8163959178ae89a3829ce02e485eef6b2befd22"
 		},
 		{
 			"ImportPath": "github.com/kballard/go-shellquote",
