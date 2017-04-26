@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
-	log "github.com/bitrise-io/steps-gradle-runner/logger"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -48,31 +48,31 @@ func createConfigsModelFromEnvs() ConfigsModel {
 
 func (configs ConfigsModel) print() {
 
-	log.Info("Configs:")
-	log.Detail("- GradlewPath: %s", configs.GradlewPath)
-	log.Detail("- GradleFile: %s", configs.GradleFile)
-	log.Detail("- GradleTasks: %s", configs.GradleTasks)
-	log.Detail("- GradleOptions: %s", configs.GradleOptions)
-	log.Detail("- ApkFileIncludeFilter: %s", configs.ApkFileIncludeFilter)
-	log.Detail("- ApkFileExcludeFilter: %s", configs.ApkFileExcludeFilter)
-	log.Detail("- MappingFileIncludeFilter: %s", configs.MappingFileIncludeFilter)
-	log.Detail("- MappingFileExcludeFilter: %s", configs.MappingFileExcludeFilter)
-	log.Detail("- DeployDir: %s", configs.DeployDir)
+	log.Infof("Configs:")
+	log.Printf("- GradlewPath: %s", configs.GradlewPath)
+	log.Printf("- GradleFile: %s", configs.GradleFile)
+	log.Printf("- GradleTasks: %s", configs.GradleTasks)
+	log.Printf("- GradleOptions: %s", configs.GradleOptions)
+	log.Printf("- ApkFileIncludeFilter: %s", configs.ApkFileIncludeFilter)
+	log.Printf("- ApkFileExcludeFilter: %s", configs.ApkFileExcludeFilter)
+	log.Printf("- MappingFileIncludeFilter: %s", configs.MappingFileIncludeFilter)
+	log.Printf("- MappingFileExcludeFilter: %s", configs.MappingFileExcludeFilter)
+	log.Printf("- DeployDir: %s", configs.DeployDir)
 }
 
 func (configs ConfigsModel) validate() (string, error) {
 	// required
 	if configs.GradleFile == "" {
-		return "", errors.New("No GradleFile parameter specified!")
+		return "", errors.New("no GradleFile parameter specified")
 	}
 	if exist, err := pathutil.IsPathExists(configs.GradleFile); err != nil {
-		return "", fmt.Errorf("Failed to check if GradleFile exist at: %s, error: %s", configs.GradleFile, err)
+		return "", fmt.Errorf("failed to check if GradleFile exist at: %s, error: %s", configs.GradleFile, err)
 	} else if !exist {
-		return "", fmt.Errorf("GradleFile not exist at: %s", configs.GradleFile)
+		return "", fmt.Errorf("gradleFile not exist at: %s", configs.GradleFile)
 	}
 
 	if configs.GradleTasks == "" {
-		return "", errors.New("No GradleTask parameter specified!")
+		return "", errors.New("no GradleTask parameter specified")
 	}
 
 	if configs.GradlewPath == "" {
@@ -84,7 +84,7 @@ You can find more information about the Gradle Wrapper (gradlew),
 and about how you can generate one (if you would not have one already
 in the official guide at: https://docs.gradle.org/current/userguide/gradle_wrapper.html`
 
-		return explanation, errors.New("No GradlewPath parameter specified!")
+		return explanation, errors.New("no GradlewPath parameter specified")
 	}
 	if exist, err := pathutil.IsPathExists(configs.GradlewPath); err != nil {
 		return "", fmt.Errorf("Failed to check if GradlewPath exist at: %s, error: %s", configs.GradlewPath, err)
@@ -110,7 +110,7 @@ func runGradleTask(gradleTool, buildFile, tasks, options string) error {
 	cmdSlice = append(cmdSlice, taskSlice...)
 	cmdSlice = append(cmdSlice, optionSlice...)
 
-	log.Detail(command.PrintableCommandArgs(false, cmdSlice))
+	log.Printf(command.PrintableCommandArgs(false, cmdSlice))
 	fmt.Println()
 
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
@@ -124,7 +124,7 @@ func find(dir, nameInclude, nameExclude string) ([]string, error) {
 	cmdSlice = append(cmdSlice, "-path", nameInclude)
 	cmdSlice = append(cmdSlice, "!", "-path", nameExclude)
 
-	log.Detail(command.PrintableCommandArgs(false, cmdSlice))
+	log.Printf(command.PrintableCommandArgs(false, cmdSlice))
 
 	out, err := command.New(cmdSlice[0], cmdSlice[1:]...).RunAndReturnTrimmedOutput()
 	if err != nil {
@@ -161,13 +161,13 @@ func findDeployPth(deployDir, baseName, ext string) (string, error) {
 
 	err := retry.Times(10).Wait(1 * time.Second).Try(func(attempt uint) error {
 		if attempt > 0 {
-			log.Warn("  Retrying...")
+			log.Warnf("  Retrying...")
 		}
 
 		pth, pathErr := createDeployPth(deployDir, retryApkName)
 		if pathErr != nil {
-			log.Warn("  %d attempt failed:", attempt+1)
-			log.Detail(pathErr.Error())
+			log.Warnf("  %d attempt failed:", attempt+1)
+			log.Printf(pathErr.Error())
 		}
 
 		t := time.Now()
@@ -186,12 +186,17 @@ func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
 	return cmd.Run()
 }
 
+func failf(message string, args ...interface{}) {
+	log.Errorf(message, args...)
+	os.Exit(1)
+}
+
 func main() {
 	configs := createConfigsModelFromEnvs()
 	configs.print()
 	if explanation, err := configs.validate(); err != nil {
 		fmt.Println()
-		log.Error("Issue with input: %s", err)
+		log.Errorf("Issue with input: %s", err)
 		fmt.Println()
 
 		if explanation != "" {
@@ -208,23 +213,23 @@ func main() {
 
 	err := os.Chmod(configs.GradlewPath, 0770)
 	if err != nil {
-		log.Fail("Failed to add executable permission on gradlew file (%s), error: %s", configs.GradlewPath, err)
+		failf("Failed to add executable permission on gradlew file (%s), error: %s", configs.GradlewPath, err)
 	}
 
-	log.Info("Running gradle task...")
+	log.Infof("Running gradle task...")
 	if err := runGradleTask(configs.GradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions); err != nil {
-		log.Fail("Gradle task failed, error: %s", err)
+		failf("Gradle task failed, error: %s", err)
 	}
 
 	// Move apk files
-	log.Info("Move apk files...")
+	log.Infof("Move apk files...")
 	apkFiles, err := find(".", configs.ApkFileIncludeFilter, configs.ApkFileExcludeFilter)
 	if err != nil {
-		log.Fail("Failed to find apk files, error: %s", err)
+		failf("Failed to find apk files, error: %s", err)
 	}
 
 	if len(apkFiles) == 0 {
-		log.Warn("No apk matched the filters")
+		log.Warnf("No apk matched the filters")
 	}
 
 	lastCopiedApkFile := ""
@@ -235,10 +240,10 @@ func main() {
 
 		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
 		if err != nil {
-			log.Fail("Failed to create apk deploy path, error: %s", err)
+			failf("Failed to create apk deploy path, error: %s", err)
 		}
 
-		log.Detail("copy %s to %s", apkFile, deployPth)
+		log.Printf("copy %s to %s", apkFile, deployPth)
 		command.CopyFile(apkFile, deployPth)
 
 		lastCopiedApkFile = deployPth
@@ -246,20 +251,20 @@ func main() {
 
 	if lastCopiedApkFile != "" {
 		if err := exportEnvironmentWithEnvman("BITRISE_APK_PATH", lastCopiedApkFile); err != nil {
-			log.Fail("Failed to export enviroment (BITRISE_APK_PATH), error: %s", err)
+			failf("Failed to export enviroment (BITRISE_APK_PATH), error: %s", err)
 		}
-		log.Done("The apk path is now available in the Environment Variable: $BITRISE_APK_PATH (value: %s)", lastCopiedApkFile)
+		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_APK_PATH (value: %s)", lastCopiedApkFile)
 	}
 
 	// Move mapping files
-	log.Info("Move mapping files...")
+	log.Infof("Move mapping files...")
 	mappingFiles, err := find(".", configs.MappingFileIncludeFilter, configs.MappingFileExcludeFilter)
 	if err != nil {
-		log.Fail("Failed to find mapping files, error: %s", err)
+		failf("Failed to find mapping files, error: %s", err)
 	}
 
 	if len(mappingFiles) == 0 {
-		log.Detail("No mapping file matched the filters")
+		log.Printf("No mapping file matched the filters")
 	}
 
 	lastCopiedMappingFile := ""
@@ -270,10 +275,10 @@ func main() {
 
 		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
 		if err != nil {
-			log.Fail("Failed to create mapping deploy path, error: %s", err)
+			failf("Failed to create mapping deploy path, error: %s", err)
 		}
 
-		log.Detail("copy %s to %s", mappingFile, deployPth)
+		log.Printf("copy %s to %s", mappingFile, deployPth)
 		command.CopyFile(mappingFile, deployPth)
 
 		lastCopiedMappingFile = deployPth
@@ -281,8 +286,8 @@ func main() {
 
 	if lastCopiedMappingFile != "" {
 		if err := exportEnvironmentWithEnvman("BITRISE_MAPPING_PATH", lastCopiedMappingFile); err != nil {
-			log.Fail("Failed to export enviroment (BITRISE_MAPPING_PATH), error: %s", err)
+			failf("Failed to export enviroment (BITRISE_MAPPING_PATH), error: %s", err)
 		}
-		log.Done("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
+		log.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
 	}
 }
