@@ -1,6 +1,13 @@
-## Changelog (Current version: 1.5.4)
+## Changelog (Current version: 1.5.5)
 
 -----------------
+
+### 1.5.5 (2017 May 04)
+
+* [4f31d28] Prepare for 1.5.5
+* [4f87888] Gradle build file made optional (#28)
+* [12d9170] godeps-update
+* [f5d87a9] Remove cmdex, add command (#27)
 
 ### 1.5.4 (2017 Jan 30)
 
@@ -102,4 +109,4 @@
 
 -----------------
 
-Updated: 2017 Jan 30
+Updated: 2017 May 04
