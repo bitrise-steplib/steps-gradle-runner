@@ -1,6 +1,10 @@
-## Changelog (Current version: 1.5.5)
+## Changelog (Current version: 1.5.6)
 
 -----------------
+
+### 1.5.6 (2017 May 04)
+
+* [527ec0f] Prepare for 1.5.6
 
 ### 1.5.5 (2017 May 04)
 
