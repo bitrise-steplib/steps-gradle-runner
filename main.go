@@ -61,14 +61,12 @@ func (configs ConfigsModel) print() {
 }
 
 func (configs ConfigsModel) validate() (string, error) {
-	// required
-	if configs.GradleFile == "" {
-		return "", errors.New("no GradleFile parameter specified")
-	}
-	if exist, err := pathutil.IsPathExists(configs.GradleFile); err != nil {
-		return "", fmt.Errorf("failed to check if GradleFile exist at: %s, error: %s", configs.GradleFile, err)
-	} else if !exist {
-		return "", fmt.Errorf("gradleFile not exist at: %s", configs.GradleFile)
+	if configs.GradleFile != "" {
+		if exist, err := pathutil.IsPathExists(configs.GradleFile); err != nil {
+			return "", fmt.Errorf("Failed to check if GradleFile exists at: %s, error: %s", configs.GradleFile, err)
+		} else if !exist {
+			return "", fmt.Errorf("GradleFile does not exist at: %s", configs.GradleFile)
+		}
 	}
 
 	if configs.GradleTasks == "" {
@@ -106,7 +104,10 @@ func runGradleTask(gradleTool, buildFile, tasks, options string) error {
 		return err
 	}
 
-	cmdSlice := []string{gradleTool, "--build-file", buildFile}
+	cmdSlice := []string{gradleTool}
+	if buildFile != "" {
+		cmdSlice = append(cmdSlice, "--build-file", buildFile)
+	}
 	cmdSlice = append(cmdSlice, taskSlice...)
 	cmdSlice = append(cmdSlice, optionSlice...)
 
