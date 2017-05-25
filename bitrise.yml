@@ -112,6 +112,8 @@ workflows:
         inputs:
         - content: |-
             #!/bin/bash
+            echo "[output] BITRISE_CACHE_INCLUDE_PATHS: ${BITRISE_CACHE_INCLUDE_PATHS}"
+            echo "[output] BITRISE_CACHE_EXCLUDE_PATHS: ${BITRISE_CACHE_EXCLUDE_PATHS}"
             echo "[output] BITRISE_APK_PATH: ${BITRISE_APK_PATH}"
             echo "[output] BITRISE_MAPPING_PATH: ${BITRISE_MAPPING_PATH}"
             set -x

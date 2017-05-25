@@ -12,6 +12,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
+	"github.com/bitrise-tools/go-steputils/cache"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -220,6 +221,39 @@ func main() {
 	log.Infof("Running gradle task...")
 	if err := runGradleTask(configs.GradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions); err != nil {
 		failf("Gradle task failed, error: %s", err)
+	}
+
+	// Collecting caches
+	gradleCache := cache.New()
+	homeDir := pathutil.UserHomeDir()
+
+	gradleCache.IncludePath(filepath.Join(homeDir, ".gradle"))
+	gradleCache.IncludePath(filepath.Join(homeDir, ".kotlin"))
+	gradleCache.IncludePath(filepath.Join(homeDir, ".android", "build-cache"))
+
+	projectRoot, err := filepath.Abs(filepath.Dir(configs.GradlewPath))
+	if err != nil {
+		log.Warnf("Failed to determine project root path.")
+	} else {
+		if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
+			if f.IsDir() && f.Name() == "build" {
+				gradleCache.IncludePath(filepath.Join(projectRoot, path))
+			}
+			return nil
+		}); err != nil {
+			log.Warnf("Failed to determine cache paths.")
+		} else {
+			gradleCache.ExcludePath("/*.lock")
+			gradleCache.ExcludePath("/*.bin")
+			gradleCache.ExcludePath("/*.log")
+			gradleCache.ExcludePath("/*.txt")
+			gradleCache.ExcludePath("/*.rawproto")
+			gradleCache.ExcludePath("/*.ap_")
+
+			if err := gradleCache.Commit(); err != nil {
+				log.Warnf("Failed to commit cache paths.")
+			}
+		}
 	}
 
 	// Move apk files
