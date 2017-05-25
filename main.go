@@ -237,7 +237,7 @@ func main() {
 	} else {
 		if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
 			if f.IsDir() && f.Name() == "build" {
-				gradleCache.IncludePath(filepath.Join(projectRoot, path))
+				gradleCache.IncludePath(path)
 			}
 			return nil
 		}); err != nil {
