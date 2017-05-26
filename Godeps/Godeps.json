@@ -8,27 +8,35 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/colorstring",
-			"Rev": "c8163959178ae89a3829ce02e485eef6b2befd22"
+			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/command",
-			"Rev": "c8163959178ae89a3829ce02e485eef6b2befd22"
+			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/errorutil",
-			"Rev": "c8163959178ae89a3829ce02e485eef6b2befd22"
+			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/log",
-			"Rev": "c8163959178ae89a3829ce02e485eef6b2befd22"
+			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/pathutil",
-			"Rev": "c8163959178ae89a3829ce02e485eef6b2befd22"
+			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/retry",
-			"Rev": "c8163959178ae89a3829ce02e485eef6b2befd22"
+			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
+		},
+		{
+			"ImportPath": "github.com/bitrise-tools/go-steputils/cache",
+			"Rev": "4648abbb44aff0929ccdd27312aa0a70077c14fc"
+		},
+		{
+			"ImportPath": "github.com/bitrise-tools/go-steputils/tools",
+			"Rev": "4648abbb44aff0929ccdd27312aa0a70077c14fc"
 		},
 		{
 			"ImportPath": "github.com/kballard/go-shellquote",

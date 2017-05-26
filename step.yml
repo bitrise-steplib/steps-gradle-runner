@@ -54,7 +54,7 @@ inputs:
         **The path should be relative** to the repository root, for example: `./gradlew`,
         or if it's in a sub directory: `./sub/dir/gradlew`.
       is_required: true
-  - gradle_options: "--stacktrace"
+  - gradle_options: "--stacktrace --no-daemon"
     opts:
       title: Additional options for Gradle call
       description: |-
