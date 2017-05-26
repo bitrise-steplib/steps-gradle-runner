@@ -224,6 +224,8 @@ func main() {
 	}
 
 	// Collecting caches
+	log.Infof("Collecting gradle caches...")
+
 	gradleCache := cache.New()
 	homeDir := pathutil.UserHomeDir()
 
@@ -248,7 +250,7 @@ func main() {
 
 	projectRoot, err := filepath.Abs(filepath.Dir(configs.GradlewPath))
 	if err != nil {
-		log.Warnf("Failed to determine project root path.")
+		log.Warnf("Cache collection skipped: failed to determine project root path.")
 	} else {
 		if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
 			if f.IsDir() {
@@ -261,14 +263,14 @@ func main() {
 			}
 			return nil
 		}); err != nil {
-			log.Warnf("Failed to determine cache paths.")
+			log.Warnf("Cache collection skipped: failed to determine cache paths.")
 		} else {
 
 			gradleCache.IncludePath(strings.Join(includePths, "\n"))
 			gradleCache.ExcludePath(strings.Join(excludePths, "\n"))
 
 			if err := gradleCache.Commit(); err != nil {
-				log.Warnf("Failed to commit cache paths.")
+				log.Warnf("Cache collection skipped: failed to commit cache paths.")
 			}
 		}
 	}
