@@ -250,6 +250,10 @@ func main() {
 		} else {
 			gradleCache.ExcludePath("/*.lock")
 			gradleCache.ExcludePath("/*.bin")
+			gradleCache.ExcludePath("/*/build/*.json")
+			gradleCache.ExcludePath("/*/build/*.xml")
+			gradleCache.ExcludePath("/*/build/*.properties")
+			gradleCache.ExcludePath("/*/build/*/zip-cache/*")
 			gradleCache.ExcludePath("/*.log")
 			gradleCache.ExcludePath("/*.txt")
 			gradleCache.ExcludePath("/*.rawproto")
