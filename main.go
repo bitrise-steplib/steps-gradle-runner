@@ -227,9 +227,24 @@ func main() {
 	gradleCache := cache.New()
 	homeDir := pathutil.UserHomeDir()
 
-	gradleCache.IncludePath(filepath.Join(homeDir, ".gradle"))
-	gradleCache.IncludePath(filepath.Join(homeDir, ".kotlin"))
-	gradleCache.IncludePath(filepath.Join(homeDir, ".android", "build-cache"))
+	includePths := []string{
+		filepath.Join(homeDir, ".gradle"),
+		filepath.Join(homeDir, ".kotlin"),
+		filepath.Join(homeDir, ".android", "build-cache"),
+	}
+	excludePths := []string{
+		"/*.lock",
+		"/*.bin",
+		"/*/build/*.json",
+		"/*/build/*.xml",
+		"/*/build/*.properties",
+		"/*/build/*/zip-cache/*",
+		"/*.log",
+		"/*.txt",
+		"/*.rawproto",
+		"/*.ap_",
+		"/*.apk",
+	}
 
 	projectRoot, err := filepath.Abs(filepath.Dir(configs.GradlewPath))
 	if err != nil {
@@ -238,27 +253,19 @@ func main() {
 		if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
 			if f.IsDir() {
 				if f.Name() == "build" {
-					gradleCache.IncludePath(path)
+					includePths = append(includePths, path)
 				}
 				if f.Name() == ".gradle" {
-					gradleCache.IncludePath(path)
+					includePths = append(includePths, path)
 				}
 			}
 			return nil
 		}); err != nil {
 			log.Warnf("Failed to determine cache paths.")
 		} else {
-			gradleCache.ExcludePath("/*.lock")
-			gradleCache.ExcludePath("/*.bin")
-			gradleCache.ExcludePath("/*/build/*.json")
-			gradleCache.ExcludePath("/*/build/*.xml")
-			gradleCache.ExcludePath("/*/build/*.properties")
-			gradleCache.ExcludePath("/*/build/*/zip-cache/*")
-			gradleCache.ExcludePath("/*.log")
-			gradleCache.ExcludePath("/*.txt")
-			gradleCache.ExcludePath("/*.rawproto")
-			gradleCache.ExcludePath("/*.ap_")
-			gradleCache.ExcludePath("/*.apk")
+
+			gradleCache.IncludePath(strings.Join(includePths, "\n"))
+			gradleCache.ExcludePath(strings.Join(excludePths, "\n"))
 
 			if err := gradleCache.Commit(); err != nil {
 				log.Warnf("Failed to commit cache paths.")
