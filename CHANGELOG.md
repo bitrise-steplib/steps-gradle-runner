@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.5.6)
+## Changelog (Current version: 1.6.0)
 
 -----------------
+
+### 1.6.0 (2017 May 26)
+
+* [f45de0a] Prepare for 1.6.0
+* [457d161] Added built-in cache collection (#30)
 
 ### 1.5.6 (2017 May 04)
 
@@ -113,4 +118,4 @@
 
 -----------------
 
-Updated: 2017 May 04
+Updated: 2017 May 26
