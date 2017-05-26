@@ -236,8 +236,13 @@ func main() {
 		log.Warnf("Failed to determine project root path.")
 	} else {
 		if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
-			if f.IsDir() && f.Name() == "build" {
-				gradleCache.IncludePath(filepath.Join(projectRoot, path))
+			if f.IsDir() {
+				if f.Name() == "build" {
+					gradleCache.IncludePath(filepath.Join(projectRoot, path))
+				}
+				if f.Name() == ".gradle" {
+					gradleCache.IncludePath(filepath.Join(projectRoot, path))
+				}
 			}
 			return nil
 		}); err != nil {
@@ -249,6 +254,7 @@ func main() {
 			gradleCache.ExcludePath("/*.txt")
 			gradleCache.ExcludePath("/*.rawproto")
 			gradleCache.ExcludePath("/*.ap_")
+			gradleCache.ExcludePath("/*.apk")
 
 			if err := gradleCache.Commit(); err != nil {
 				log.Warnf("Failed to commit cache paths.")
