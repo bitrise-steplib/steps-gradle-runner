@@ -224,6 +224,7 @@ func main() {
 	}
 
 	// Collecting caches
+	fmt.Println()
 	log.Infof("Collecting gradle caches...")
 
 	gradleCache := cache.New()
@@ -276,6 +277,7 @@ func main() {
 	}
 
 	// Move apk files
+	fmt.Println()
 	log.Infof("Move apk files...")
 	apkFiles, err := find(".", configs.ApkFileIncludeFilter, configs.ApkFileExcludeFilter)
 	if err != nil {
