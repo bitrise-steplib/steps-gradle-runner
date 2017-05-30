@@ -249,7 +249,7 @@ func main() {
 		"/*.apk",
 	}
 
-	projectRoot, err := filepath.Abs(filepath.Dir(configs.GradlewPath))
+	projectRoot, err := filepath.Abs(".")
 	if err != nil {
 		log.Warnf("Cache collection skipped: failed to determine project root path.")
 	} else {
