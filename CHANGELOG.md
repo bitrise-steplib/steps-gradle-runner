@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.6.0)
+## Changelog (Current version: 1.6.1)
 
 -----------------
+
+### 1.6.1 (2017 May 30)
+
+* [fc69adb] Prepare for 1.6.1
+* [792b2a6] switch to SOURCE_DIR search (#31)
 
 ### 1.6.0 (2017 May 26)
 
@@ -118,4 +123,4 @@
 
 -----------------
 
-Updated: 2017 May 26
+Updated: 2017 May 30
