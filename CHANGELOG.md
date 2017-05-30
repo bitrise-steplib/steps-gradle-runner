@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.6.1)
+## Changelog (Current version: 1.6.2)
 
 -----------------
+
+### 1.6.2 (2017 May 30)
+
+* [262c786] Prepare for 1.6.2
+* [3f2b509] sample forked and url changed (#32)
 
 ### 1.6.1 (2017 May 30)
 
