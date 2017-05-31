@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.6.2)
+## Changelog (Current version: 1.6.3)
 
 -----------------
+
+### 1.6.3 (2017 May 31)
+
+* [4ff25ae] Prepare for 1.6.3
+* [3f8b9f7] updated cache ignore paths (#33)
 
 ### 1.6.2 (2017 May 30)
 
@@ -128,4 +133,4 @@
 
 -----------------
 
-Updated: 2017 May 30
+Updated: 2017 May 31
