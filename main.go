@@ -291,6 +291,7 @@ func main() {
 	}
 
 	lastCopiedApkFile := ""
+	copiedApkFiles := []string{}
 	for _, apkFile := range apkFiles {
 		ext := filepath.Ext(apkFile)
 		baseName := filepath.Base(apkFile)
@@ -302,9 +303,12 @@ func main() {
 		}
 
 		log.Printf("copy %s to %s", apkFile, deployPth)
-		command.CopyFile(apkFile, deployPth)
+		if err := command.CopyFile(apkFile, deployPth); err != nil {
+			failf("Failed to copy apk, error: %s", err)
+		}
 
 		lastCopiedApkFile = deployPth
+		copiedApkFiles = append(copiedApkFiles, apkFile)
 	}
 
 	if lastCopiedApkFile != "" {
@@ -312,6 +316,13 @@ func main() {
 			failf("Failed to export enviroment (BITRISE_APK_PATH), error: %s", err)
 		}
 		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_APK_PATH (value: %s)", lastCopiedApkFile)
+	}
+	if len(copiedApkFiles) > 0 {
+		apkList := strings.Join(copiedApkFiles, "|")
+		if err := exportEnvironmentWithEnvman("BITRISE_APK_PATH_LIST", apkList); err != nil {
+			failf("Failed to export enviroment (BITRISE_APK_PATH_LIST), error: %s", err)
+		}
+		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_APK_PATH_LIST (value: %s)", apkList)
 	}
 
 	// Move mapping files
