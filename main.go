@@ -322,7 +322,7 @@ func main() {
 		if err := exportEnvironmentWithEnvman("BITRISE_APK_PATH_LIST", apkList); err != nil {
 			failf("Failed to export enviroment (BITRISE_APK_PATH_LIST), error: %s", err)
 		}
-		log.Donef("The apks paths is now available in the Environment Variable: $BITRISE_APK_PATH_LIST (value: %s)", apkList)
+		log.Donef("The apk paths list is now available in the Environment Variable: $BITRISE_APK_PATH_LIST (value: %s)", apkList)
 	}
 
 	// Move mapping files
