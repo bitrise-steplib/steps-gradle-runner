@@ -28,11 +28,13 @@ toolkit:
 inputs:
   - gradle_file: $GRADLE_BUILD_FILE_PATH
     opts:
+      category: Config
       title: Optional path to the gradle build file to use
       description: |
         Optional path to the gradle build file to use
   - gradle_task: assemble
     opts:
+      category: Config
       title: Gradle task to run
       description: |
         Gradle task to run.
@@ -42,6 +44,7 @@ inputs:
       is_required: true
   - gradlew_path: $GRADLEW_PATH
     opts:
+      category: Config
       title: gradlew file path
       description: |
         Using a Gradle Wrapper (gradlew) is required, as the wrapper is what makes sure
@@ -54,29 +57,23 @@ inputs:
         **The path should be relative** to the repository root, for example: `./gradlew`,
         or if it's in a sub directory: `./sub/dir/gradlew`.
       is_required: true
-  - gradle_options: "--stacktrace --no-daemon"
-    opts:
-      title: Additional options for Gradle call
-      description: |-
-        Options added to the end of the Gradle call.
-
-        You can use multiple options, separated by a space
-        character. Example: `--stacktrace --debug`
   - apk_file_include_filter: "*.apk"
     opts:
+      category: Export Config
       title: "APK file include filter"
       description: |
         The step will copy the generated apk files that match this filter into the Bitrise Deploy Directory.
 
-        This filter is a standard find commands -path pattern, see: http://linux.die.net/man/1/find 
+        This filter is a standard find commands -path pattern, see: http://linux.die.net/man/1/find
 
         If you specify an empty filter, the step will set this filter to: `*.apk`.
 
-        Example: 
+        Example:
 
         - `*release*.apk` - Copy every apk which filename contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`).
   - apk_file_exclude_filter: "*-unaligned.apk"
     opts:
+      category: Export Config
       title: "APK file exclude filter"
       description: |
         The step will **not** copy the generated apk files that match this filter into the Bitrise Deploy Directory.
@@ -86,11 +83,12 @@ inputs:
 
         If you specify an empty filter, every apk file (selected by `apk_file_include_filter`) will be copied.
 
-        Example: 
-        
+        Example:
+
         - `*unaligned*.apk` - Avoid to copy apk if filename contains `unaligned`.
   - mapping_file_include_filter: "*/mapping.txt"
     opts:
+      category: Export Config
       title: "Mapping file include filter"
       description: |
         The step will copy the generated mapping files that match this filter into the Bitrise Deploy Directory.
@@ -102,6 +100,7 @@ inputs:
         Example: `*mapping.txt` - Copy every mapping.txt file.
   - mapping_file_exclude_filter:
     opts:
+      category: Export Config
       title: "Mapping file exclude filter"
       description: |
         The step will **not** copy the generated mapping files that match this filter into the Bitrise Deploy Directory.
@@ -112,6 +111,15 @@ inputs:
         If you specify an empty filter, every mapping files (selected by `mapping_file_include_filter`) will be copied.
 
         Example: `*/beta/mapping.txt` - Avoid to copy mapping.txt file in a `beta` directoy.
+  - gradle_options: "--stacktrace --no-daemon"
+    opts:
+      category: Debug
+      title: Additional options for Gradle call
+      description: |-
+        Options added to the end of the Gradle call.
+
+        You can use multiple options, separated by a space
+        character. Example: `--stacktrace --debug`
 outputs:
   - BITRISE_APK_PATH: ""
     opts:
