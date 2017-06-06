@@ -113,7 +113,7 @@ inputs:
 
         Example: `*/beta/mapping.txt` - Avoid to copy mapping.txt file in a `beta` directoy.
 outputs:
-  - BITRISE_APK_PATH: ""
+  - BITRISE_APK_PATH:
     opts:
       title: "Path of the generated APK"
       summary: "Path of the generated (and copied) APK - after filtering."
@@ -123,7 +123,16 @@ outputs:
 
         If the build generates more than one APK which fulfills the
         filter inputs this output will contain the last one's path.
-  - BITRISE_MAPPING_PATH: ""
+  - BITRISE_APK_PATH_LIST:
+    opts:
+      title: "List of the generated APK paths"
+      summary: "List of the generated (and copied) APK paths - after filtering."
+      description: |-
+        This output will include the paths of the generated APKs,
+        after filtering based on the filter inputs.
+
+        The paths are separated with `|` character, eg: `app-armeabi-v7a-debug.apk|app-mips-debug.apk|app-x86-debug.apk`
+  - BITRISE_MAPPING_PATH:
     opts:
       title: "Path of the generated mapping.txt"
       summary: "Path of the generated (and copied) mapping.txt."

@@ -1,4 +1,4 @@
 .bitrise*
 _tmp/
 .gradle
-*gows
+.gows*

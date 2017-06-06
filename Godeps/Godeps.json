@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/bitrise-io/steps-gradle-runner",
-	"GoVersion": "go1.7",
+	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
@@ -8,35 +8,35 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/colorstring",
-			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
+			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/command",
-			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
+			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/errorutil",
-			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
+			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/log",
-			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
+			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/pathutil",
-			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
+			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/retry",
-			"Rev": "ad8f0cff18a087ae94ce410d6dbd9f04bb6d6c00"
+			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
 		},
 		{
 			"ImportPath": "github.com/bitrise-tools/go-steputils/cache",
-			"Rev": "4648abbb44aff0929ccdd27312aa0a70077c14fc"
+			"Rev": "a848c9870ff7d745a8fb2a951e1c81fcb147b4ec"
 		},
 		{
 			"ImportPath": "github.com/bitrise-tools/go-steputils/tools",
-			"Rev": "4648abbb44aff0929ccdd27312aa0a70077c14fc"
+			"Rev": "a848c9870ff7d745a8fb2a951e1c81fcb147b4ec"
 		},
 		{
 			"ImportPath": "github.com/kballard/go-shellquote",
