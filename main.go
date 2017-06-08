@@ -233,6 +233,7 @@ func main() {
 	includePths := []string{
 		filepath.Join(homeDir, ".gradle"),
 		filepath.Join(homeDir, ".kotlin"),
+		filepath.Join(homeDir, ".m2"),
 		filepath.Join(homeDir, ".android", "build-cache"),
 	}
 	excludePths := []string{
