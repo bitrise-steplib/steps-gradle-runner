@@ -309,7 +309,7 @@ func main() {
 		}
 
 		lastCopiedApkFile = deployPth
-		copiedApkFiles = append(copiedApkFiles, apkFile)
+		copiedApkFiles = append(copiedApkFiles, deployPth)
 	}
 
 	if lastCopiedApkFile != "" {
