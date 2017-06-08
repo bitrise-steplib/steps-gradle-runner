@@ -348,7 +348,9 @@ func main() {
 		}
 
 		log.Printf("copy %s to %s", mappingFile, deployPth)
-		command.CopyFile(mappingFile, deployPth)
+		if err := command.CopyFile(mappingFile, deployPth); err != nil {
+			failf("Failed to copy mapping file, error: %s", err)
+		}
 
 		lastCopiedMappingFile = deployPth
 	}
