@@ -1,6 +1,15 @@
-## Changelog (Current version: 1.6.3)
+## Changelog (Current version: 1.7.0)
 
 -----------------
+
+### 1.7.0 (2017 Jun 08)
+
+* [5790862] prepare for 1.7.0
+* [07dccbd] APK_LIST fix
+* [6e088e2] input grouping and reordering (#35)
+* [4d13e02] bitrise.yml updates (#36)
+* [60dcc1e] added ~/.m2 dir include
+* [4d0448b] export apk list (#34)
 
 ### 1.6.3 (2017 May 31)
 
@@ -133,4 +142,4 @@
 
 -----------------
 
-Updated: 2017 May 31
+Updated: 2017 Jun 08
