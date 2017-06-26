@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.7.0)
+## Changelog (Current version: 1.7.1)
 
 -----------------
+
+### 1.7.1 (2017 Jun 26)
+
+* [17cd35e] Prepare for 1.7.1
+* [a2a7925] godeps-update, added cacheLevel input (#38)
 
 ### 1.7.0 (2017 Jun 08)
 
@@ -142,4 +147,4 @@
 
 -----------------
 
-Updated: 2017 Jun 08
+Updated: 2017 Jun 26
