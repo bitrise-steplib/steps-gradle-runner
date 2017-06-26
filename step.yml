@@ -111,6 +111,19 @@ inputs:
         If you specify an empty filter, every mapping files (selected by `mapping_file_include_filter`) will be copied.
 
         Example: `*/beta/mapping.txt` - Avoid to copy mapping.txt file in a `beta` directoy.
+  - cache_level: "all"
+    opts:
+      category: Debug
+      title: Set the level of cache
+      description: |-
+        `all` - will cache build-cache and dependencies
+        `only deps` - will cache dependencies only
+        `none` - won't cache any of the above
+      is_required: true
+      value_options:
+      - "all"
+      - "only deps"
+      - "none"
   - gradle_options: "--stacktrace --no-daemon"
     opts:
       category: Debug
