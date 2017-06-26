@@ -13,6 +13,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-tools/go-steputils/cache"
+	"github.com/bitrise-tools/go-steputils/input"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -30,6 +31,8 @@ type ConfigsModel struct {
 
 	// Other configs
 	DeployDir string
+	// Cache configs
+	CacheLevel string
 }
 
 func createConfigsModelFromEnvs() ConfigsModel {
@@ -44,6 +47,8 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		MappingFileExcludeFilter: os.Getenv("mapping_file_exclude_filter"),
 		//
 		DeployDir: os.Getenv("BITRISE_DEPLOY_DIR"),
+		//
+		CacheLevel: os.Getenv("cache_level"),
 	}
 }
 
@@ -59,6 +64,7 @@ func (configs ConfigsModel) print() {
 	log.Printf("- MappingFileIncludeFilter: %s", configs.MappingFileIncludeFilter)
 	log.Printf("- MappingFileExcludeFilter: %s", configs.MappingFileExcludeFilter)
 	log.Printf("- DeployDir: %s", configs.DeployDir)
+	log.Printf("- CacheLevel: %s", configs.CacheLevel)
 }
 
 func (configs ConfigsModel) validate() (string, error) {
@@ -89,6 +95,14 @@ in the official guide at: https://docs.gradle.org/current/userguide/gradle_wrapp
 		return "", fmt.Errorf("Failed to check if GradlewPath exist at: %s, error: %s", configs.GradlewPath, err)
 	} else if !exist {
 		return "", fmt.Errorf("GradlewPath not exist at: %s", configs.GradlewPath)
+	}
+
+	if err := input.ValidateIfNotEmpty(configs.CacheLevel); err != nil {
+		return "", fmt.Errorf("CacheLevel, error: %s", err)
+	}
+
+	if err := input.ValidateWithOptions(configs.CacheLevel, "all", "only deps", "none"); err != nil {
+		return "", fmt.Errorf("CacheLevel, error: %s", err)
 	}
 
 	return "", nil
@@ -224,57 +238,70 @@ func main() {
 	}
 
 	// Collecting caches
-	fmt.Println()
-	log.Infof("Collecting gradle caches...")
+	if configs.CacheLevel != "none" {
+		fmt.Println()
+		log.Infof("Collecting gradle caches...")
 
-	gradleCache := cache.New()
-	homeDir := pathutil.UserHomeDir()
+		gradleCache := cache.New()
+		homeDir := pathutil.UserHomeDir()
 
-	includePths := []string{
-		filepath.Join(homeDir, ".gradle"),
-		filepath.Join(homeDir, ".kotlin"),
-		filepath.Join(homeDir, ".m2"),
-		filepath.Join(homeDir, ".android", "build-cache"),
-	}
-	excludePths := []string{
-		"~/.gradle/**",
-		"~/.android/build-cache/**",
-		"*.lock",
-		"*.bin",
-		"/**/build/**.json",
-		"/**/build/**.xml",
-		"/**/build/**.properties",
-		"/**/build/**/zip-cache/**",
-		"*.log",
-		"*.txt",
-		"*.rawproto",
-		"!*.ap_",
-		"!*.apk",
-	}
+		includePths := []string{}
 
-	projectRoot, err := filepath.Abs(".")
-	if err != nil {
-		log.Warnf("Cache collection skipped: failed to determine project root path.")
-	} else {
-		if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
-			if f.IsDir() {
-				if f.Name() == "build" {
-					includePths = append(includePths, path)
-				}
-				if f.Name() == ".gradle" {
-					includePths = append(includePths, path)
+		if configs.CacheLevel == "all" || configs.CacheLevel == "only deps" {
+			includePths = append(includePths, filepath.Join(homeDir, ".gradle"))
+			includePths = append(includePths, filepath.Join(homeDir, ".kotlin"))
+			includePths = append(includePths, filepath.Join(homeDir, ".m2"))
+		}
+
+		if configs.CacheLevel == "all" {
+			includePths = append(includePths, filepath.Join(homeDir, ".android", "build-cache"))
+		}
+
+		excludePths := []string{
+			"~/.gradle/**",
+			"~/.android/build-cache/**",
+			"*.lock",
+			"*.bin",
+			"/**/build/**.json",
+			"/**/build/**.xml",
+			"/**/build/**.properties",
+			"/**/build/**/zip-cache/**",
+			"*.log",
+			"*.txt",
+			"*.rawproto",
+			"!*.ap_",
+			"!*.apk",
+		}
+
+		collectCaches := true
+		projectRoot, err := filepath.Abs(".")
+		if err != nil {
+			log.Warnf("Cache collection skipped: failed to determine project root path.")
+			collectCaches = false
+		} else {
+			if configs.CacheLevel == "all" {
+				if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
+					if f.IsDir() {
+						if f.Name() == "build" {
+							includePths = append(includePths, path)
+						}
+						if f.Name() == ".gradle" {
+							includePths = append(includePths, path)
+						}
+					}
+					return nil
+				}); err != nil {
+					log.Warnf("Cache collection skipped: failed to determine cache paths.")
+					collectCaches = false
 				}
 			}
-			return nil
-		}); err != nil {
-			log.Warnf("Cache collection skipped: failed to determine cache paths.")
-		} else {
+			if collectCaches {
+				gradleCache.IncludePath(strings.Join(includePths, "\n"))
+				gradleCache.ExcludePath(strings.Join(excludePths, "\n"))
 
-			gradleCache.IncludePath(strings.Join(includePths, "\n"))
-			gradleCache.ExcludePath(strings.Join(excludePths, "\n"))
-
-			if err := gradleCache.Commit(); err != nil {
-				log.Warnf("Cache collection skipped: failed to commit cache paths.")
+				if err := gradleCache.Commit(); err != nil {
+					log.Warnf("Cache collection skipped: failed to commit cache paths.")
+				}
 			}
 		}
 	}
