@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,6 +19,14 @@ import (
 	"github.com/bitrise-tools/go-steputils/input"
 	"github.com/kballard/go-shellquote"
 )
+
+const failedToFindTargetWithHasString = `Failed to find target with hash string `
+const failedToFindBuildToolRevision = `Failed to find Build Tools revision `
+
+var automaticRetryReasonPatterns = []string{
+	failedToFindTargetWithHasString,
+	failedToFindBuildToolRevision,
+}
 
 // ConfigsModel ...
 type ConfigsModel struct {
@@ -108,7 +119,25 @@ in the official guide at: https://docs.gradle.org/current/userguide/gradle_wrapp
 	return "", nil
 }
 
-func runGradleTask(gradleTool, buildFile, tasks, options string) error {
+func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
+	r, err := regexp.Compile("(?i)" + searchStr)
+	if err != nil {
+		log.Warnf("Failed to compile regexp: %s", err)
+		return false
+	}
+	return r.MatchString(outputToSearchIn)
+}
+
+func shouldRetry(output string) bool {
+	for _, retryReasonPattern := range automaticRetryReasonPatterns {
+		if isStringFoundInOutput(retryReasonPattern, output) {
+			return true
+		}
+	}
+	return false
+}
+
+func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetryOnReason bool) error {
 	optionSlice, err := shellquote.Split(options)
 	if err != nil {
 		return err
@@ -129,10 +158,24 @@ func runGradleTask(gradleTool, buildFile, tasks, options string) error {
 	log.Printf(command.PrintableCommandArgs(false, cmdSlice))
 	fmt.Println()
 
+	var outBuffer bytes.Buffer
+	outWriter := io.MultiWriter(os.Stdout, &outBuffer)
+
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
-	cmd.SetStdout(os.Stdout)
-	cmd.SetStderr(os.Stderr)
-	return cmd.Run()
+	cmd.SetStdout(outWriter)
+	cmd.SetStderr(outWriter)
+	if err := cmd.Run(); err != nil {
+		if isAutomaticRetryOnReason {
+			for _, retryReasonPattern := range automaticRetryReasonPatterns {
+				if isStringFoundInOutput(retryReasonPattern, outBuffer.String()) {
+					log.Warnf("Automatic retry reason found in log: %s - retrying...", retryReasonPattern)
+					return runGradleTask(gradleTool, buildFile, tasks, options, false)
+				}
+			}
+		}
+		return err
+	}
+	return nil
 }
 
 func find(dir, nameInclude, nameExclude string) ([]string, error) {
@@ -233,7 +276,7 @@ func main() {
 	}
 
 	log.Infof("Running gradle task...")
-	if err := runGradleTask(configs.GradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions); err != nil {
+	if err := runGradleTask(configs.GradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, true); err != nil {
 		failf("Gradle task failed, error: %s", err)
 	}
 
