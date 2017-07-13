@@ -5,10 +5,6 @@ import (
 	"testing"
 )
 
-/*
-const failedToFindTargetWithHasString = `Failed to find target with hash string `
-const failedToFindBuildToolRevision = `Failed to find Build Tools revision `
-*/
 func loadFileContent(filePth string) (string, error) {
 	fileBytes, err := ioutil.ReadFile(filePth)
 	if err != nil {

@@ -128,15 +128,6 @@ func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	return r.MatchString(outputToSearchIn)
 }
 
-func shouldRetry(output string) bool {
-	for _, retryReasonPattern := range automaticRetryReasonPatterns {
-		if isStringFoundInOutput(retryReasonPattern, output) {
-			return true
-		}
-	}
-	return false
-}
-
 func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetryOnReason bool) error {
 	optionSlice, err := shellquote.Split(options)
 	if err != nil {
