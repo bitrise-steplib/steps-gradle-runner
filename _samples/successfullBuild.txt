@@ -1,0 +1,289 @@
+Incremental java compilation is an incubating feature.
+:app:preBuild UP-TO-DATE
+:app:preDebugBuild UP-TO-DATE
+:app:checkDebugManifest
+:app:preReleaseBuild UP-TO-DATE
+:app:prepareComAndroidSupportAppcompatV72221Library
+:app:prepareComAndroidSupportSupportV42221Library
+:app:prepareDebugDependencies
+:app:compileDebugAidl
+:app:compileDebugRenderscript
+:app:generateDebugBuildConfig
+:app:mergeDebugShaders
+:app:compileDebugShaders
+:app:generateDebugAssets
+:app:mergeDebugAssets
+:app:generateDebugResValues
+:app:generateDebugResources
+:app:mergeDebugResources
+:app:processDebugManifest
+:app:processDebugResources
+:app:generateDebugSources
+:app:incrementalDebugJavaCompilationSafeguard
+:app:compileDebugJavaWithJavac
+:app:compileDebugJavaWithJavac - is not incremental (e.g. outputs have changed, no previous execution, etc.).
+Note: /Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/src/main/java/com/bitrise_io/sample_apps_android_simple/MainActivity.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+:app:compileDebugNdk UP-TO-DATE
+:app:compileDebugSources
+:app:prePackageMarkerForDebug
+:app:processDebugJavaRes UP-TO-DATE
+:app:transformResourcesWithMergeJavaResForDebug
+:app:transformClassesAndResourcesWithProguardForDebug
+ProGuard, version 5.2.1
+Reading input...
+Reading program jar [/Users/bitrise/Library/Android/sdk/extras/android/m2repository/com/android/support/support-annotations/22.2.1/support-annotations-22.2.1.jar] (filtered)
+Reading program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/22.2.1/jars/classes.jar] (filtered)
+Reading program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/support-v4/22.2.1/jars/classes.jar] (filtered)
+Reading program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/support-v4/22.2.1/jars/libs/internal_impl-22.2.1.jar] (filtered)
+Reading program directory [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/classes/debug] (filtered)
+Reading library jar [/Users/bitrise/Library/Android/sdk/platforms/android-22/android.jar]
+Initializing...
+Note: the configuration refers to the unknown class 'com.google.vending.licensing.ILicensingService'
+Note: the configuration refers to the unknown class 'com.android.vending.licensing.ILicensingService'
+Note: android.support.v4.app.NotificationCompatJellybean calls 'Field.getType'
+Note: android.support.v4.text.ICUCompatIcs: can't find dynamically referenced class libcore.icu.ICU
+Note: android.support.v7.internal.widget.DrawableUtils: can't find dynamically referenced class android.graphics.Insets
+Note: android.support.v4.app.NotificationCompatJellybean accesses a declared field 'icon' dynamically
+      Maybe this is program field 'android.support.v4.app.NotificationCompat$Action { int icon; }'
+      Maybe this is program field 'android.support.v7.appcompat.R$attr { int icon; }'
+      Maybe this is program field 'android.support.v7.appcompat.R$id { int icon; }'
+      Maybe this is program field 'com.bitrise_io.sample_apps_android_simple.R$attr { int icon; }'
+      Maybe this is program field 'com.bitrise_io.sample_apps_android_simple.R$id { int icon; }'
+      Maybe this is library field 'android.R$attr { int icon; }'
+      Maybe this is library field 'android.R$id { int icon; }'
+      Maybe this is library field 'android.app.LauncherActivity$ListItem { android.graphics.drawable.Drawable icon; }'
+      Maybe this is library field 'android.app.Notification { int icon; }'
+      Maybe this is library field 'android.app.Notification$Action { int icon; }'
+      Maybe this is library field 'android.appwidget.AppWidgetProviderInfo { int icon; }'
+      Maybe this is library field 'android.content.pm.PackageItemInfo { int icon; }'
+      Maybe this is library field 'android.content.pm.ResolveInfo { int icon; }'
+      Maybe this is library field 'android.inputmethodservice.Keyboard$Key { android.graphics.drawable.Drawable icon; }'
+      Maybe this is library field 'android.speech.tts.TextToSpeech$EngineInfo { int icon; }'
+Note: android.support.v4.app.NotificationCompatJellybean accesses a declared field 'title' dynamically
+      Maybe this is program field 'android.support.v4.app.NotificationCompat$Action { java.lang.CharSequence title; }'
+      Maybe this is program field 'android.support.v7.appcompat.R$attr { int title; }'
+      Maybe this is program field 'android.support.v7.appcompat.R$id { int title; }'
+      Maybe this is program field 'com.bitrise_io.sample_apps_android_simple.R$attr { int title; }'
+      Maybe this is program field 'com.bitrise_io.sample_apps_android_simple.R$id { int title; }'
+      Maybe this is library field 'android.R$attr { int title; }'
+      Maybe this is library field 'android.R$id { int title; }'
+      Maybe this is library field 'android.app.Notification$Action { java.lang.CharSequence title; }'
+      Maybe this is library field 'android.preference.PreferenceActivity$Header { java.lang.CharSequence title; }'
+Note: android.support.v4.app.NotificationCompatJellybean accesses a declared field 'actionIntent' dynamically
+      Maybe this is program field 'android.support.v4.app.NotificationCompat$Action { android.app.PendingIntent actionIntent; }'
+      Maybe this is library field 'android.app.Notification$Action { android.app.PendingIntent actionIntent; }'
+Note: the configuration keeps the entry point 'android.support.v4.view.ViewPager { void setAdapter(android.support.v4.view.PagerAdapter); }', but not the descriptor class 'android.support.v4.view.PagerAdapter'
+Note: the configuration keeps the entry point 'android.support.v4.view.ViewPager { void setOnAdapterChangeListener(android.support.v4.view.ViewPager$OnAdapterChangeListener); }', but not the descriptor class 'android.support.v4.view.ViewPager$OnAdapterChangeListener'
+Note: the configuration keeps the entry point 'android.support.v4.view.ViewPager { void setOnPageChangeListener(android.support.v4.view.ViewPager$OnPageChangeListener); }', but not the descriptor class 'android.support.v4.view.ViewPager$OnPageChangeListener'
+Note: the configuration keeps the entry point 'android.support.v4.widget.DrawerLayout { void setDrawerListener(android.support.v4.widget.DrawerLayout$DrawerListener); }', but not the descriptor class 'android.support.v4.widget.DrawerLayout$DrawerListener'
+Note: the configuration keeps the entry point 'android.support.v4.widget.SlidingPaneLayout { void setPanelSlideListener(android.support.v4.widget.SlidingPaneLayout$PanelSlideListener); }', but not the descriptor class 'android.support.v4.widget.SlidingPaneLayout$PanelSlideListener'
+Note: the configuration keeps the entry point 'android.support.v4.widget.SwipeRefreshLayout { void setOnRefreshListener(android.support.v4.widget.SwipeRefreshLayout$OnRefreshListener); }', but not the descriptor class 'android.support.v4.widget.SwipeRefreshLayout$OnRefreshListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.view.menu.ActionMenuItemView { void setItemInvoker(android.support.v7.internal.view.menu.MenuBuilder$ItemInvoker); }', but not the descriptor class 'android.support.v7.internal.view.menu.MenuBuilder$ItemInvoker'
+Note: the configuration keeps the entry point 'android.support.v7.internal.view.menu.ActionMenuItemView { void setPopupCallback(android.support.v7.internal.view.menu.ActionMenuItemView$PopupCallback); }', but not the descriptor class 'android.support.v7.internal.view.menu.ActionMenuItemView$PopupCallback'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.ActionBarContainer { void setTabContainer(android.support.v7.internal.widget.ScrollingTabContainerView); }', but not the descriptor class 'android.support.v7.internal.widget.ScrollingTabContainerView'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.ActionBarOverlayLayout { void setActionBarVisibilityCallback(android.support.v7.internal.widget.ActionBarOverlayLayout$ActionBarVisibilityCallback); }', but not the descriptor class 'android.support.v7.internal.widget.ActionBarOverlayLayout$ActionBarVisibilityCallback'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.ActivityChooserView { void setActivityChooserModel(android.support.v7.internal.widget.ActivityChooserModel); }', but not the descriptor class 'android.support.v7.internal.widget.ActivityChooserModel'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.ActivityChooserView { void setProvider(android.support.v4.view.ActionProvider); }', but not the descriptor class 'android.support.v4.view.ActionProvider'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.AdapterViewCompat { void setOnItemClickListener(android.support.v7.internal.widget.AdapterViewCompat$OnItemClickListener); }', but not the descriptor class 'android.support.v7.internal.widget.AdapterViewCompat$OnItemClickListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.AdapterViewCompat { void setOnItemLongClickListener(android.support.v7.internal.widget.AdapterViewCompat$OnItemLongClickListener); }', but not the descriptor class 'android.support.v7.internal.widget.AdapterViewCompat$OnItemLongClickListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.AdapterViewCompat { void setOnItemSelectedListener(android.support.v7.internal.widget.AdapterViewCompat$OnItemSelectedListener); }', but not the descriptor class 'android.support.v7.internal.widget.AdapterViewCompat$OnItemSelectedListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.FitWindowsFrameLayout { void setOnFitSystemWindowsListener(android.support.v7.internal.widget.FitWindowsViewGroup$OnFitSystemWindowsListener); }', but not the descriptor class 'android.support.v7.internal.widget.FitWindowsViewGroup$OnFitSystemWindowsListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.FitWindowsLinearLayout { void setOnFitSystemWindowsListener(android.support.v7.internal.widget.FitWindowsViewGroup$OnFitSystemWindowsListener); }', but not the descriptor class 'android.support.v7.internal.widget.FitWindowsViewGroup$OnFitSystemWindowsListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.ViewStubCompat { void setOnInflateListener(android.support.v7.internal.widget.ViewStubCompat$OnInflateListener); }', but not the descriptor class 'android.support.v7.internal.widget.ViewStubCompat$OnInflateListener'
+Note: the configuration keeps the entry point 'android.support.v7.widget.ActionMenuView { void setPresenter(android.support.v7.widget.ActionMenuPresenter); }', but not the descriptor class 'android.support.v7.widget.ActionMenuPresenter'
+Note: the configuration keeps the entry point 'android.support.v7.widget.ActionMenuView { void setOnMenuItemClickListener(android.support.v7.widget.ActionMenuView$OnMenuItemClickListener); }', but not the descriptor class 'android.support.v7.widget.ActionMenuView$OnMenuItemClickListener'
+Note: the configuration keeps the entry point 'android.support.v7.widget.SearchView { void setOnQueryTextListener(android.support.v7.widget.SearchView$OnQueryTextListener); }', but not the descriptor class 'android.support.v7.widget.SearchView$OnQueryTextListener'
+Note: the configuration keeps the entry point 'android.support.v7.widget.SearchView { void setOnCloseListener(android.support.v7.widget.SearchView$OnCloseListener); }', but not the descriptor class 'android.support.v7.widget.SearchView$OnCloseListener'
+Note: the configuration keeps the entry point 'android.support.v7.widget.SearchView { void setOnSuggestionListener(android.support.v7.widget.SearchView$OnSuggestionListener); }', but not the descriptor class 'android.support.v7.widget.SearchView$OnSuggestionListener'
+Note: the configuration keeps the entry point 'android.support.v7.widget.SearchView { void setSuggestionsAdapter(android.support.v4.widget.CursorAdapter); }', but not the descriptor class 'android.support.v4.widget.CursorAdapter'
+Note: the configuration keeps the entry point 'android.support.v7.widget.SearchView$SearchAutoComplete { void setSearchView(android.support.v7.widget.SearchView); }', but not the descriptor class 'android.support.v7.widget.SearchView'
+Note: the configuration keeps the entry point 'android.support.v7.widget.Toolbar { void setOnMenuItemClickListener(android.support.v7.widget.Toolbar$OnMenuItemClickListener); }', but not the descriptor class 'android.support.v7.widget.Toolbar$OnMenuItemClickListener'
+Note: there were 2 references to unknown classes.
+      You should check your configuration for typos.
+      (http://proguard.sourceforge.net/manual/troubleshooting.html#unknownclass)
+Note: there were 1 classes trying to access generic signatures using reflection.
+      You should consider keeping the signature attributes
+      (using '-keepattributes Signature').
+      (http://proguard.sourceforge.net/manual/troubleshooting.html#attributes)
+Note: there were 26 unkept descriptor classes in kept class members.
+      You should consider explicitly keeping the mentioned classes
+      (using '-keep').
+      (http://proguard.sourceforge.net/manual/troubleshooting.html#descriptorclass)
+Note: there were 2 unresolved dynamic references to classes or interfaces.
+      You should check if you need to specify additional program jars.
+      (http://proguard.sourceforge.net/manual/troubleshooting.html#dynamicalclass)
+Note: there were 3 accesses to class members by means of introspection.
+      You should consider explicitly keeping the mentioned class members
+      (using '-keep' or '-keepclassmembers').
+      (http://proguard.sourceforge.net/manual/troubleshooting.html#dynamicalclassmember)
+Ignoring unused library classes...
+  Original number of library classes: 3683
+  Final number of library classes:    796
+Printing kept classes, fields, and methods...
+Shrinking...
+Printing usage to [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/outputs/mapping/debug/usage.txt]...
+Removing unused program classes and class elements...
+  Original number of program classes: 1277
+  Final number of program classes:    473
+Obfuscating...
+Printing mapping to [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/outputs/mapping/debug/mapping.txt]...
+Writing output...
+Preparing output jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/transforms/proguard/debug/jars/3/1f/main.jar]
+  Copying resources from program jar [/Users/bitrise/Library/Android/sdk/extras/android/m2repository/com/android/support/support-annotations/22.2.1/support-annotations-22.2.1.jar] (filtered)
+  Copying resources from program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/22.2.1/jars/classes.jar] (filtered)
+  Copying resources from program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/support-v4/22.2.1/jars/classes.jar] (filtered)
+  Copying resources from program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/support-v4/22.2.1/jars/libs/internal_impl-22.2.1.jar] (filtered)
+  Copying resources from program directory [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/classes/debug] (filtered)
+Printing classes to [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/outputs/mapping/debug/dump.txt]...
+:app:transformClassesWithDexForDebug
+Running dex in-process requires build tools 23.0.2.
+For faster builds update this project to use the latest build tools.
+:app:mergeDebugJniLibFolders
+:app:transformNative_libsWithMergeJniLibsForDebug
+:app:validateDebugSigning
+:app:packageDebug
+:app:zipalignDebug
+:app:assembleDebug
+:app:checkReleaseManifest
+:app:prepareReleaseDependencies
+:app:compileReleaseAidl
+:app:compileReleaseRenderscript
+:app:generateReleaseBuildConfig
+:app:mergeReleaseShaders
+:app:compileReleaseShaders
+:app:generateReleaseAssets
+:app:mergeReleaseAssets
+:app:generateReleaseResValues
+:app:generateReleaseResources
+:app:mergeReleaseResources
+:app:processReleaseManifest
+:app:processReleaseResources
+:app:generateReleaseSources
+:app:incrementalReleaseJavaCompilationSafeguard
+:app:compileReleaseJavaWithJavac
+:app:compileReleaseJavaWithJavac - is not incremental (e.g. outputs have changed, no previous execution, etc.).
+Note: /Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/src/main/java/com/bitrise_io/sample_apps_android_simple/MainActivity.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+:app:compileReleaseNdk UP-TO-DATE
+:app:compileReleaseSources
+:app:lintVitalRelease
+:app:prePackageMarkerForRelease
+:app:processReleaseJavaRes UP-TO-DATE
+:app:transformResourcesWithMergeJavaResForRelease
+:app:transformClassesAndResourcesWithProguardForRelease
+ProGuard, version 5.2.1
+Reading input...
+Reading program jar [/Users/bitrise/Library/Android/sdk/extras/android/m2repository/com/android/support/support-annotations/22.2.1/support-annotations-22.2.1.jar] (filtered)
+Reading program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/22.2.1/jars/classes.jar] (filtered)
+Reading program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/support-v4/22.2.1/jars/classes.jar] (filtered)
+Reading program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/support-v4/22.2.1/jars/libs/internal_impl-22.2.1.jar] (filtered)
+Reading program directory [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/classes/release] (filtered)
+Reading library jar [/Users/bitrise/Library/Android/sdk/platforms/android-22/android.jar]
+Initializing...
+Note: the configuration refers to the unknown class 'com.google.vending.licensing.ILicensingService'
+Note: the configuration refers to the unknown class 'com.android.vending.licensing.ILicensingService'
+Note: android.support.v4.app.NotificationCompatJellybean calls 'Field.getType'
+Note: android.support.v4.text.ICUCompatIcs: can't find dynamically referenced class libcore.icu.ICU
+Note: android.support.v7.internal.widget.DrawableUtils: can't find dynamically referenced class android.graphics.Insets
+Note: android.support.v4.app.NotificationCompatJellybean accesses a declared field 'icon' dynamically
+      Maybe this is program field 'android.support.v4.app.NotificationCompat$Action { int icon; }'
+      Maybe this is program field 'android.support.v7.appcompat.R$attr { int icon; }'
+      Maybe this is program field 'android.support.v7.appcompat.R$id { int icon; }'
+      Maybe this is program field 'com.bitrise_io.sample_apps_android_simple.R$attr { int icon; }'
+      Maybe this is program field 'com.bitrise_io.sample_apps_android_simple.R$id { int icon; }'
+      Maybe this is library field 'android.R$attr { int icon; }'
+      Maybe this is library field 'android.R$id { int icon; }'
+      Maybe this is library field 'android.app.LauncherActivity$ListItem { android.graphics.drawable.Drawable icon; }'
+      Maybe this is library field 'android.app.Notification { int icon; }'
+      Maybe this is library field 'android.app.Notification$Action { int icon; }'
+      Maybe this is library field 'android.appwidget.AppWidgetProviderInfo { int icon; }'
+      Maybe this is library field 'android.content.pm.PackageItemInfo { int icon; }'
+      Maybe this is library field 'android.content.pm.ResolveInfo { int icon; }'
+      Maybe this is library field 'android.inputmethodservice.Keyboard$Key { android.graphics.drawable.Drawable icon; }'
+      Maybe this is library field 'android.speech.tts.TextToSpeech$EngineInfo { int icon; }'
+Note: android.support.v4.app.NotificationCompatJellybean accesses a declared field 'title' dynamically
+      Maybe this is program field 'android.support.v4.app.NotificationCompat$Action { java.lang.CharSequence title; }'
+      Maybe this is program field 'android.support.v7.appcompat.R$attr { int title; }'
+      Maybe this is program field 'android.support.v7.appcompat.R$id { int title; }'
+      Maybe this is program field 'com.bitrise_io.sample_apps_android_simple.R$attr { int title; }'
+      Maybe this is program field 'com.bitrise_io.sample_apps_android_simple.R$id { int title; }'
+      Maybe this is library field 'android.R$attr { int title; }'
+      Maybe this is library field 'android.R$id { int title; }'
+      Maybe this is library field 'android.app.Notification$Action { java.lang.CharSequence title; }'
+      Maybe this is library field 'android.preference.PreferenceActivity$Header { java.lang.CharSequence title; }'
+Note: android.support.v4.app.NotificationCompatJellybean accesses a declared field 'actionIntent' dynamically
+      Maybe this is program field 'android.support.v4.app.NotificationCompat$Action { android.app.PendingIntent actionIntent; }'
+      Maybe this is library field 'android.app.Notification$Action { android.app.PendingIntent actionIntent; }'
+Note: the configuration keeps the entry point 'android.support.v4.view.ViewPager { void setAdapter(android.support.v4.view.PagerAdapter); }', but not the descriptor class 'android.support.v4.view.PagerAdapter'
+Note: the configuration keeps the entry point 'android.support.v4.view.ViewPager { void setOnAdapterChangeListener(android.support.v4.view.ViewPager$OnAdapterChangeListener); }', but not the descriptor class 'android.support.v4.view.ViewPager$OnAdapterChangeListener'
+Note: the configuration keeps the entry point 'android.support.v4.view.ViewPager { void setOnPageChangeListener(android.support.v4.view.ViewPager$OnPageChangeListener); }', but not the descriptor class 'android.support.v4.view.ViewPager$OnPageChangeListener'
+Note: the configuration keeps the entry point 'android.support.v4.widget.DrawerLayout { void setDrawerListener(android.support.v4.widget.DrawerLayout$DrawerListener); }', but not the descriptor class 'android.support.v4.widget.DrawerLayout$DrawerListener'
+Note: the configuration keeps the entry point 'android.support.v4.widget.SlidingPaneLayout { void setPanelSlideListener(android.support.v4.widget.SlidingPaneLayout$PanelSlideListener); }', but not the descriptor class 'android.support.v4.widget.SlidingPaneLayout$PanelSlideListener'
+Note: the configuration keeps the entry point 'android.support.v4.widget.SwipeRefreshLayout { void setOnRefreshListener(android.support.v4.widget.SwipeRefreshLayout$OnRefreshListener); }', but not the descriptor class 'android.support.v4.widget.SwipeRefreshLayout$OnRefreshListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.view.menu.ActionMenuItemView { void setItemInvoker(android.support.v7.internal.view.menu.MenuBuilder$ItemInvoker); }', but not the descriptor class 'android.support.v7.internal.view.menu.MenuBuilder$ItemInvoker'
+Note: the configuration keeps the entry point 'android.support.v7.internal.view.menu.ActionMenuItemView { void setPopupCallback(android.support.v7.internal.view.menu.ActionMenuItemView$PopupCallback); }', but not the descriptor class 'android.support.v7.internal.view.menu.ActionMenuItemView$PopupCallback'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.ActionBarContainer { void setTabContainer(android.support.v7.internal.widget.ScrollingTabContainerView); }', but not the descriptor class 'android.support.v7.internal.widget.ScrollingTabContainerView'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.ActionBarOverlayLayout { void setActionBarVisibilityCallback(android.support.v7.internal.widget.ActionBarOverlayLayout$ActionBarVisibilityCallback); }', but not the descriptor class 'android.support.v7.internal.widget.ActionBarOverlayLayout$ActionBarVisibilityCallback'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.ActivityChooserView { void setActivityChooserModel(android.support.v7.internal.widget.ActivityChooserModel); }', but not the descriptor class 'android.support.v7.internal.widget.ActivityChooserModel'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.ActivityChooserView { void setProvider(android.support.v4.view.ActionProvider); }', but not the descriptor class 'android.support.v4.view.ActionProvider'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.AdapterViewCompat { void setOnItemClickListener(android.support.v7.internal.widget.AdapterViewCompat$OnItemClickListener); }', but not the descriptor class 'android.support.v7.internal.widget.AdapterViewCompat$OnItemClickListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.AdapterViewCompat { void setOnItemLongClickListener(android.support.v7.internal.widget.AdapterViewCompat$OnItemLongClickListener); }', but not the descriptor class 'android.support.v7.internal.widget.AdapterViewCompat$OnItemLongClickListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.AdapterViewCompat { void setOnItemSelectedListener(android.support.v7.internal.widget.AdapterViewCompat$OnItemSelectedListener); }', but not the descriptor class 'android.support.v7.internal.widget.AdapterViewCompat$OnItemSelectedListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.FitWindowsFrameLayout { void setOnFitSystemWindowsListener(android.support.v7.internal.widget.FitWindowsViewGroup$OnFitSystemWindowsListener); }', but not the descriptor class 'android.support.v7.internal.widget.FitWindowsViewGroup$OnFitSystemWindowsListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.FitWindowsLinearLayout { void setOnFitSystemWindowsListener(android.support.v7.internal.widget.FitWindowsViewGroup$OnFitSystemWindowsListener); }', but not the descriptor class 'android.support.v7.internal.widget.FitWindowsViewGroup$OnFitSystemWindowsListener'
+Note: the configuration keeps the entry point 'android.support.v7.internal.widget.ViewStubCompat { void setOnInflateListener(android.support.v7.internal.widget.ViewStubCompat$OnInflateListener); }', but not the descriptor class 'android.support.v7.internal.widget.ViewStubCompat$OnInflateListener'
+Note: the configuration keeps the entry point 'android.support.v7.widget.ActionMenuView { void setPresenter(android.support.v7.widget.ActionMenuPresenter); }', but not the descriptor class 'android.support.v7.widget.ActionMenuPresenter'
+Note: the configuration keeps the entry point 'android.support.v7.widget.ActionMenuView { void setOnMenuItemClickListener(android.support.v7.widget.ActionMenuView$OnMenuItemClickListener); }', but not the descriptor class 'android.support.v7.widget.ActionMenuView$OnMenuItemClickListener'
+Note: the configuration keeps the entry point 'android.support.v7.widget.SearchView { void setOnQueryTextListener(android.support.v7.widget.SearchView$OnQueryTextListener); }', but not the descriptor class 'android.support.v7.widget.SearchView$OnQueryTextListener'
+Note: the configuration keeps the entry point 'android.support.v7.widget.SearchView { void setOnCloseListener(android.support.v7.widget.SearchView$OnCloseListener); }', but not the descriptor class 'android.support.v7.widget.SearchView$OnCloseListener'
+Note: the configuration keeps the entry point 'android.support.v7.widget.SearchView { void setOnSuggestionListener(android.support.v7.widget.SearchView$OnSuggestionListener); }', but not the descriptor class 'android.support.v7.widget.SearchView$OnSuggestionListener'
+Note: the configuration keeps the entry point 'android.support.v7.widget.SearchView { void setSuggestionsAdapter(android.support.v4.widget.CursorAdapter); }', but not the descriptor class 'android.support.v4.widget.CursorAdapter'
+Note: the configuration keeps the entry point 'android.support.v7.widget.SearchView$SearchAutoComplete { void setSearchView(android.support.v7.widget.SearchView); }', but not the descriptor class 'android.support.v7.widget.SearchView'
+Note: the configuration keeps the entry point 'android.support.v7.widget.Toolbar { void setOnMenuItemClickListener(android.support.v7.widget.Toolbar$OnMenuItemClickListener); }', but not the descriptor class 'android.support.v7.widget.Toolbar$OnMenuItemClickListener'
+Note: there were 2 references to unknown classes.
+      You should check your configuration for typos.
+      (http://proguard.sourceforge.net/manual/troubleshooting.html#unknownclass)
+Note: there were 1 classes trying to access generic signatures using reflection.
+      You should consider keeping the signature attributes
+      (using '-keepattributes Signature').
+      (http://proguard.sourceforge.net/manual/troubleshooting.html#attributes)
+Note: there were 26 unkept descriptor classes in kept class members.
+      You should consider explicitly keeping the mentioned classes
+      (using '-keep').
+      (http://proguard.sourceforge.net/manual/troubleshooting.html#descriptorclass)
+Note: there were 2 unresolved dynamic references to classes or interfaces.
+      You should check if you need to specify additional program jars.
+      (http://proguard.sourceforge.net/manual/troubleshooting.html#dynamicalclass)
+Note: there were 3 accesses to class members by means of introspection.
+      You should consider explicitly keeping the mentioned class members
+      (using '-keep' or '-keepclassmembers').
+      (http://proguard.sourceforge.net/manual/troubleshooting.html#dynamicalclassmember)
+Ignoring unused library classes...
+  Original number of library classes: 3683
+  Final number of library classes:    796
+Printing kept classes, fields, and methods...
+Shrinking...
+Printing usage to [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/outputs/mapping/release/usage.txt]...
+Removing unused program classes and class elements...
+  Original number of program classes: 1277
+  Final number of program classes:    473
+Obfuscating...
+Printing mapping to [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/outputs/mapping/release/mapping.txt]...
+Writing output...
+Preparing output jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/transforms/proguard/release/jars/3/1f/main.jar]
+  Copying resources from program jar [/Users/bitrise/Library/Android/sdk/extras/android/m2repository/com/android/support/support-annotations/22.2.1/support-annotations-22.2.1.jar] (filtered)
+  Copying resources from program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/22.2.1/jars/classes.jar] (filtered)
+  Copying resources from program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/support-v4/22.2.1/jars/classes.jar] (filtered)
+  Copying resources from program jar [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/exploded-aar/com.android.support/support-v4/22.2.1/jars/libs/internal_impl-22.2.1.jar] (filtered)
+  Copying resources from program directory [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/intermediates/classes/release] (filtered)
+Printing classes to [/Users/bitrise/Develop/go/src/github.com/bitrise-io/steps-gradle-runner/_tmp/sample-app-repo/_tmp/sample-app-repo/app/build/outputs/mapping/release/dump.txt]...
+:app:transformClassesWithDexForRelease
+:app:mergeReleaseJniLibFolders
+:app:transformNative_libsWithMergeJniLibsForRelease
+:app:packageRelease
+:app:assembleRelease
+
+BUILD SUCCESSFUL
+
+Total time: 35.37 secs
