@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.7.1)
+## Changelog (Current version: 1.7.2)
 
 -----------------
+
+### 1.7.2 (2017 Jul 14)
+
+* [d34d802] prepare for 1.7.2
+* [68e69e3] Retry gradle command (#39)
 
 ### 1.7.1 (2017 Jun 26)
 
@@ -147,4 +152,4 @@
 
 -----------------
 
-Updated: 2017 Jun 26
+Updated: 2017 Jul 14
