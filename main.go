@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
@@ -278,13 +279,47 @@ func main() {
 
 		gradleCache := cache.New()
 		homeDir := pathutil.UserHomeDir()
-
+		collectCaches := true
 		includePths := []string{}
 
+		projectRoot, err := filepath.Abs(".")
+		if err != nil {
+			log.Warnf("Cache collection skipped: failed to determine project root path.")
+			collectCaches = false
+		}
+
 		if configs.CacheLevel == "all" || configs.CacheLevel == "only deps" {
-			includePths = append(includePths, filepath.Join(homeDir, ".gradle"))
-			includePths = append(includePths, filepath.Join(homeDir, ".kotlin"))
-			includePths = append(includePths, filepath.Join(homeDir, ".m2"))
+
+			// create dependencies lockfile
+			log.Infof("Generate dependencies map...")
+			lockfileContent := ""
+			lockFilePath := filepath.Join(pathutil.UserHomeDir(), "gradle_deps.lock")
+			if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
+				if !f.IsDir() && f.Name() == "build.gradle" {
+
+					gradleDepCmd := command.New(configs.GradlewPath, "-b", path, "dependencies", "-q")
+
+					if output, err := gradleDepCmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
+						log.Warnf("Gradle task failed, error: %s", err)
+					} else {
+						lockfileContent += output
+					}
+				}
+				return nil
+			}); err != nil {
+				log.Warnf("Dependency map generation skipped: failed to collect dependencies.")
+				collectCaches = false
+			} else {
+				err := fileutil.WriteStringToFile(lockFilePath, lockfileContent)
+				if err != nil {
+					log.Warnf("Dependency map generation skipped: failed to write lockfile, error: %s", err)
+					collectCaches = false
+				}
+			}
+
+			includePths = append(includePths, fmt.Sprintf("%s -> %s", filepath.Join(homeDir, ".gradle"), lockFilePath))
+			includePths = append(includePths, fmt.Sprintf("%s -> %s", filepath.Join(homeDir, ".kotlin"), lockFilePath))
+			includePths = append(includePths, fmt.Sprintf("%s -> %s", filepath.Join(homeDir, ".m2"), lockFilePath))
 		}
 
 		if configs.CacheLevel == "all" {
@@ -297,6 +332,7 @@ func main() {
 			"*.lock",
 			"*.bin",
 			"/**/build/**.json",
+			"/**/build/**.html",
 			"/**/build/**.xml",
 			"/**/build/**.properties",
 			"/**/build/**/zip-cache/**",
@@ -307,37 +343,31 @@ func main() {
 			"!*.apk",
 		}
 
-		collectCaches := true
-		projectRoot, err := filepath.Abs(".")
-		if err != nil {
-			log.Warnf("Cache collection skipped: failed to determine project root path.")
-			collectCaches = false
-		} else {
-			if configs.CacheLevel == "all" {
-				if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
-					if f.IsDir() {
-						if f.Name() == "build" {
-							includePths = append(includePths, path)
-						}
-						if f.Name() == ".gradle" {
-							includePths = append(includePths, path)
-						}
+		if configs.CacheLevel == "all" {
+			if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
+				if f.IsDir() {
+					if f.Name() == "build" {
+						includePths = append(includePths, path)
 					}
-					return nil
-				}); err != nil {
-					log.Warnf("Cache collection skipped: failed to determine cache paths.")
-					collectCaches = false
+					if f.Name() == ".gradle" {
+						includePths = append(includePths, path)
+					}
 				}
-			}
-			if collectCaches {
-				gradleCache.IncludePath(strings.Join(includePths, "\n"))
-				gradleCache.ExcludePath(strings.Join(excludePths, "\n"))
-
-				if err := gradleCache.Commit(); err != nil {
-					log.Warnf("Cache collection skipped: failed to commit cache paths.")
-				}
+				return nil
+			}); err != nil {
+				log.Warnf("Cache collection skipped: failed to determine cache paths.")
+				collectCaches = false
 			}
 		}
+		if collectCaches {
+			gradleCache.IncludePath(strings.Join(includePths, "\n"))
+			gradleCache.ExcludePath(strings.Join(excludePths, "\n"))
+
+			if err := gradleCache.Commit(); err != nil {
+				log.Warnf("Cache collection skipped: failed to commit cache paths.")
+			}
+		}
+
 	}
 
 	// Move apk files
