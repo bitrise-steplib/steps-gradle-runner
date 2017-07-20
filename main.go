@@ -291,7 +291,7 @@ func main() {
 		if configs.CacheLevel == "all" || configs.CacheLevel == "only deps" {
 
 			// create dependencies lockfile
-			log.Infof("Generate dependencies map...")
+			log.Printf(" Generate dependencies map...")
 			lockfileContent := ""
 			lockFilePath := filepath.Join(pathutil.UserHomeDir(), "gradle_deps.lock")
 			if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
@@ -367,7 +367,7 @@ func main() {
 				log.Warnf("Cache collection skipped: failed to commit cache paths.")
 			}
 		}
-
+		log.Donef("Done")
 	}
 
 	// Move apk files
