@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.7.2)
+## Changelog (Current version: 1.7.3)
 
 -----------------
+
+### 1.7.3 (2017 Jul 21)
+
+* [90e8141] Prepare for 1.7.3
+* [e8a68dc] Dependencies with lockfile (#40)
 
 ### 1.7.2 (2017 Jul 14)
 
@@ -152,4 +157,4 @@
 
 -----------------
 
-Updated: 2017 Jul 14
+Updated: 2017 Jul 21
