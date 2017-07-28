@@ -310,24 +310,16 @@ func main() {
 				log.Warnf("Dependency map generation skipped: failed to collect dependencies.")
 				collectCaches = false
 			} else {
-				if lockfileContent != "" {
-					err := fileutil.WriteStringToFile(lockFilePath, lockfileContent)
-					if err != nil {
-						log.Warnf("Dependency map generation skipped: failed to write lockfile, error: %s", err)
-						collectCaches = false
-					}
+				err := fileutil.WriteStringToFile(lockFilePath, lockfileContent)
+				if err != nil {
+					log.Warnf("Dependency map generation skipped: failed to write lockfile, error: %s", err)
+					collectCaches = false
 				}
 			}
 
-			if lockfileContent != "" {
-				includePths = append(includePths, fmt.Sprintf("%s -> %s", filepath.Join(homeDir, ".gradle"), lockFilePath))
-				includePths = append(includePths, fmt.Sprintf("%s -> %s", filepath.Join(homeDir, ".kotlin"), lockFilePath))
-				includePths = append(includePths, fmt.Sprintf("%s -> %s", filepath.Join(homeDir, ".m2"), lockFilePath))
-			} else {
-				includePths = append(includePths, filepath.Join(homeDir, ".gradle"))
-				includePths = append(includePths, filepath.Join(homeDir, ".kotlin"))
-				includePths = append(includePths, filepath.Join(homeDir, ".m2"))
-			}
+			includePths = append(includePths, fmt.Sprintf("%s -> %s", filepath.Join(homeDir, ".gradle"), lockFilePath))
+			includePths = append(includePths, fmt.Sprintf("%s -> %s", filepath.Join(homeDir, ".kotlin"), lockFilePath))
+			includePths = append(includePths, fmt.Sprintf("%s -> %s", filepath.Join(homeDir, ".m2"), lockFilePath))
 		}
 
 		if configs.CacheLevel == "all" {
