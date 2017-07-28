@@ -295,7 +295,7 @@ func main() {
 			lockfileContent := ""
 			lockFilePath := filepath.Join(projectRoot, "gradle_deps.lock")
 			if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
-				if !f.IsDir() && f.Name() == "build.gradle" {
+				if !f.IsDir() && f.Name() == "build.gradle" && !strings.Contains(path, "node_modules") {
 
 					gradleDepCmd := command.New(configs.GradlewPath, "-b", path, "dependencies", "-q")
 
