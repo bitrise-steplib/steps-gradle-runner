@@ -300,7 +300,7 @@ func main() {
 					gradleDepCmd := command.New(configs.GradlewPath, "-b", path, "dependencies", "-q")
 
 					if output, err := gradleDepCmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-						log.Warnf("Gradle task failed, error: %s", err)
+						log.Warnf("Gradle task failed, error: %s, output: %s", err, output)
 					} else {
 						lockfileContent += output
 					}
