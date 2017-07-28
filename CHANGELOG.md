@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.7.5)
+## Changelog (Current version: 1.7.6)
 
 -----------------
+
+### 1.7.6 (2017 Jul 28)
+
+* [3b0f6af] Prepare for 1.7.6
+* [7eebcd1] Lockfilecontentfix (#42)
 
 ### 1.7.5 (2017 Jul 28)
 
