@@ -11,6 +11,9 @@ host_os_tags:
   - "ubuntu"
 project_type_tags:
   - android
+  - react-native
+  - cordova
+  - ionic
 type_tags:
   - build
 is_requires_admin_user: false
