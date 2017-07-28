@@ -1,6 +1,10 @@
-## Changelog (Current version: 1.7.4)
+## Changelog (Current version: 1.7.5)
 
 -----------------
+
+### 1.7.5 (2017 Jul 28)
+
+* [dfd7115] Prepare for 1.7.5
 
 ### 1.7.4 (2017 Jul 28)
 
