@@ -293,7 +293,7 @@ func main() {
 			// create dependencies lockfile
 			log.Printf(" Generate dependencies map...")
 			lockfileContent := ""
-			lockFilePath := filepath.Join(projectRoot, "gradle_deps.lock")
+			lockFilePath := filepath.Join(projectRoot, "gradle.deps")
 			if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
 				if !f.IsDir() && f.Name() == "build.gradle" && !strings.Contains(path, "node_modules") {
 
