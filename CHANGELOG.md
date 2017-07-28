@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.7.3)
+## Changelog (Current version: 1.7.4)
 
 -----------------
+
+### 1.7.4 (2017 Jul 28)
+
+* [4531cec] Prepare for 1.7.4
+* [3a85104] Lockfile generation fix (#41)
 
 ### 1.7.3 (2017 Jul 21)
 
@@ -157,4 +162,4 @@
 
 -----------------
 
-Updated: 2017 Jul 21
+Updated: 2017 Jul 28
