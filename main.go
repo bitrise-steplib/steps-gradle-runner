@@ -295,12 +295,12 @@ func main() {
 			lockfileContent := ""
 			lockFilePath := filepath.Join(projectRoot, "gradle_deps.lock")
 			if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
-				if !f.IsDir() && f.Name() == "build.gradle" {
+				if !f.IsDir() && f.Name() == "build.gradle" && !strings.Contains(path, "node_modules") {
 
 					gradleDepCmd := command.New(configs.GradlewPath, "-b", path, "dependencies", "-q")
 
 					if output, err := gradleDepCmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-						log.Warnf("Gradle task failed, error: %s", err)
+						log.Warnf("Gradle task failed, error: %s, output: %s", err, output)
 					} else {
 						lockfileContent += output
 					}
