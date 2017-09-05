@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"io"
@@ -170,6 +171,25 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetr
 	return nil
 }
 
+func computeMD5String(filePath string) (string, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Errorf("Failed to close file(%s), error: %s", filePath, err)
+		}
+	}()
+
+	h := md5.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
 func find(dir, nameInclude, nameExclude string) ([]string, error) {
 	cmdSlice := []string{"find", dir}
 	cmdSlice = append(cmdSlice, "-path", nameInclude)
@@ -288,21 +308,19 @@ func main() {
 			collectCaches = false
 		}
 
+		lockFilePath := filepath.Join(projectRoot, "gradle.deps")
+
 		if configs.CacheLevel == "all" || configs.CacheLevel == "only deps" {
 
 			// create dependencies lockfile
 			log.Printf(" Generate dependencies map...")
 			lockfileContent := ""
-			lockFilePath := filepath.Join(projectRoot, "gradle.deps")
 			if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
-				if !f.IsDir() && f.Name() == "build.gradle" && !strings.Contains(path, "node_modules") {
-
-					gradleDepCmd := command.New(configs.GradlewPath, "-b", path, "dependencies", "-q")
-
-					if output, err := gradleDepCmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-						log.Warnf("Gradle task failed, error: %s, output: %s", err, output)
+				if !f.IsDir() && strings.HasSuffix(f.Name(), ".gradle") && !strings.Contains(path, "node_modules") {
+					if md5Hash, err := computeMD5String(path); err != nil {
+						log.Warnf("Failed to compute MD5 hash of file(%s), error: %s", path, err)
 					} else {
-						lockfileContent += output
+						lockfileContent += md5Hash
 					}
 				}
 				return nil
@@ -323,7 +341,7 @@ func main() {
 		}
 
 		if configs.CacheLevel == "all" {
-			includePths = append(includePths, filepath.Join(homeDir, ".android", "build-cache"))
+			includePths = append(includePths, fmt.Sprintf("%s -> %s", filepath.Join(homeDir, ".android", "build-cache"), lockFilePath))
 		}
 
 		excludePths := []string{
