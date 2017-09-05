@@ -176,7 +176,11 @@ func computeMD5String(filePath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Errorf("Failed to close file(%s), error: %s", filePath, err)
+		}
+	}()
 
 	h := md5.New()
 	if _, err := io.Copy(h, f); err != nil {
