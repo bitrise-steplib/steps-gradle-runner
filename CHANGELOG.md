@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.7.6)
+## Changelog (Current version: 1.7.7)
 
 -----------------
+
+### 1.7.7 (2017 Sep 05)
+
+* [1cf8dea] Prepare for 1.7.7
+* [ba03ffb] Dependency file generation fix (#44) (#45)
 
 ### 1.7.6 (2017 Jul 28)
 
@@ -171,4 +176,4 @@
 
 -----------------
 
-Updated: 2017 Jul 28
+Updated: 2017 Sep 05
