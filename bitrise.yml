@@ -114,6 +114,9 @@ workflows:
         inputs:
         - path: ./_tmp/sample-app-repo
         - is_create_path: true
+    - install-missing-android-tools:
+        inputs:
+        - root_build_gradle_file: $GRADLE_FILE
     - path::./:
         inputs:
         - gradle_file: $GRADLE_FILE
