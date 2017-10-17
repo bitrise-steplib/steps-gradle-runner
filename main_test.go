@@ -20,16 +20,16 @@ func testIsFoundWith(t *testing.T, searchPattern, outputToSearchIn string, isSho
 		t.Fatalf("Expected (%v), actual (%v)", isShouldFind, isFound)
 	}
 }
-func testIsFoundWithFailedToFindTargetWithHasString(t *testing.T, outputToSearchIn string, isShouldFind bool) {
-	testIsFoundWith(t, failedToFindTargetWithHasString, outputToSearchIn, isShouldFind)
+func testIsFoundWithFailedToFindTargetWithHashString(t *testing.T, outputToSearchIn string, isShouldFind bool) {
+	testIsFoundWith(t, failedToFindTargetWithHashString, outputToSearchIn, isShouldFind)
 }
 
 func testIsFoundWithFailedToFindBuildToolRevision(t *testing.T, outputToSearchIn string, isShouldFind bool) {
 	testIsFoundWith(t, failedToFindBuildToolRevision, outputToSearchIn, isShouldFind)
 }
 
-func TestIsStringFoundInOutput_failedToFindTargetWithHasString(t *testing.T) {
-	failedToFindTargetWithHasStringLog, err := loadFileContent("./_samples/failedToFindTargetWithHasString.txt")
+func TestIsStringFoundInOutput_failedToFindTargetWithHashString(t *testing.T) {
+	failedToFindTargetWithHashStringLog, err := loadFileContent("./_samples/failedToFindTargetWithHashString.txt")
 	if err != nil {
 		t.Fatalf("Failed to load error sample log : %s", err)
 	}
@@ -44,9 +44,9 @@ func TestIsStringFoundInOutput_failedToFindTargetWithHasString(t *testing.T) {
 		for _, anOutStr := range []string{
 			"Caused by: java.lang.IllegalStateException: failed to find target with hash string 'android-22' in:",
 			"> failed to find target with hash string 'android-22' in:",
-			failedToFindTargetWithHasStringLog,
+			failedToFindTargetWithHashStringLog,
 		} {
-			testIsFoundWithFailedToFindTargetWithHasString(t, anOutStr, true)
+			testIsFoundWithFailedToFindTargetWithHashString(t, anOutStr, true)
 		}
 	}
 
@@ -58,7 +58,7 @@ func TestIsStringFoundInOutput_failedToFindTargetWithHasString(t *testing.T) {
 			"Caused by: java.lang.IllegalStateException:",
 			sampleOKBuildLog,
 		} {
-			testIsFoundWithFailedToFindTargetWithHasString(t, anOutStr, false)
+			testIsFoundWithFailedToFindTargetWithHashString(t, anOutStr, false)
 		}
 	}
 }
