@@ -202,7 +202,7 @@ func find(dir, nameInclude, nameExclude string) ([]string, error) {
 
 	for _, exclude := range strings.Split(nameExclude, "\n") {
 		if exclude != "" {
-			cmdSlice = append(cmdSlice, "!", "-path", nameExclude)
+			cmdSlice = append(cmdSlice, "!", "-path", exclude)
 		}
 	}
 
