@@ -411,15 +411,6 @@ func main() {
 		log.Warnf("No file name matched apk filters")
 	}
 
-	testApkFiles, err := find(".", configs.TestApkFileIncludeFilter, configs.TestApkFileExcludeFilter)
-	if err != nil {
-		failf("Failed to find test apk files, error: %s", err)
-	}
-
-	if len(testApkFiles) == 0 {
-		log.Warnf("No file name matched test apk filters")
-	}
-
 	lastCopiedApkFile := ""
 	copiedApkFiles := []string{}
 	for _, apkFile := range apkFiles {
@@ -453,6 +444,15 @@ func main() {
 			failf("Failed to export enviroment (BITRISE_APK_PATH_LIST), error: %s", err)
 		}
 		log.Donef("The apk paths list is now available in the Environment Variable: $BITRISE_APK_PATH_LIST (value: %s)", apkList)
+	}
+
+	testApkFiles, err := find(".", configs.TestApkFileIncludeFilter, configs.TestApkFileExcludeFilter)
+	if err != nil {
+		failf("Failed to find test apk files, error: %s", err)
+	}
+
+	if len(testApkFiles) == 0 {
+		log.Warnf("No file name matched test apk filters")
 	}
 
 	lastCopiedTestApkFile := ""
