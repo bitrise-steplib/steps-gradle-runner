@@ -473,7 +473,7 @@ func main() {
 
 		lastCopiedTestApkFile = deployPth
 	}
-	if lastCopiedApkFile != "" {
+	if lastCopiedTestApkFile != "" {
 		if err := exportEnvironmentWithEnvman("BITRISE_TEST_APK_PATH", lastCopiedTestApkFile); err != nil {
 			failf("Failed to export enviroment (BITRISE_TEST_APK_PATH), error: %s", err)
 		}
