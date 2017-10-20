@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.7.7)
+## Changelog (Current version: 1.7.8)
 
 -----------------
+
+### 1.7.8 (2017 Oct 20)
+
+* [e88d1da] Prepare for 1.7.8
+* [f55bce8] Test apk export (#47)
 
 ### 1.7.7 (2017 Sep 05)
 
@@ -176,4 +181,4 @@
 
 -----------------
 
-Updated: 2017 Sep 05
+Updated: 2017 Oct 20
