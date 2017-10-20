@@ -39,6 +39,8 @@ type ConfigsModel struct {
 	GradleOptions            string
 	ApkFileIncludeFilter     string
 	ApkFileExcludeFilter     string
+	TestApkFileIncludeFilter string
+	TestApkFileExcludeFilter string
 	MappingFileIncludeFilter string
 	MappingFileExcludeFilter string
 
@@ -56,6 +58,8 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		GradleOptions:            os.Getenv("gradle_options"),
 		ApkFileIncludeFilter:     os.Getenv("apk_file_include_filter"),
 		ApkFileExcludeFilter:     os.Getenv("apk_file_exclude_filter"),
+		TestApkFileIncludeFilter: os.Getenv("test_apk_file_include_filter"),
+		TestApkFileExcludeFilter: os.Getenv("test_apk_file_exclude_filter"),
 		MappingFileIncludeFilter: os.Getenv("mapping_file_include_filter"),
 		MappingFileExcludeFilter: os.Getenv("mapping_file_exclude_filter"),
 		//
@@ -74,6 +78,8 @@ func (configs ConfigsModel) print() {
 	log.Printf("- GradleOptions: %s", configs.GradleOptions)
 	log.Printf("- ApkFileIncludeFilter: %s", configs.ApkFileIncludeFilter)
 	log.Printf("- ApkFileExcludeFilter: %s", configs.ApkFileExcludeFilter)
+	log.Printf("- TestApkFileIncludeFilter: %s", configs.TestApkFileIncludeFilter)
+	log.Printf("- TestApkFileExcludeFilter: %s", configs.TestApkFileExcludeFilter)
 	log.Printf("- MappingFileIncludeFilter: %s", configs.MappingFileIncludeFilter)
 	log.Printf("- MappingFileExcludeFilter: %s", configs.MappingFileExcludeFilter)
 	log.Printf("- DeployDir: %s", configs.DeployDir)
@@ -193,7 +199,12 @@ func computeMD5String(filePath string) (string, error) {
 func find(dir, nameInclude, nameExclude string) ([]string, error) {
 	cmdSlice := []string{"find", dir}
 	cmdSlice = append(cmdSlice, "-path", nameInclude)
-	cmdSlice = append(cmdSlice, "!", "-path", nameExclude)
+
+	for _, exclude := range strings.Split(nameExclude, "\n") {
+		if exclude != "" {
+			cmdSlice = append(cmdSlice, "!", "-path", exclude)
+		}
+	}
 
 	log.Printf(command.PrintableCommandArgs(false, cmdSlice))
 
@@ -397,7 +408,7 @@ func main() {
 	}
 
 	if len(apkFiles) == 0 {
-		log.Warnf("No apk matched the filters")
+		log.Warnf("No file name matched apk filters")
 	}
 
 	lastCopiedApkFile := ""
@@ -433,6 +444,40 @@ func main() {
 			failf("Failed to export enviroment (BITRISE_APK_PATH_LIST), error: %s", err)
 		}
 		log.Donef("The apk paths list is now available in the Environment Variable: $BITRISE_APK_PATH_LIST (value: %s)", apkList)
+	}
+
+	testApkFiles, err := find(".", configs.TestApkFileIncludeFilter, configs.TestApkFileExcludeFilter)
+	if err != nil {
+		failf("Failed to find test apk files, error: %s", err)
+	}
+
+	if len(testApkFiles) == 0 {
+		log.Warnf("No file name matched test apk filters")
+	}
+
+	lastCopiedTestApkFile := ""
+	for _, apkFile := range testApkFiles {
+		ext := filepath.Ext(apkFile)
+		baseName := filepath.Base(apkFile)
+		baseName = strings.TrimSuffix(baseName, ext)
+
+		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
+		if err != nil {
+			failf("Failed to create apk deploy path, error: %s", err)
+		}
+
+		log.Printf("copy %s to %s", apkFile, deployPth)
+		if err := command.CopyFile(apkFile, deployPth); err != nil {
+			failf("Failed to copy apk, error: %s", err)
+		}
+
+		lastCopiedTestApkFile = deployPth
+	}
+	if lastCopiedTestApkFile != "" {
+		if err := exportEnvironmentWithEnvman("BITRISE_TEST_APK_PATH", lastCopiedTestApkFile); err != nil {
+			failf("Failed to export enviroment (BITRISE_TEST_APK_PATH), error: %s", err)
+		}
+		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_TEST_APK_PATH (value: %s)", lastCopiedTestApkFile)
 	}
 
 	// Move mapping files

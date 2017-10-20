@@ -73,14 +73,70 @@ inputs:
 
         Example:
 
-        - `*release*.apk` - Copy every apk which filename contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`).
-  - apk_file_exclude_filter: "*-unaligned.apk"
+        Copy every apk:
+
+        ```
+        "*.apk"
+        ```
+
+        Copy every apk which filename contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`):
+
+        ```
+        *release*.apk
+        ```
+  - apk_file_exclude_filter: |
+      *unaligned.apk
+      *Test*.apk
     opts:
       category: Export Config
       title: "APK file exclude filter"
       description: |
-        The step will **not** copy the generated apk files that match this filter into the Bitrise Deploy Directory.
-        You can use this filter to avoid moving unalinged or unsigned apk files.
+        One filter per line. The step will **not** copy the generated apk files that match this filters into the Bitrise Deploy Directory.
+        You can use this filter to avoid moving unalinged and/or unsigned apk files.
+
+        This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
+
+        If you specify an empty filter, every apk file (selected by `apk_file_include_filter`) will be copied.
+
+        Examples:
+
+        Avoid to copy apk if filename contains `unaligned`:
+        
+        ```
+        *unaligned*.apk
+        ```
+
+        Avoid to copy apk if filename contains `unaligned` and/or `Test`:
+        
+        ```
+        *unaligned*.apk
+        *Test*.apk
+        ```
+  - test_apk_file_include_filter: "*Test*.apk"
+    opts:
+      category: Export Config
+      title: "Test APK file include filter"
+      description: |
+        The step will copy the generated apk files that match this filter into the Bitrise Deploy Directory.
+
+        This filter is a standard find commands -path pattern, see: http://linux.die.net/man/1/find
+
+        If you specify an empty filter, the step will set this filter to: `*.apk`.
+
+        Example:
+
+        Copy every apk which filename contains `Test`, like (`./app/build/outputs/apk/app-debug-androidTest-unaligned.apk`):
+        
+        ```
+        *Test*.apk
+        ```
+  - test_apk_file_exclude_filter: ""
+    opts:
+      category: Export Config
+      title: "Test APK file exclude filter"
+      description: |
+        One filter per line. The step will **not** copy the generated apk files that match this filters into the Bitrise Deploy Directory.
+        You can use this filter to avoid moving unalinged and/or unsigned apk files.
 
         This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
 
@@ -88,7 +144,11 @@ inputs:
 
         Example:
 
-        - `*unaligned*.apk` - Avoid to copy apk if filename contains `unaligned`.
+        Avoid to copy test apk if filename contains `unaligned`:
+
+        ```
+        *unaligned*.apk
+        ```
   - mapping_file_include_filter: "*/mapping.txt"
     opts:
       category: Export Config
@@ -100,7 +160,13 @@ inputs:
 
         If you specify an empty filter, no mapping files will be copied.
 
-        Example: `*mapping.txt` - Copy every mapping.txt file.
+        Example: 
+        
+        Copy every mapping.txt file:
+
+        ```
+        *mapping.txt
+        ```
   - mapping_file_exclude_filter:
     opts:
       category: Export Config
@@ -113,7 +179,13 @@ inputs:
 
         If you specify an empty filter, every mapping files (selected by `mapping_file_include_filter`) will be copied.
 
-        Example: `*/beta/mapping.txt` - Avoid to copy mapping.txt file in a `beta` directoy.
+        Example: 
+        
+        Avoid to copy mapping.txt file in a `beta` directoy:
+
+        ```
+        */beta/mapping.txt
+        ``` 
   - cache_level: "all"
     opts:
       category: Debug
@@ -143,6 +215,16 @@ outputs:
       summary: "Path of the generated (and copied) APK - after filtering."
       description: |-
         This output will include the path of the generated APK,
+        after filtering based on the filter inputs.
+
+        If the build generates more than one APK which fulfills the
+        filter inputs this output will contain the last one's path.
+  - BITRISE_TEST_APK_PATH:
+    opts:
+      title: "Path of the generated test APK"
+      summary: "Path of the generated (and copied) test APK - after filtering."
+      description: |-
+        This output will include the path of the generated test APK,
         after filtering based on the filter inputs.
 
         If the build generates more than one APK which fulfills the
