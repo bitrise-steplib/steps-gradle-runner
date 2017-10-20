@@ -73,13 +73,19 @@ inputs:
 
         Example:
 
+        Copy every apk:
+
+        ```
+        "*.apk"
+        ```
+
         Copy every apk which filename contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`):
 
         ```
         *release*.apk
         ```
   - apk_file_exclude_filter: |
-      *-unaligned.apk
+      *unaligned.apk
       *Test*.apk
     opts:
       category: Export Config
