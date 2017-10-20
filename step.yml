@@ -73,7 +73,11 @@ inputs:
 
         Example:
 
-        - `*release*.apk` - Copy every apk which filename contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`).
+        Copy every apk which filename contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`):
+
+        ```
+        *release*.apk
+        ```
   - apk_file_exclude_filter: |
       *-unaligned.apk
       *Test*.apk
@@ -88,9 +92,20 @@ inputs:
 
         If you specify an empty filter, every apk file (selected by `apk_file_include_filter`) will be copied.
 
-        Example:
+        Examples:
 
-        - `*unaligned*.apk` - Avoid to copy apk if filename contains `unaligned`.
+        Avoid to copy apk if filename contains `unaligned`:
+        
+        ```
+        *unaligned*.apk
+        ```
+
+        Avoid to copy apk if filename contains `unaligned` and/or `Test`:
+        
+        ```
+        *unaligned*.apk
+        *Test*.apk
+        ```
   - test_apk_file_include_filter: "*Test*.apk"
     opts:
       category: Export Config
@@ -104,7 +119,11 @@ inputs:
 
         Example:
 
-        - `*release*.apk` - Copy every apk which filename contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`).
+        Copy every apk which filename contains `Test`, like (`./app/build/outputs/apk/app-debug-androidTest-unaligned.apk`):
+        
+        ```
+        *Test*.apk
+        ```
   - test_apk_file_exclude_filter: ""
     opts:
       category: Export Config
@@ -119,7 +138,11 @@ inputs:
 
         Example:
 
-        - `*unaligned*.apk` - Avoid to copy apk if filename contains `unaligned`.
+        Avoid to copy test apk if filename contains `unaligned`:
+
+        ```
+        *unaligned*.apk
+        ```
   - mapping_file_include_filter: "*/mapping.txt"
     opts:
       category: Export Config
@@ -131,7 +154,13 @@ inputs:
 
         If you specify an empty filter, no mapping files will be copied.
 
-        Example: `*mapping.txt` - Copy every mapping.txt file.
+        Example: 
+        
+        Copy every mapping.txt file:
+
+        ```
+        *mapping.txt
+        ```
   - mapping_file_exclude_filter:
     opts:
       category: Export Config
@@ -144,7 +173,13 @@ inputs:
 
         If you specify an empty filter, every mapping files (selected by `mapping_file_include_filter`) will be copied.
 
-        Example: `*/beta/mapping.txt` - Avoid to copy mapping.txt file in a `beta` directoy.
+        Example: 
+        
+        Avoid to copy mapping.txt file in a `beta` directoy:
+
+        ```
+        */beta/mapping.txt
+        ``` 
   - cache_level: "all"
     opts:
       category: Debug
