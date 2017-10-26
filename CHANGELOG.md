@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.7.8)
+## Changelog (Current version: 1.7.9)
 
 -----------------
+
+### 1.7.9 (2017 Oct 26)
+
+* [448d15c] Prepare for 1.7.9
+* [d6c752f] changed default for cache level (#48)
+* [37babec] Added additional reasons to retry (#46)
 
 ### 1.7.8 (2017 Oct 20)
 
@@ -181,4 +187,4 @@
 
 -----------------
 
-Updated: 2017 Oct 20
+Updated: 2017 Oct 26
