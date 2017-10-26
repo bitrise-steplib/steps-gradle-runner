@@ -22,12 +22,36 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
-const failedToFindTargetWithHasString = `Failed to find target with hash string `
+const failedToFindTargetWithHashString = `Failed to find target with hash string `
 const failedToFindBuildToolRevision = `Failed to find Build Tools revision `
+const failedToFindPlatformSDKWithPath = `Failed to find Platform SDK with path: `
+const couldNotFind = `Could not find `
+const couldNotHEAD = `Could not HEAD `
+const connectionTimedOut = `Connection timed out`
+const couldNotRead = `Could not read `
+const couldNotGetResource = `Could not get resource `
+const couldNotGET = `Could not GET `
+const couldNotDownload = `Could not download `
+const receivedStatusCode503 = `Received status code 503 from server: Service Temporarily Unavailable`
+const causeErrorInOpeningZipFile = `Cause: error in opening zip file.`
+const failedToDownloadResource = `Failed to download resource`
+const failedToDownloadSHA1ForResource = `Failed to download SHA1 for resource`
 
 var automaticRetryReasonPatterns = []string{
-	failedToFindTargetWithHasString,
+	failedToFindTargetWithHashString,
 	failedToFindBuildToolRevision,
+	failedToFindPlatformSDKWithPath,
+	couldNotFind,
+	couldNotHEAD,
+	connectionTimedOut,
+	couldNotRead,
+	couldNotGetResource,
+	couldNotGET,
+	couldNotDownload,
+	receivedStatusCode503,
+	causeErrorInOpeningZipFile,
+	failedToDownloadResource,
+	failedToDownloadSHA1ForResource,
 }
 
 // ConfigsModel ...
