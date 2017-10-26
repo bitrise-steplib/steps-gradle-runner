@@ -144,7 +144,7 @@ in the official guide at: https://docs.gradle.org/current/userguide/gradle_wrapp
 		return "", fmt.Errorf("CacheLevel, error: %s", err)
 	}
 
-	if err := input.ValidateWithOptions(configs.CacheLevel, "all", "only_deps", "none"); err != nil {
+	if err := input.ValidateWithOptions(configs.CacheLevel, "all", "only_deps", "only deps", "none"); err != nil {
 		return "", fmt.Errorf("CacheLevel, error: %s", err)
 	}
 
@@ -311,6 +311,11 @@ func main() {
 		}
 
 		os.Exit(1)
+	}
+
+	if configs.CacheLevel == "only deps" {
+		configs.CacheLevel = "only_deps"
+		log.Warnf("(only deps) value for cache_level is deprecated, please use (only_deps) instead")
 	}
 
 	if configs.ApkFileIncludeFilter == "" {
