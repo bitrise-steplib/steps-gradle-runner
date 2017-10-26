@@ -186,18 +186,18 @@ inputs:
         ```
         */beta/mapping.txt
         ``` 
-  - cache_level: "all"
+  - cache_level: "only_deps"
     opts:
       category: Debug
       title: Set the level of cache
       description: |-
         `all` - will cache build-cache and dependencies
-        `only deps` - will cache dependencies only
+        `only_deps` - will cache dependencies only
         `none` - won't cache any of the above
       is_required: true
       value_options:
       - "all"
-      - "only deps"
+      - "only_deps"
       - "none"
   - gradle_options: "--stacktrace --no-daemon"
     opts:
