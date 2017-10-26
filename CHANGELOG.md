@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.7.9)
+## Changelog (Current version: 1.8.0)
 
 -----------------
+
+### 1.8.0 (2017 Oct 26)
+
+* [6518f9d] Prepare for 1.8.0
+* [1ccfa37] added depracion log (#49)
 
 ### 1.7.9 (2017 Oct 26)
 
