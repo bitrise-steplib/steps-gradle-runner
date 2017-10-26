@@ -144,7 +144,7 @@ in the official guide at: https://docs.gradle.org/current/userguide/gradle_wrapp
 		return "", fmt.Errorf("CacheLevel, error: %s", err)
 	}
 
-	if err := input.ValidateWithOptions(configs.CacheLevel, "all", "only deps", "none"); err != nil {
+	if err := input.ValidateWithOptions(configs.CacheLevel, "all", "only_deps", "none"); err != nil {
 		return "", fmt.Errorf("CacheLevel, error: %s", err)
 	}
 
@@ -345,7 +345,7 @@ func main() {
 
 		lockFilePath := filepath.Join(projectRoot, "gradle.deps")
 
-		if configs.CacheLevel == "all" || configs.CacheLevel == "only deps" {
+		if configs.CacheLevel == "all" || configs.CacheLevel == "only_deps" {
 
 			// create dependencies lockfile
 			log.Printf(" Generate dependencies map...")
