@@ -328,8 +328,13 @@ func main() {
 		failf("Failed to add executable permission on gradlew file (%s), error: %s", configs.GradlewPath, err)
 	}
 
+	gradleFilePath, err := filepath.Abs(configs.GradleFile)
+	if err != nil {
+		failf("Failed to get absoulte path for gradle file (%s), error: %s", configs.GradleFile, err)
+	}
+
 	log.Infof("Running gradle task...")
-	if err := runGradleTask(configs.GradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, true); err != nil {
+	if err := runGradleTask(configs.GradlewPath, gradleFilePath, configs.GradleTasks, configs.GradleOptions, true); err != nil {
 		failf("Gradle task failed, error: %s", err)
 	}
 
