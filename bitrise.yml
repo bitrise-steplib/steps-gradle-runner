@@ -6,7 +6,7 @@ app:
   - RELEASE_VERSION: 1.8.0
   # define these here, or in your .bitrise.secrets.yml (if required)
   - ANDROID_HOME: $ANDROID_HOME
-
+  - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
   - BRANCH: master
 
 workflows:
@@ -106,7 +106,7 @@ workflows:
     - script:
         title: remove _tmp directory
         inputs:
-        - content: rm -rf ./_tmp
+        - content: rm -rf "$ORIG_BITRISE_SOURCE_DIR/_tmp"
     - change-workdir:
         title: Switch working dir to test/_tmp dir
         description: |-
@@ -115,7 +115,7 @@ workflows:
           but not if the step is included in another bitrise.yml!
         run_if: true
         inputs:
-        - path: ./_tmp
+        - path: "$ORIG_BITRISE_SOURCE_DIR/_tmp"
         - is_create_path: true
     - script:
         inputs:
