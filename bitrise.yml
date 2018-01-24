@@ -104,11 +104,11 @@ workflows:
   _common:
     steps:
     - script:
-        title: remove _tmp directory
+        title: recreate _tmp directory
         inputs:
-        - content: rm -rf "$ORIG_BITRISE_SOURCE_DIR/_tmp"
+        - content: rm -rf "$ORIG_BITRISE_SOURCE_DIR/_tmp" && mkdir "$ORIG_BITRISE_SOURCE_DIR/_tmp"
     - change-workdir:
-        title: Switch working dir to test/_tmp dir
+        title: Switch working dir to _tmp dir
         description: |-
           To prevent step testing issues, like referencing relative
           files with just './some-file', which would work for local tests
@@ -116,7 +116,6 @@ workflows:
         run_if: true
         inputs:
         - path: "$ORIG_BITRISE_SOURCE_DIR/_tmp"
-        - is_create_path: true
     - script:
         inputs:
         - content: |-
