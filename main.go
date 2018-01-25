@@ -171,7 +171,7 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetr
 		return err
 	}
 
-	cmdSlice := []string{gradleTool}
+	cmdSlice := []string{"./gradlew"}
 	if buildFile != "" {
 		cmdSlice = append(cmdSlice, "--build-file", buildFile)
 	}
@@ -185,6 +185,7 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetr
 	outWriter := io.MultiWriter(os.Stdout, &outBuffer)
 
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
+	cmd.SetDir(filepath.Dir(gradleTool))
 	cmd.SetStdout(outWriter)
 	cmd.SetStderr(outWriter)
 	if err := cmd.Run(); err != nil {
@@ -325,6 +326,14 @@ func main() {
 	err := os.Chmod(configs.GradlewPath, 0770)
 	if err != nil {
 		failf("Failed to add executable permission on gradlew file (%s), error: %s", configs.GradlewPath, err)
+	}
+
+	if configs.GradleFile != "" {
+		path, err := filepath.Abs(configs.GradleFile)
+		if err != nil {
+			failf("Failed to get absoulte path for gradle file (%s), error: %s", configs.GradleFile, err)
+		}
+		configs.GradleFile = path
 	}
 
 	log.Infof("Running gradle task...")
