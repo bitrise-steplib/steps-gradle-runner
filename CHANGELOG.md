@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.8.0)
+## Changelog (Current version: 1.8.1)
 
 -----------------
+
+### 1.8.1 (2018 Jan 25)
+
+* [7e7c3a9] Bump version to 1.8.1
+* [43dc1fb] use proper gradlew command if path is set to gradlew (#50)
 
 ### 1.8.0 (2017 Oct 26)
 
@@ -192,4 +197,4 @@
 
 -----------------
 
-Updated: 2017 Oct 26
+Updated: 2018 Jan 25
