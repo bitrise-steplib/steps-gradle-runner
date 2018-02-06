@@ -322,17 +322,17 @@ func main() {
 		configs.ApkFileIncludeFilter = "*.apk"
 	}
 
-	if !strings.HasPrefix(configs.GradlewPath, ".") && !strings.HasPrefix(configs.GradlewPath, "/") {
-		configs.GradlewPath = "./" + configs.GradlewPath
+	gradlewPath, err := filepath.Abs(configs.GradlewPath)
+	if err != nil {
+		failf("Can't get absolute path for gradlew file (%s), error: %s", configs.GradlewPath, err)
 	}
 
-	err := os.Chmod(configs.GradlewPath, 0770)
-	if err != nil {
-		failf("Failed to add executable permission on gradlew file (%s), error: %s", configs.GradlewPath, err)
+	if err := os.Chmod(gradlewPath, 0770); err != nil {
+		failf("Failed to add executable permission on gradlew file (%s), error: %s", gradlewPath, err)
 	}
 
 	log.Infof("Running gradle task...")
-	if err := runGradleTask(configs.GradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, true); err != nil {
+	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, true); err != nil {
 		failf("Gradle task failed, error: %s", err)
 	}
 
