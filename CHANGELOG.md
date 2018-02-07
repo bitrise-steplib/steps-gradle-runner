@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.8.1)
+## Changelog (Current version: 1.8.2)
 
 -----------------
+
+### 1.8.2 (2018 Feb 07)
+
+* [12bb21e] Bump version to 1.8.2
+* [1ec9d44] Fix gradlew path detection (#52)
 
 ### 1.8.1 (2018 Jan 25)
 
@@ -197,4 +202,4 @@
 
 -----------------
 
-Updated: 2018 Jan 25
+Updated: 2018 Feb 07
