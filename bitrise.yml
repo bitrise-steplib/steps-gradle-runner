@@ -17,6 +17,7 @@ workflows:
     - go-tests
     after_run:
     - test
+    - test-gradlew-path
     - test-multiple-tasks
     - test-subdir
     - test-no-root-buildfile
