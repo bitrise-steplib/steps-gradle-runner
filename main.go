@@ -331,6 +331,8 @@ func main() {
 		failf("Failed to add executable permission on gradlew file (%s), error: %s", gradlewPath, err)
 	}
 
+	gradleStarted := time.Now()
+
 	log.Infof("Running gradle task...")
 	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, true); err != nil {
 		failf("Gradle task failed, error: %s", err)
@@ -447,6 +449,16 @@ func main() {
 	lastCopiedApkFile := ""
 	copiedApkFiles := []string{}
 	for _, apkFile := range apkFiles {
+		fi, err := os.Lstat(apkFile)
+		if err != nil {
+			failf("Failed to get file info, error: %s", err)
+		}
+
+		if fi.ModTime().Before(gradleStarted) {
+			log.Warnf("skipping: %s, modified before the gradle task has started", apkFile)
+			continue
+		}
+
 		ext := filepath.Ext(apkFile)
 		baseName := filepath.Base(apkFile)
 		baseName = strings.TrimSuffix(baseName, ext)
@@ -490,6 +502,16 @@ func main() {
 
 	lastCopiedTestApkFile := ""
 	for _, apkFile := range testApkFiles {
+		fi, err := os.Lstat(apkFile)
+		if err != nil {
+			failf("Failed to get file info, error: %s", err)
+		}
+
+		if fi.ModTime().Before(gradleStarted) {
+			log.Warnf("skipping: %s, modified before the gradle task has started", apkFile)
+			continue
+		}
+
 		ext := filepath.Ext(apkFile)
 		baseName := filepath.Base(apkFile)
 		baseName = strings.TrimSuffix(baseName, ext)
@@ -526,6 +548,16 @@ func main() {
 
 	lastCopiedMappingFile := ""
 	for _, mappingFile := range mappingFiles {
+		fi, err := os.Lstat(mappingFile)
+		if err != nil {
+			failf("Failed to get file info, error: %s", err)
+		}
+
+		if fi.ModTime().Before(gradleStarted) {
+			log.Warnf("skipping: %s, modified before the gradle task has started", mappingFile)
+			continue
+		}
+
 		ext := filepath.Ext(mappingFile)
 		baseName := filepath.Base(mappingFile)
 		baseName = strings.TrimSuffix(baseName, ext)
