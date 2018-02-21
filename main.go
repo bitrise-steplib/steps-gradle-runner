@@ -449,12 +449,12 @@ func main() {
 	lastCopiedApkFile := ""
 	copiedApkFiles := []string{}
 	for _, apkFile := range apkFiles {
-		fileInfo, err := os.Lstat(apkFile)
+		fi, err := os.Lstat(apkFile)
 		if err != nil {
 			failf("Failed to get file info, error: %s", err)
 		}
 
-		if fileInfo.ModTime().Before(gradleStarted) {
+		if fi.ModTime().Before(gradleStarted) {
 			log.Warnf("skipping: %s, modified before the gradle task has started", apkFile)
 			continue
 		}
@@ -502,12 +502,12 @@ func main() {
 
 	lastCopiedTestApkFile := ""
 	for _, apkFile := range testApkFiles {
-		fileInfo, err := os.Lstat(apkFile)
+		fi, err := os.Lstat(apkFile)
 		if err != nil {
 			failf("Failed to get file info, error: %s", err)
 		}
 
-		if fileInfo.ModTime().Before(gradleStarted) {
+		if fi.ModTime().Before(gradleStarted) {
 			log.Warnf("skipping: %s, modified before the gradle task has started", apkFile)
 			continue
 		}
@@ -548,12 +548,12 @@ func main() {
 
 	lastCopiedMappingFile := ""
 	for _, mappingFile := range mappingFiles {
-		fileInfo, err := os.Lstat(mappingFile)
+		fi, err := os.Lstat(mappingFile)
 		if err != nil {
 			failf("Failed to get file info, error: %s", err)
 		}
 
-		if fileInfo.ModTime().Before(gradleStarted) {
+		if fi.ModTime().Before(gradleStarted) {
 			log.Warnf("skipping: %s, modified before the gradle task has started", mappingFile)
 			continue
 		}
