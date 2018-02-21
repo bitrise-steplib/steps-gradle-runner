@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.8.2)
+## Changelog (Current version: 1.8.3)
 
 -----------------
+
+### 1.8.3 (2018 Feb 21)
+
+* [917e576] Prepare for 1.8.3
+* [fe4ba80] export files only if they were made after the gradle task has started (#53)
 
 ### 1.8.2 (2018 Feb 07)
 
@@ -202,4 +207,4 @@
 
 -----------------
 
-Updated: 2018 Feb 07
+Updated: 2018 Feb 21
