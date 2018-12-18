@@ -7,8 +7,7 @@ description: |-
 website: https://github.com/bitrise-io/steps-gradle-runner
 source_code_url: https://github.com/bitrise-io/steps-gradle-runner
 support_url: https://github.com/bitrise-io/steps-gradle-runner/issues
-host_os_tags:
-  - "ubuntu"
+
 project_type_tags:
   - android
   - react-native
