@@ -1,4 +1,4 @@
-format_version: "2"
+format_version: "6"
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
@@ -215,36 +215,20 @@ workflows:
 
   # ----------------------------------------------------------------
   # --- Utility workflows
-  godeps-update:
-    title: Godeps update
+  dep-update:
+    title: Dep update
+    description: |
+      Used for updating bitrise dependencies with dep
     steps:
     - script:
         title: Dependency update
         inputs:
-        - content: |
+        - content: |-
             #!/bin/bash
             set -ex
-            go get -u -v github.com/tools/godep
-
-            rm -rf ./Godeps
-            rm -rf ./vendor
-
-            go get -t -d ./...
-            godep save ./...
-
-  # ----------------------------------------------------------------
-  # --- workflows to create Release
-  create-release:
-    steps:
-    - script:
-        title:
-        inputs:
-        - content: |
-            #!/bin/bash
-            set -e
-
-            export CI=true
-            releaseman create --version $RELEASE_VERSION
+            go get -u -v github.com/golang/dep/cmd/dep
+            dep ensure -v
+            dep ensure -v -update
 
   # ----------------------------------------------------------------
   # --- workflows to Share this step into a Step Library
