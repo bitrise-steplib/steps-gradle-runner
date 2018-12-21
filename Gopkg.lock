@@ -2,7 +2,8 @@
 
 
 [[projects]]
-  digest = "1:bb1449042232e17167a8ed054128ae9f41f2ccdb7e3956903494524b946bab23"
+  branch = "master"
+  digest = "1:ce12a41e6500ee11c77b982673ab6e9b60f31308d7b145a0b9a681e5721b5570"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -14,10 +15,11 @@
     "retry",
   ]
   pruneopts = "UT"
-  revision = "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
+  revision = "2a09aab8380d7842750328aebd5671bcccea89c8"
 
 [[projects]]
-  digest = "1:745a27ccb73de66f747cb9319cb0d60742445bf4bc7bde191a63c995fe5aceed"
+  branch = "master"
+  digest = "1:e9506e93905416f9673e90e2b23fafff71362d8fccd266c6f5e6ac59f75fbecc"
   name = "github.com/bitrise-tools/go-steputils"
   packages = [
     "cache",
@@ -25,14 +27,15 @@
     "tools",
   ]
   pruneopts = "UT"
-  revision = "a848c9870ff7d745a8fb2a951e1c81fcb147b4ec"
+  revision = "ec226b2359fcd806be64f0ad2217d8e741a1ff11"
 
 [[projects]]
-  digest = "1:968adb8d04fddfdd3c65bcf2e7942e7ca491dcb7c3f914671249d97e3ad0893a"
+  branch = "master"
+  digest = "1:400e113a367b511b9b09ca642ee11d9885485a93838526d697033af334a2fdde"
   name = "github.com/kballard/go-shellquote"
   packages = ["."]
   pruneopts = "UT"
-  revision = "cd60e84ee657ff3dc51de0b4f55dd299a3e136f2"
+  revision = "95032a82bc518f77982ea72343cc1ade730072f0"
 
 [solve-meta]
   analyzer-name = "dep"
