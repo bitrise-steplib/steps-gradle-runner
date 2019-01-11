@@ -19,7 +19,7 @@ import (
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-tools/go-steputils/cache"
 	"github.com/bitrise-tools/go-steputils/input"
-	"github.com/kballard/go-shellquote"
+	shellquote "github.com/kballard/go-shellquote"
 )
 
 const failedToFindTargetWithHashString = `Failed to find target with hash string `
@@ -311,6 +311,10 @@ func main() {
 		}
 
 		os.Exit(1)
+	}
+
+	if err := os.Unsetenv("ANDROID_NDK_HOME"); err != nil {
+		failf("Failed to unset environment variable, error: %s", err)
 	}
 
 	if configs.CacheLevel == "only deps" {
