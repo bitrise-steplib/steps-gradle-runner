@@ -21,6 +21,7 @@ workflows:
     - test-subdir
     - test-no-root-buildfile
     - test-apk-split
+    - test-gradle-kts
 
   test:
     description: "CI workflow - this should always pass!"
@@ -98,6 +99,15 @@ workflows:
     - GRADLEW_PATH: "./gradlew"
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+    - _common
+
+  test-gradle-kts:
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/android-gradle-kotlin-dsl.git
+    - GRADLE_FILE: "./build.gradle.kts"
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: "./gradlew"
     after_run:
     - _common
     
