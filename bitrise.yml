@@ -1,9 +1,8 @@
-format_version: "2"
+format_version: "6"
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
-  - RELEASE_VERSION: 1.8.3
   # define these here, or in your .bitrise.secrets.yml (if required)
   - ANDROID_HOME: $ANDROID_HOME
   - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
@@ -22,6 +21,7 @@ workflows:
     - test-subdir
     - test-no-root-buildfile
     - test-apk-split
+    - test-gradle-kts
 
   test:
     description: "CI workflow - this should always pass!"
@@ -99,6 +99,15 @@ workflows:
     - GRADLEW_PATH: "./gradlew"
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+    - _common
+
+  test-gradle-kts:
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/android-gradle-kotlin-dsl.git
+    - GRADLE_FILE: "./build.gradle.kts"
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: "./gradlew"
     after_run:
     - _common
     
@@ -216,36 +225,20 @@ workflows:
 
   # ----------------------------------------------------------------
   # --- Utility workflows
-  godeps-update:
-    title: Godeps update
+  dep-update:
+    title: Dep update
+    description: |
+      Used for updating bitrise dependencies with dep
     steps:
     - script:
         title: Dependency update
         inputs:
-        - content: |
+        - content: |-
             #!/bin/bash
             set -ex
-            go get -u -v github.com/tools/godep
-
-            rm -rf ./Godeps
-            rm -rf ./vendor
-
-            go get -t -d ./...
-            godep save ./...
-
-  # ----------------------------------------------------------------
-  # --- workflows to create Release
-  create-release:
-    steps:
-    - script:
-        title:
-        inputs:
-        - content: |
-            #!/bin/bash
-            set -e
-
-            export CI=true
-            releaseman create --version $RELEASE_VERSION
+            go get -u -v github.com/golang/dep/cmd/dep
+            dep ensure -v
+            dep ensure -v -update
 
   # ----------------------------------------------------------------
   # --- workflows to Share this step into a Step Library
@@ -257,47 +250,3 @@ workflows:
             #!/bin/bash
             set -ex
             stepman audit --step-yml ./step.yml
-
-  share-this-step:
-    envs:
-      # if you want to share this step into a StepLib
-      - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
-      - STEP_ID_IN_STEPLIB: gradle-runner
-      - STEP_GIT_VERION_TAG_TO_SHARE: $RELEASE_VERSION
-      - STEP_GIT_CLONE_URL: https://github.com/bitrise-io/steps-gradle-runner.git
-    description: |-
-      If this is the first time you try to share a Step you should
-      first call: $ bitrise share
-
-      This will print you a guide, and information about how Step sharing
-      works. Please read it at least once!
-
-      As noted in the Step sharing guide you'll have to fork the
-      StepLib you want to share this step into. Once you're done with forking
-      the repository you should set your own fork's git clone URL
-      in the `.bitrise.secrets.yml` file, or here in the `envs` section,
-      as the value of the `MY_STEPLIB_REPO_FORK_GIT_URL` environment.
-
-      You're now ready to share this Step, just make sure that
-      the `STEP_ID_IN_STEPLIB` and `STEP_GIT_VERION_TAG_TO_SHARE`
-      environments are set to the desired values!
-
-      To share this Step into a StepLib you can just run: $ bitrise run share-this-step
-
-      Once it finishes the only thing left is to actually create a Pull Request,
-      the way described in the guide printed at the end of the process.
-    before_run:
-    - audit-this-step
-    steps:
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -e
-            set -x
-
-            bitrise share start -c ${MY_STEPLIB_REPO_FORK_GIT_URL}
-
-            bitrise share create --stepid ${STEP_ID_IN_STEPLIB} --tag ${STEP_GIT_VERION_TAG_TO_SHARE} --git ${STEP_GIT_CLONE_URL}
-
-            bitrise share finish

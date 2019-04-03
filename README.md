@@ -34,7 +34,7 @@ envs:
 
 1. Create a new git repository for your step (**don't fork** the *step template*, create a *new* repository)
 2. Copy the [step template](https://github.com/bitrise-steplib/step-template) files into your repository
-3. Fill the `step.sh` with your functionality
+3. Fill the `main.go` with your functionality
 4. Wire out your inputs to `step.yml` (`inputs` section)
 5. Fill out the other parts of the `step.yml` too
 6. Provide test values for the inputs in the `bitrise.yml`
@@ -79,3 +79,8 @@ in the [bitrise CLI repository](https://github.com/bitrise-io/bitrise/blob/maste
 ## Share your own Step
 
 You can share your Step or step version with the [bitrise CLI](https://github.com/bitrise-io/bitrise). Just run `bitrise share` and follow the guide it prints.
+
+## Trigger a new release
+
+- __merge every code changes__ to the `master` branch
+- __push the new version tag__ to the `master` branch
