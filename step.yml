@@ -84,27 +84,27 @@ inputs:
       category: Export Config
       title: "APK file exclude filter"
       description: |
-       One filter per line. The step will **not** copy the generated APK files that match this filters into the Bitrise Deploy Directory.
-      You can use this filter to avoid moving unalinged and/or unsigned apk files.
+        One filter per line. The step will **not** copy the generated APK files that match this filters into the Bitrise Deploy Directory.
+        You can use this filter to avoid moving unalinged and/or unsigned apk files.
 
-      This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
+        This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
 
-      If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied.
+        If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied.
 
-      Examples:
+        Examples:
 
-      Do not copy APK files with a filename that contains `unaligned`:
+        Do not copy APK files with a filename that contains `unaligned`:
 
-      ```
-      *unaligned*.apk
-      ```
+        ```
+        *unaligned*.apk
+        ```
 
-      Do not copy APK files with a filename that contains `unaligned` and/or `Test`:
+        Do not copy APK files with a filename that contains `unaligned` and/or `Test`:
 
-      ```
-      *unaligned*.apk
-      *Test*.apk
-      ```
+        ```
+        *unaligned*.apk
+        *Test*.apk
+        ```
   - test_apk_file_include_filter: "*Test*.apk"
     opts:
       category: Export Config
