@@ -60,8 +60,8 @@ type Config struct {
 	GradleTasks              string `env:"gradle_task,required"`
 	GradlewPath              string `env:"gradlew_path,file"`
 	GradleOptions            string `env:"gradle_options"`
-	ApkFileIncludeFilter     string `env:"apk_file_include_filter"`
-	ApkFileExcludeFilter     string `env:"apk_file_exclude_filter"`
+	AppFileIncludeFilter     string `env:"app_file_include_filter"`
+	AppFileExcludeFilter     string `env:"app_file_exclude_filter"`
 	TestApkFileIncludeFilter string `env:"test_apk_file_include_filter"`
 	TestApkFileExcludeFilter string `env:"test_apk_file_exclude_filter"`
 	MappingFileIncludeFilter string `env:"mapping_file_include_filter"`
@@ -70,7 +70,11 @@ type Config struct {
 	// Other configs
 	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
 	// Cache configs
-	CacheLevel string `env:"cache_level,opt['all','only_deps','only deps','none']"`
+	CacheLevel string `env:"cache_level,opt['all','only_deps','none']"`
+
+	// Deprecated
+	ApkFileIncludeFilter string `env:"apk_file_include_filter"`
+	ApkFileExcludeFilter string `env:"apk_file_exclude_filter"`
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
@@ -208,6 +212,36 @@ func findDeployPth(deployDir, baseName, ext string) (string, error) {
 	return deployPth, err
 }
 
+func validateAndMigrateConfig(config *Config) error {
+	if config.GradleFile != "" {
+		if exist, err := pathutil.IsPathExists(config.GradleFile); err != nil {
+			return fmt.Errorf("failed to check if GradleFile exists at: %s, error: %s", config.GradleFile, err)
+		} else if !exist {
+			return fmt.Errorf("GradleFile does not exist at: %s", config.GradleFile)
+		}
+	}
+
+	if config.ApkFileIncludeFilter != "" || config.ApkFileExcludeFilter != "" {
+		log.Warnf(`apk_file_include_filter and apk_file_exclude_filter inputs will be deprecated,
+			please use app_file_include_filter and app_file_exclude_filter instead.`)
+		fmt.Println()
+	}
+	if config.AppFileIncludeFilter != "" && config.ApkFileIncludeFilter != "" {
+		log.Warnf(`both apk_file_include_filter and app_file_include_filter inputs are specified,
+			apk_file_include_filter will be used`)
+		fmt.Println()
+		config.AppFileIncludeFilter = config.ApkFileIncludeFilter
+	}
+	if config.AppFileExcludeFilter != "" && config.ApkFileExcludeFilter != "" {
+		log.Warnf(`both apk_file_exclude_filter and app_file_exclude_filter inputs are specified,
+			apk_file_exclude_filter will be used.`)
+		fmt.Println()
+		config.AppFileExcludeFilter = config.ApkFileExcludeFilter
+	}
+
+	return nil
+}
+
 func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
 	cmd := command.New("envman", "add", "--key", keyStr)
 	cmd.SetStdin(strings.NewReader(valueStr))
@@ -224,24 +258,11 @@ func main() {
 	if err := stepconf.Parse(&configs); err != nil {
 		failf("Issue with input: %s", err)
 	}
-	if configs.GradleFile != "" {
-		if exist, err := pathutil.IsPathExists(configs.GradleFile); err != nil {
-			failf("Failed to check if GradleFile exists at: %s, error: %s", configs.GradleFile, err)
-		} else if !exist {
-			failf("GradleFile does not exist at: %s", configs.GradleFile)
-		}
+	if err := validateAndMigrateConfig(&configs); err != nil {
+		failf("Issue with input: %s", err)
 	}
 	stepconf.Print(configs)
 	fmt.Println()
-
-	if configs.CacheLevel == "only deps" {
-		configs.CacheLevel = "only_deps"
-		log.Warnf("(only deps) value for cache_level is deprecated, please use (only_deps) instead")
-	}
-
-	if configs.ApkFileIncludeFilter == "" {
-		configs.ApkFileIncludeFilter = "*.apk"
-	}
 
 	gradlewPath, err := filepath.Abs(configs.GradlewPath)
 	if err != nil {
@@ -355,33 +376,33 @@ func main() {
 		log.Donef("Done")
 	}
 
-	// Move apk files
+	// Move apk and aab files
 	fmt.Println()
-	log.Infof("Move apk files...")
-	apkFiles, err := find(".", configs.ApkFileIncludeFilter, configs.ApkFileExcludeFilter)
+	log.Infof("Move APK and AAB files...")
+	appFiles, err := find(".", configs.AppFileIncludeFilter, configs.AppFileExcludeFilter)
 	if err != nil {
-		failf("Failed to find apk files, error: %s", err)
+		failf("Failed to find APK or AAB files, error: %s", err)
 	}
 
-	if len(apkFiles) == 0 {
-		log.Warnf("No file name matched apk filters")
+	if len(appFiles) == 0 {
+		log.Warnf("No file name matched app filters")
 	}
 
-	lastCopiedApkFile := ""
-	copiedApkFiles := []string{}
-	for _, apkFile := range apkFiles {
-		fi, err := os.Lstat(apkFile)
+	var copiedApkFiles []string
+	var aabFiles []string
+	for _, appFile := range appFiles {
+		fi, err := os.Lstat(appFile)
 		if err != nil {
 			failf("Failed to get file info, error: %s", err)
 		}
 
 		if fi.ModTime().Before(gradleStarted) {
-			log.Warnf("skipping: %s, modified before the gradle task has started", apkFile)
+			log.Warnf("skipping: %s, modified before the gradle task has started", appFile)
 			continue
 		}
 
-		ext := filepath.Ext(apkFile)
-		baseName := filepath.Base(apkFile)
+		ext := filepath.Ext(appFile)
+		baseName := filepath.Base(appFile)
 		baseName = strings.TrimSuffix(baseName, ext)
 
 		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
@@ -389,27 +410,46 @@ func main() {
 			failf("Failed to create apk deploy path, error: %s", err)
 		}
 
-		log.Printf("copy %s to %s", apkFile, deployPth)
-		if err := command.CopyFile(apkFile, deployPth); err != nil {
+		log.Printf("copy %s to %s", appFile, deployPth)
+		if err := command.CopyFile(appFile, deployPth); err != nil {
 			failf("Failed to copy apk, error: %s", err)
 		}
 
-		lastCopiedApkFile = deployPth
-		copiedApkFiles = append(copiedApkFiles, deployPth)
+		switch strings.ToLower(ext) {
+		case ".apk":
+			copiedApkFiles = append(copiedApkFiles, deployPth)
+		case ".aab":
+			aabFiles = append(aabFiles, deployPth)
+		}
 	}
 
-	if lastCopiedApkFile != "" {
+	// APK files
+	if len(copiedApkFiles) != 0 {
+		lastCopiedApkFile := copiedApkFiles[len(copiedApkFiles)-1]
 		if err := exportEnvironmentWithEnvman("BITRISE_APK_PATH", lastCopiedApkFile); err != nil {
 			failf("Failed to export enviroment (BITRISE_APK_PATH), error: %s", err)
 		}
 		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_APK_PATH (value: %s)", lastCopiedApkFile)
-	}
-	if len(copiedApkFiles) > 0 {
+
 		apkList := strings.Join(copiedApkFiles, "|")
 		if err := exportEnvironmentWithEnvman("BITRISE_APK_PATH_LIST", apkList); err != nil {
 			failf("Failed to export enviroment (BITRISE_APK_PATH_LIST), error: %s", err)
 		}
 		log.Donef("The apk paths list is now available in the Environment Variable: $BITRISE_APK_PATH_LIST (value: %s)", apkList)
+	}
+	// AAB files
+	if len(aabFiles) != 0 {
+		lastCopiedAABFile := aabFiles[len(aabFiles)-1]
+		if err := exportEnvironmentWithEnvman("BITRISE_AAB_PATH", lastCopiedAABFile); err != nil {
+			failf("Failed to export enviroment (BITRISE_AAB_PATH), error: %s", err)
+		}
+		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_AAB_PATH (value: %s)", lastCopiedAABFile)
+
+		aabList := strings.Join(aabFiles, "|")
+		if err := exportEnvironmentWithEnvman("BITRISE_AAB_PATH_LIST", aabList); err != nil {
+			failf("Failed to export enviroment (BITRISE_AAB_PATH_LIST), error: %s", err)
+		}
+		log.Donef("The apk paths list is now available in the Environment Variable: $BITRISE_AAB_PATH_LIST (value: %s)", aabList)
 	}
 
 	testApkFiles, err := find(".", configs.TestApkFileIncludeFilter, configs.TestApkFileExcludeFilter)

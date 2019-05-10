@@ -2,7 +2,7 @@ title: Gradle Runner
 summary: |-
   Runs the specified gradle task.
 description: |-
-  Runs the specified gradle task and copies the generated APK files into
+  Runs the specified gradle task and copies the generated APK and AAB files into
   the Bitrise Deploy Directory (`$BITRISE_DEPLOY_DIR`).
 website: https://github.com/bitrise-io/steps-gradle-runner
 source_code_url: https://github.com/bitrise-io/steps-gradle-runner
@@ -53,23 +53,25 @@ inputs:
         **The path should be relative** to the repository root. For example, `./gradlew`,
         or if it is in a sub directory, `./sub/dir/gradlew`.
       is_required: true
-  - apk_file_include_filter: "*.apk"
+  - app_file_include_filter: |
+      *.apk
+      *.aab
     opts:
       category: Export Config
-      title: "APK file include filter"
+      title: "APK and AAB file include filter"
       description: |
-        The step will copy the generated APK files that match this filter into the Bitrise Deploy Directory.
+        The step will copy the generated APK and AAB files that match this filter into the Bitrise Deploy Directory.
 
         This filter is a standard find commands -path pattern, see: http://linux.die.net/man/1/find
 
-        If you specify an empty filter, the step will set this filter to: `*.apk`.
+        If you specify an empty filter, the step will set this filter to: `*.apk *.aab`.
 
         Example:
 
-        Copy every APK file:
+        Copy every AAB file:
 
         ```
-        "*.apk"
+        "*.aab"
         ```
 
         Copy every APK file with a filename that contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`):
@@ -77,19 +79,19 @@ inputs:
         ```
         *release*.apk
         ```
-  - apk_file_exclude_filter: |
+  - app_file_exclude_filter: |
       *unaligned.apk
       *Test*.apk
     opts:
       category: Export Config
-      title: "APK file exclude filter"
+      title: "APK and AAB file exclude filter"
       description: |
-        One filter per line. The step will **not** copy the generated APK files that match this filters into the Bitrise Deploy Directory.
-        You can use this filter to avoid moving unalinged and/or unsigned apk files.
+        One filter per line. The step will **not** copy the generated APK and AAB files that match this filters into the Bitrise Deploy Directory.
+        You can use this filter to avoid moving unalinged and/or unsigned APK and AAB files.
 
         This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
 
-        If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied.
+        If you specify an empty filter, every APK and AAB file (selected by `app_file_include_filter`) will be copied.
 
         Examples:
 
@@ -213,6 +215,16 @@ outputs:
 
         If the build generates more than one APK file which fulfills the
         filter inputs this output will contain the last one's path.
+  - BITRISE_AAB_PATH:
+    opts:
+      title: "Path of the generated AAB"
+      summary: "Path of the generated (and copied) AAB file - after filtering."
+      description: |-
+        This output will include the path of the generated AAB file,
+        after filtering based on the filter inputs.
+
+        If the build generates more than one AAB file which fulfills the
+        filter inputs this output will contain the last one's path.
   - BITRISE_TEST_APK_PATH:
     opts:
       title: "Path of the generated test APK file"
@@ -232,6 +244,15 @@ outputs:
         after filtering based on the filter inputs.
 
         The paths are separated with `|` character, eg: `app-armeabi-v7a-debug.apk|app-mips-debug.apk|app-x86-debug.apk`
+  - BITRISE_AAB_PATH_LIST:
+    opts:
+      title: "List of the generated AAB file paths"
+      summary: "List of the generated (and copied) AAB file paths - after filtering."
+      description: |-
+        This output will include the paths of the generated AAB files,
+        after filtering based on the filter inputs.
+
+        The paths are separated with `|` character, eg: `app.aab|app2.aab`
   - BITRISE_MAPPING_PATH:
     opts:
       title: "Path of the generated mapping.txt"
