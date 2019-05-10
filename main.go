@@ -389,7 +389,7 @@ func main() {
 	}
 
 	var copiedApkFiles []string
-	var aabFiles []string
+	var copiedAabFiles []string
 	for _, appFile := range appFiles {
 		fi, err := os.Lstat(appFile)
 		if err != nil {
@@ -419,37 +419,33 @@ func main() {
 		case ".apk":
 			copiedApkFiles = append(copiedApkFiles, deployPth)
 		case ".aab":
-			aabFiles = append(aabFiles, deployPth)
+			copiedAabFiles = append(copiedAabFiles, deployPth)
+		default:
+			copiedApkFiles = append(copiedApkFiles, deployPth)
 		}
 	}
 
-	// APK files
-	if len(copiedApkFiles) != 0 {
-		lastCopiedApkFile := copiedApkFiles[len(copiedApkFiles)-1]
-		if err := exportEnvironmentWithEnvman("BITRISE_APK_PATH", lastCopiedApkFile); err != nil {
-			failf("Failed to export enviroment (BITRISE_APK_PATH), error: %s", err)
+	for appEnv, appFiles := range map[string][]string{
+		"BITRISE_APK_PATH": copiedApkFiles,
+		"BITRISE_AAB_PATH": copiedAabFiles} {
+		if len(appFiles) != 0 {
+			lastCopiedFile := appFiles[len(appFiles)-1]
+			if err := exportEnvironmentWithEnvman(appEnv, lastCopiedFile); err != nil {
+				failf("Failed to export enviroment (%s), error: %s", appEnv, err)
+			}
+			log.Donef("The apk path is now available in the Environment Variable: $%s (value: %s)", appEnv, lastCopiedFile)
 		}
-		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_APK_PATH (value: %s)", lastCopiedApkFile)
-
-		apkList := strings.Join(copiedApkFiles, "|")
-		if err := exportEnvironmentWithEnvman("BITRISE_APK_PATH_LIST", apkList); err != nil {
-			failf("Failed to export enviroment (BITRISE_APK_PATH_LIST), error: %s", err)
-		}
-		log.Donef("The apk paths list is now available in the Environment Variable: $BITRISE_APK_PATH_LIST (value: %s)", apkList)
 	}
-	// AAB files
-	if len(aabFiles) != 0 {
-		lastCopiedAABFile := aabFiles[len(aabFiles)-1]
-		if err := exportEnvironmentWithEnvman("BITRISE_AAB_PATH", lastCopiedAABFile); err != nil {
-			failf("Failed to export enviroment (BITRISE_AAB_PATH), error: %s", err)
+	for appListEnv, appFiles := range map[string][]string{
+		"BITRISE_APK_PATH_LIST": copiedApkFiles,
+		"BITRISE_AAB_PATH_LIST": copiedAabFiles} {
+		if len(appFiles) != 0 {
+			appList := strings.Join(appFiles, "|")
+			if err := exportEnvironmentWithEnvman(appListEnv, appList); err != nil {
+				failf("Failed to export enviroment (%s), error: %s", appListEnv, err)
+			}
+			log.Donef("The apk paths list is now available in the Environment Variable: $%s (value: %s)", appListEnv, appList)
 		}
-		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_AAB_PATH (value: %s)", lastCopiedAABFile)
-
-		aabList := strings.Join(aabFiles, "|")
-		if err := exportEnvironmentWithEnvman("BITRISE_AAB_PATH_LIST", aabList); err != nil {
-			failf("Failed to export enviroment (BITRISE_AAB_PATH_LIST), error: %s", err)
-		}
-		log.Donef("The apk paths list is now available in the Environment Variable: $BITRISE_AAB_PATH_LIST (value: %s)", aabList)
 	}
 
 	testApkFiles, err := find(".", configs.TestApkFileIncludeFilter, configs.TestApkFileExcludeFilter)
