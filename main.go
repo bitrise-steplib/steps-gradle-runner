@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -12,13 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-tools/go-steputils/cache"
-	"github.com/bitrise-tools/go-steputils/input"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -54,101 +53,24 @@ var automaticRetryReasonPatterns = []string{
 	failedToDownloadSHA1ForResource,
 }
 
-// ConfigsModel ...
-type ConfigsModel struct {
+// Config ...
+type Config struct {
 	// Gradle Inputs
-	GradleFile               string
-	GradleTasks              string
-	GradlewPath              string
-	GradleOptions            string
-	ApkFileIncludeFilter     string
-	ApkFileExcludeFilter     string
-	TestApkFileIncludeFilter string
-	TestApkFileExcludeFilter string
-	MappingFileIncludeFilter string
-	MappingFileExcludeFilter string
+	GradleFile               string `env:"gradle_file"`
+	GradleTasks              string `env:"gradle_task,required"`
+	GradlewPath              string `env:"gradlew_path,file"`
+	GradleOptions            string `env:"gradle_options"`
+	ApkFileIncludeFilter     string `env:"apk_file_include_filter"`
+	ApkFileExcludeFilter     string `env:"apk_file_exclude_filter"`
+	TestApkFileIncludeFilter string `env:"test_apk_file_include_filter"`
+	TestApkFileExcludeFilter string `env:"test_apk_file_exclude_filter"`
+	MappingFileIncludeFilter string `env:"mapping_file_include_filter"`
+	MappingFileExcludeFilter string `env:"mapping_file_exclude_filter"`
 
 	// Other configs
-	DeployDir string
+	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
 	// Cache configs
-	CacheLevel string
-}
-
-func createConfigsModelFromEnvs() ConfigsModel {
-	return ConfigsModel{
-		GradleFile:               os.Getenv("gradle_file"),
-		GradleTasks:              os.Getenv("gradle_task"),
-		GradlewPath:              os.Getenv("gradlew_path"),
-		GradleOptions:            os.Getenv("gradle_options"),
-		ApkFileIncludeFilter:     os.Getenv("apk_file_include_filter"),
-		ApkFileExcludeFilter:     os.Getenv("apk_file_exclude_filter"),
-		TestApkFileIncludeFilter: os.Getenv("test_apk_file_include_filter"),
-		TestApkFileExcludeFilter: os.Getenv("test_apk_file_exclude_filter"),
-		MappingFileIncludeFilter: os.Getenv("mapping_file_include_filter"),
-		MappingFileExcludeFilter: os.Getenv("mapping_file_exclude_filter"),
-		//
-		DeployDir: os.Getenv("BITRISE_DEPLOY_DIR"),
-		//
-		CacheLevel: os.Getenv("cache_level"),
-	}
-}
-
-func (configs ConfigsModel) print() {
-
-	log.Infof("Configs:")
-	log.Printf("- GradlewPath: %s", configs.GradlewPath)
-	log.Printf("- GradleFile: %s", configs.GradleFile)
-	log.Printf("- GradleTasks: %s", configs.GradleTasks)
-	log.Printf("- GradleOptions: %s", configs.GradleOptions)
-	log.Printf("- ApkFileIncludeFilter: %s", configs.ApkFileIncludeFilter)
-	log.Printf("- ApkFileExcludeFilter: %s", configs.ApkFileExcludeFilter)
-	log.Printf("- TestApkFileIncludeFilter: %s", configs.TestApkFileIncludeFilter)
-	log.Printf("- TestApkFileExcludeFilter: %s", configs.TestApkFileExcludeFilter)
-	log.Printf("- MappingFileIncludeFilter: %s", configs.MappingFileIncludeFilter)
-	log.Printf("- MappingFileExcludeFilter: %s", configs.MappingFileExcludeFilter)
-	log.Printf("- DeployDir: %s", configs.DeployDir)
-	log.Printf("- CacheLevel: %s", configs.CacheLevel)
-}
-
-func (configs ConfigsModel) validate() (string, error) {
-	if configs.GradleFile != "" {
-		if exist, err := pathutil.IsPathExists(configs.GradleFile); err != nil {
-			return "", fmt.Errorf("Failed to check if GradleFile exists at: %s, error: %s", configs.GradleFile, err)
-		} else if !exist {
-			return "", fmt.Errorf("GradleFile does not exist at: %s", configs.GradleFile)
-		}
-	}
-
-	if configs.GradleTasks == "" {
-		return "", errors.New("no GradleTask parameter specified")
-	}
-
-	if configs.GradlewPath == "" {
-		explanation := `
-Using a Gradle Wrapper (gradlew) is required, as the wrapper is what makes sure
-that the right Gradle version is installed and used for the build.
-
-You can find more information about the Gradle Wrapper (gradlew),
-and about how you can generate one (if you would not have one already
-in the official guide at: https://docs.gradle.org/current/userguide/gradle_wrapper.html`
-
-		return explanation, errors.New("no GradlewPath parameter specified")
-	}
-	if exist, err := pathutil.IsPathExists(configs.GradlewPath); err != nil {
-		return "", fmt.Errorf("Failed to check if GradlewPath exist at: %s, error: %s", configs.GradlewPath, err)
-	} else if !exist {
-		return "", fmt.Errorf("GradlewPath not exist at: %s", configs.GradlewPath)
-	}
-
-	if err := input.ValidateIfNotEmpty(configs.CacheLevel); err != nil {
-		return "", fmt.Errorf("CacheLevel, error: %s", err)
-	}
-
-	if err := input.ValidateWithOptions(configs.CacheLevel, "all", "only_deps", "only deps", "none"); err != nil {
-		return "", fmt.Errorf("CacheLevel, error: %s", err)
-	}
-
-	return "", nil
+	CacheLevel string `env:"cache_level,opt['all','only_deps','only deps','none']"`
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
@@ -298,20 +220,19 @@ func failf(message string, args ...interface{}) {
 }
 
 func main() {
-	configs := createConfigsModelFromEnvs()
-	configs.print()
-	if explanation, err := configs.validate(); err != nil {
-		fmt.Println()
-		log.Errorf("Issue with input: %s", err)
-		fmt.Println()
-
-		if explanation != "" {
-			fmt.Println(explanation)
-			fmt.Println()
-		}
-
-		os.Exit(1)
+	var configs Config
+	if err := stepconf.Parse(&configs); err != nil {
+		failf("Issue with input: %s", err)
 	}
+	if configs.GradleFile != "" {
+		if exist, err := pathutil.IsPathExists(configs.GradleFile); err != nil {
+			failf("Failed to check if GradleFile exists at: %s, error: %s", configs.GradleFile, err)
+		} else if !exist {
+			failf("GradleFile does not exist at: %s", configs.GradleFile)
+		}
+	}
+	stepconf.Print(configs)
+	fmt.Println()
 
 	if configs.CacheLevel == "only deps" {
 		configs.CacheLevel = "only_deps"
