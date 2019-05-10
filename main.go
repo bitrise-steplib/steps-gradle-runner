@@ -292,7 +292,7 @@ func main() {
 
 		projectRoot, err := filepath.Abs(".")
 		if err != nil {
-			log.Warnf("Cache collection skipped: failed to determine project root path.")
+			log.Warnf("Cache collection skipped: failed to determine project root path, error: %s", err)
 			collectCaches = false
 		}
 
@@ -304,6 +304,9 @@ func main() {
 			log.Printf(" Generate dependencies map...")
 			lockfileContent := ""
 			if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
 				if !f.IsDir() && strings.HasSuffix(f.Name(), ".gradle") && !strings.Contains(path, "node_modules") {
 					if md5Hash, err := computeMD5String(path); err != nil {
 						log.Warnf("Failed to compute MD5 hash of file(%s), error: %s", path, err)
@@ -313,7 +316,7 @@ func main() {
 				}
 				return nil
 			}); err != nil {
-				log.Warnf("Dependency map generation skipped: failed to collect dependencies.")
+				log.Warnf("Dependency map generation skipped: failed to collect dependencies, error: ", err)
 				collectCaches = false
 			} else {
 				err := fileutil.WriteStringToFile(lockFilePath, lockfileContent)
@@ -351,6 +354,9 @@ func main() {
 
 		if configs.CacheLevel == "all" {
 			if err := filepath.Walk(projectRoot, func(path string, f os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
 				if f.IsDir() {
 					if f.Name() == "build" {
 						includePths = append(includePths, path)
@@ -361,7 +367,7 @@ func main() {
 				}
 				return nil
 			}); err != nil {
-				log.Warnf("Cache collection skipped: failed to determine cache paths.")
+				log.Warnf("Cache collection skipped: failed to determine cache paths, error: ", err)
 				collectCaches = false
 			}
 		}
@@ -370,7 +376,7 @@ func main() {
 			gradleCache.ExcludePath(strings.Join(excludePths, "\n"))
 
 			if err := gradleCache.Commit(); err != nil {
-				log.Warnf("Cache collection skipped: failed to commit cache paths.")
+				log.Warnf("Cache collection skipped: failed to commit cache paths, error: %s", err)
 			}
 		}
 		log.Donef("Done")
@@ -379,9 +385,21 @@ func main() {
 	// Move apk and aab files
 	fmt.Println()
 	log.Infof("Move APK and AAB files...")
-	appFiles, err := find(".", configs.AppFileIncludeFilter, configs.AppFileExcludeFilter)
-	if err != nil {
-		failf("Failed to find APK or AAB files, error: %s", err)
+
+	var includeFilters []string
+	for _, filter := range strings.Split(configs.AppFileIncludeFilter, "\n") {
+		if filter != "" {
+			includeFilters = append(includeFilters, filter)
+		}
+	}
+
+	var appFiles []string
+	for _, includeFilter := range includeFilters {
+		matches, err := find(".", includeFilter, configs.AppFileExcludeFilter)
+		if err != nil {
+			failf("Failed to find APK or AAB files, error: %s", err)
+		}
+		appFiles = append(appFiles, matches...)
 	}
 
 	if len(appFiles) == 0 {
