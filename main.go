@@ -258,10 +258,10 @@ func main() {
 	if err := stepconf.Parse(&configs); err != nil {
 		failf("Issue with input: %s", err)
 	}
+	stepconf.Print(configs)
 	if err := validateAndMigrateConfig(&configs); err != nil {
 		failf("Issue with input: %s", err)
 	}
-	stepconf.Print(configs)
 	fmt.Println()
 
 	gradlewPath, err := filepath.Abs(configs.GradlewPath)
@@ -451,7 +451,7 @@ func main() {
 			if err := exportEnvironmentWithEnvman(appEnv, lastCopiedFile); err != nil {
 				failf("Failed to export enviroment (%s), error: %s", appEnv, err)
 			}
-			log.Donef("The apk path is now available in the Environment Variable: $%s (value: %s)", appEnv, lastCopiedFile)
+			log.Donef("The app path is now available in the Environment Variable: $%s (value: %s)", appEnv, lastCopiedFile)
 		}
 	}
 	for appListEnv, appFiles := range map[string][]string{

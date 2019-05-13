@@ -12,8 +12,7 @@ workflows:
 
   ci:
     before_run:
-    - audit-this-step
-    - go-tests
+    - lint
     after_run:
     - test
     - test-gradlew-path
@@ -22,6 +21,16 @@ workflows:
     - test-no-root-buildfile
     - test-apk-split
     - test-gradle-kts
+
+  lint:  
+    steps:
+    - script:
+        inputs:
+          - content: stepman audit --step-yml ./step.yml
+    - go-list:
+    - golint:
+    - errcheck:
+    - go-test:
 
   test:
     description: "CI workflow - this should always pass!"
@@ -34,6 +43,20 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+
+  test-aab:
+    description: "Use app filter input"
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+    - GRADLE_FILE: ./build.gradle
+    - GRADLE_TASK: bundle
+    - GRADLEW_PATH: ./gradlew
+    - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+    - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+    - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+    - _common
+    - _check_output_aab
 
   test-gradlew-path:
     description: "CI workflow - this should always pass!"
@@ -156,18 +179,25 @@ workflows:
             #!/bin/bash
             echo "[output] BITRISE_APK_PATH: ${BITRISE_APK_PATH}"
             echo "[output] BITRISE_APK_PATH_LIST: ${BITRISE_APK_PATH_LIST}"
+            echo "[output] BITRISE_AAB_PATH: ${BITRISE_AAB_PATH}"
+            echo "[output] BITRISE_AAB_PATH_LIST: ${BITRISE_AAB_PATH_LIST}"
             echo "[output] BITRISE_MAPPING_PATH: ${BITRISE_MAPPING_PATH}"
             echo "[output] BITRISE_CACHE_INCLUDE_PATHS: ${BITRISE_CACHE_INCLUDE_PATHS}"
             echo "[output] BITRISE_CACHE_EXCLUDE_PATHS: ${BITRISE_CACHE_EXCLUDE_PATHS}"
             set -x
             ls -alh "$BITRISE_DEPLOY_DIR"
 
-  go-tests:
+  _check_output_aab:
     steps:
-    - go-list:
-    - golint:
-    - errcheck:
-    - go-test:
+    - script:
+        title: Check if aab output exists
+        inputs:
+        - content: |-
+            if [ ! -f $BITRISE_AAB_PATH ]; then
+              echo "AAB bundle not found at ${BITRISE_AAB_PATH}"
+              exit 1
+            fi
+            echo "AAB bundle found at ${BITRISE_AAB_PATH}"
 
   # ----------------------------------------------------------------
   # --- Utility workflows
