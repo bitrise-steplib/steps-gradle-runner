@@ -9,10 +9,6 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/bitrise-tools/go-steputils"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/kballard/go-shellquote"
 
 [prune]

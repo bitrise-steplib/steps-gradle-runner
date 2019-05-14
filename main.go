@@ -11,13 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bitrise-io/go-steputils/cache"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
-	"github.com/bitrise-tools/go-steputils/cache"
 	"github.com/kballard/go-shellquote"
 )
 
