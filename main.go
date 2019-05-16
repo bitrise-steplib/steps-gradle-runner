@@ -18,6 +18,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
+	"github.com/bitrise-io/go-utils/sliceutil"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -151,7 +152,7 @@ func find(dir, nameInclude, nameExclude string) ([]string, error) {
 	cmdSlice = append(cmdSlice, "-path", nameInclude)
 
 	for _, exclude := range strings.Split(nameExclude, "\n") {
-		if exclude != "" {
+		if strings.TrimSpace(exclude) != "" {
 			cmdSlice = append(cmdSlice, "!", "-path", exclude)
 		}
 	}
@@ -389,7 +390,7 @@ func main() {
 
 	var includeFilters []string
 	for _, filter := range strings.Split(configs.AppFileIncludeFilter, "\n") {
-		if filter != "" {
+		if strings.TrimSpace(filter) != "" {
 			includeFilters = append(includeFilters, filter)
 		}
 	}
@@ -406,6 +407,7 @@ func main() {
 	if len(appFiles) == 0 {
 		log.Warnf("No file name matched app filters")
 	}
+	appFiles = sliceutil.UniqueStringSlice(appFiles)
 
 	var copiedApkFiles []string
 	var copiedAabFiles []string
@@ -440,7 +442,6 @@ func main() {
 		case ".aab":
 			copiedAabFiles = append(copiedAabFiles, deployPth)
 		default:
-			copiedApkFiles = append(copiedApkFiles, deployPth)
 		}
 	}
 
@@ -463,7 +464,7 @@ func main() {
 			if err := exportEnvironmentWithEnvman(appListEnv, appList); err != nil {
 				failf("Failed to export enviroment (%s), error: %s", appListEnv, err)
 			}
-			log.Donef("The apk paths list is now available in the Environment Variable: $%s (value: %s)", appListEnv, appList)
+			log.Donef("The app paths list is now available in the Environment Variable: $%s (value: %s)", appListEnv, appList)
 		}
 	}
 
