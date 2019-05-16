@@ -21,6 +21,7 @@ workflows:
     - test-no-root-buildfile
     - test-apk-split
     - test-gradle-kts
+    - test-aab
 
   lint:  
     steps:
@@ -43,6 +44,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
 
   test-aab:
     description: "Use app filter input"
@@ -51,7 +53,6 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: bundle
     - GRADLEW_PATH: ./gradlew
-    - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -69,6 +70,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
 
   test-multiple-tasks:
     envs:
@@ -80,6 +82,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
   
   test-subdir:
     envs:
@@ -91,6 +94,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
 
   test-no-gradlew-error:
     envs:
@@ -102,6 +106,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
 
   test-no-root-buildfile:
     envs:
@@ -113,6 +118,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
 
   test-apk-split:
     envs:
@@ -124,6 +130,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
 
   test-gradle-kts:
     envs:
@@ -133,6 +140,7 @@ workflows:
     - GRADLEW_PATH: "./gradlew"
     after_run:
     - _common
+    - _check_output_apk
     
   _common:
     steps:
@@ -198,6 +206,18 @@ workflows:
               exit 1
             fi
             echo "AAB bundle found at ${BITRISE_AAB_PATH}"
+
+  _check_output_apk:
+    steps:
+    - script:
+        title: Check if apk output exists
+        inputs:
+        - content: |-
+            if [ ! -f $BITRISE_APK_PATH ]; then
+              echo "AAB not found at ${BITRISE_APK_PATH}"
+              exit 1
+            fi
+            echo "APK found at ${BITRISE_APK_PATH}"
 
   # ----------------------------------------------------------------
   # --- Utility workflows
