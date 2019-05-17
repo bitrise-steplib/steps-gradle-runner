@@ -19,7 +19,6 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/kballard/go-shellquote"
-	"github.com/ryanuber/go-glob"
 )
 
 const failedToFindTargetWithHashString = `Failed to find target with hash string `
@@ -183,40 +182,6 @@ func filterEmpty(in []string) (out []string) {
 		}
 	}
 	return
-}
-
-func findArtifacts(searchDir string, generatedAfter time.Time, includePatterns []string, excludePatterns []string) ([]string, error) {
-	var artifacts []string
-	return artifacts, filepath.Walk(searchDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			log.Warnf("failed to walk path: %s", err)
-			return nil
-		}
-
-		if info.IsDir() || info.ModTime().Before(generatedAfter) {
-			return nil
-		}
-
-		includeMatch := false
-		for _, includePattern := range includePatterns {
-			if glob.Glob(includePattern, path) {
-				includeMatch = true
-				break
-			}
-		}
-		if !includeMatch {
-			return nil
-		}
-
-		for _, excludePattern := range excludePatterns {
-			if glob.Glob(excludePattern, path) {
-				return nil
-			}
-		}
-
-		artifacts = append(artifacts, path)
-		return nil
-	})
 }
 
 func createDeployPth(deployDir, apkName string) (string, error) {
@@ -430,14 +395,6 @@ func main() {
 	// Move apk and aab files
 	fmt.Println()
 	log.Infof("Move APK and AAB files...")
-
-	var includeFilters []string
-	for _, filter := range strings.Split(configs.AppFileIncludeFilter, "\n") {
-		if strings.TrimSpace(filter) != "" {
-			includeFilters = append(includeFilters, filter)
-		}
-	}
-
 	appFiles, err := findArtifacts(".",
 		gradleStarted,
 		filterEmpty(strings.Split(configs.AppFileIncludeFilter, "\n")),
