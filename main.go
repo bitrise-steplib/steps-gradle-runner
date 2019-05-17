@@ -367,8 +367,10 @@ func main() {
 	fmt.Println()
 	log.Infof("Move APK and AAB files...")
 	appFiles, err := findArtifacts(".",
-		filterEmpty(strings.Split(configs.AppFileIncludeFilter, "\n")),
-		filterEmpty(strings.Split(configs.AppFileExcludeFilter, "\n")))
+		filePatterns{
+			include: filterEmpty(strings.Split(configs.AppFileIncludeFilter, "\n")),
+			exclude: filterEmpty(strings.Split(configs.AppFileExcludeFilter, "\n")),
+		})
 	if err != nil {
 		failf("Failed to find APK or AAB files, error: %s", err)
 	}
@@ -436,8 +438,10 @@ func main() {
 	}
 
 	testApkFiles, err := findArtifacts(".",
-		filterEmpty(strings.Split(configs.TestApkFileIncludeFilter, "\n")),
-		filterEmpty(strings.Split(configs.TestApkFileExcludeFilter, "\n")))
+		filePatterns{
+			include: filterEmpty(strings.Split(configs.TestApkFileIncludeFilter, "\n")),
+			exclude: filterEmpty(strings.Split(configs.TestApkFileExcludeFilter, "\n")),
+		})
 	if err != nil {
 		failf("Failed to find test apk files, error: %s", err)
 	}
@@ -484,8 +488,10 @@ func main() {
 	// Move mapping files
 	log.Infof("Move mapping files...")
 	mappingFiles, err := findArtifacts(".",
-		filterEmpty(strings.Split(configs.MappingFileIncludeFilter, "\n")),
-		filterEmpty(strings.Split(configs.MappingFileExcludeFilter, "\n")))
+		filePatterns{
+			include: filterEmpty(strings.Split(configs.MappingFileIncludeFilter, "\n")),
+			exclude: filterEmpty(strings.Split(configs.MappingFileExcludeFilter, "\n")),
+		})
 	if err != nil {
 		failf("Failed to find mapping files, error: %s", err)
 	}

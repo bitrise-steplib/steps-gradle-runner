@@ -8,7 +8,12 @@ import (
 	"github.com/ryanuber/go-glob"
 )
 
-func findArtifacts(searchDir string, includePatterns []string, excludePatterns []string) ([]string, error) {
+type filePatterns struct {
+	include []string
+	exclude []string
+}
+
+func findArtifacts(searchDir string, patterns filePatterns) ([]string, error) {
 	var artifacts []string
 	return artifacts, filepath.Walk(searchDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -21,7 +26,7 @@ func findArtifacts(searchDir string, includePatterns []string, excludePatterns [
 		}
 
 		includeMatch := false
-		for _, includePattern := range includePatterns {
+		for _, includePattern := range patterns.include {
 			if glob.Glob(includePattern, path) {
 				includeMatch = true
 				break
@@ -31,7 +36,7 @@ func findArtifacts(searchDir string, includePatterns []string, excludePatterns [
 			return nil
 		}
 
-		for _, excludePattern := range excludePatterns {
+		for _, excludePattern := range patterns.exclude {
 			if glob.Glob(excludePattern, path) {
 				return nil
 			}

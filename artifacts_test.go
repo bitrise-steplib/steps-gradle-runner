@@ -21,22 +21,18 @@ func Test_findArtifacts(t *testing.T) {
 		}
 	}()
 
-	type args struct {
-		nameInclude []string
-		nameExclude []string
-	}
 	tests := []struct {
 		name      string
-		args      args
+		patterns  filePatterns
 		filePaths []string
 		want      []string
 		wantErr   bool
 	}{
 		{
 			name: "Inc: 1 ext, Excl: none",
-			args: args{
-				nameInclude: []string{"*.apk"},
-				nameExclude: []string{""},
+			patterns: filePatterns{
+				include: []string{"*.apk"},
+				exclude: []string{""},
 			},
 			filePaths: []string{"test.apk"},
 			want:      []string{"test.apk"},
@@ -44,9 +40,9 @@ func Test_findArtifacts(t *testing.T) {
 		},
 		{
 			name: "Inc: 1 ext, Excl: 1",
-			args: args{
-				nameInclude: []string{"*.apk"},
-				nameExclude: []string{"*.aab"},
+			patterns: filePatterns{
+				include: []string{"*.apk"},
+				exclude: []string{"*.aab"},
 			},
 			filePaths: []string{"test.apk", "test.aab"},
 			want:      []string{"test.apk"},
@@ -54,9 +50,9 @@ func Test_findArtifacts(t *testing.T) {
 		},
 		{
 			name: "Inc: 1 ext, Excl: 0, Nested",
-			args: args{
-				nameInclude: []string{"*.apk"},
-				nameExclude: []string{""},
+			patterns: filePatterns{
+				include: []string{"*.apk"},
+				exclude: []string{""},
 			},
 			filePaths: []string{"a/test.apk"},
 			want:      []string{"a/test.apk"},
@@ -64,9 +60,9 @@ func Test_findArtifacts(t *testing.T) {
 		},
 		{
 			name: "Inc: 1 ext, Excl: no path match, Nested",
-			args: args{
-				nameInclude: []string{"*.apk"},
-				nameExclude: []string{"unaligned*.apk"},
+			patterns: filePatterns{
+				include: []string{"*.apk"},
+				exclude: []string{"unaligned*.apk"},
 			},
 			filePaths: []string{"a/test.apk", "a/unaligned-test.apk"},
 			want:      []string{"a/test.apk", "a/unaligned-test.apk"},
@@ -74,9 +70,9 @@ func Test_findArtifacts(t *testing.T) {
 		},
 		{
 			name: "Inc: 1 ext, Excl: 1, Nested",
-			args: args{
-				nameInclude: []string{"*.apk"},
-				nameExclude: []string{"*unaligned*.apk"},
+			patterns: filePatterns{
+				include: []string{"*.apk"},
+				exclude: []string{"*unaligned*.apk"},
 			},
 			filePaths: []string{"a/test.apk", "a/unaligned-test.apk"},
 			want:      []string{"a/test.apk"},
@@ -84,9 +80,9 @@ func Test_findArtifacts(t *testing.T) {
 		},
 		{
 			name: "Inc: 1 ext, Excl: 2, Nested",
-			args: args{
-				nameInclude: []string{"*.apk"},
-				nameExclude: []string{"*unaligned*.apk", "*Test*.apk"},
+			patterns: filePatterns{
+				include: []string{"*.apk"},
+				exclude: []string{"*unaligned*.apk", "*Test*.apk"},
 			},
 			filePaths: []string{"a/test.apk", "a/unaligned-test.apk", "a/Test-app.apk"},
 			want:      []string{"a/test.apk"},
@@ -94,9 +90,9 @@ func Test_findArtifacts(t *testing.T) {
 		},
 		{
 			name: "Inc: 1 ext, Excl: 2, Nested, path in include",
-			args: args{
-				nameInclude: []string{"*/b/*.apk"},
-				nameExclude: []string{"*unaligned*.apk", "*Test*.apk"},
+			patterns: filePatterns{
+				include: []string{"*/b/*.apk"},
+				exclude: []string{"*unaligned*.apk", "*Test*.apk"},
 			},
 			filePaths: []string{"a/b/test.apk", "a/b/unaligned-test.apk", "a/b/Test-app.apk"},
 			want:      []string{"a/b/test.apk"},
@@ -104,9 +100,9 @@ func Test_findArtifacts(t *testing.T) {
 		},
 		{
 			name: "Inc: 1 ext, Excl: 1, Nested, path in include, path in exclude",
-			args: args{
-				nameInclude: []string{"*/b/*.apk"},
-				nameExclude: []string{"*/c/*"},
+			patterns: filePatterns{
+				include: []string{"*/b/*.apk"},
+				exclude: []string{"*/c/*"},
 			},
 			filePaths: []string{"a/b/test.apk", "a/c/unaligned-test.apk", "a/c/Test-app.apk"},
 			want:      []string{"a/b/test.apk"},
@@ -135,7 +131,7 @@ func Test_findArtifacts(t *testing.T) {
 			}
 			currentTestDir := setupFiles(tempDir, tt.filePaths)
 
-			got, err := findArtifacts(currentTestDir, tt.args.nameInclude, tt.args.nameExclude)
+			got, err := findArtifacts(currentTestDir, tt.patterns)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("findArtifacts() error = %v, wantErr %v", err, tt.wantErr)
 				return
