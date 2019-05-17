@@ -12,8 +12,7 @@ workflows:
 
   ci:
     before_run:
-    - audit-this-step
-    - go-tests
+    - lint
     after_run:
     - test
     - test-gradlew-path
@@ -22,6 +21,17 @@ workflows:
     - test-no-root-buildfile
     - test-apk-split
     - test-gradle-kts
+    - test-aab
+
+  lint:  
+    steps:
+    - script:
+        inputs:
+          - content: stepman audit --step-yml ./step.yml
+    - go-list:
+    - golint:
+    - errcheck:
+    - go-test:
 
   test:
     description: "CI workflow - this should always pass!"
@@ -34,6 +44,20 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
+
+  test-aab:
+    description: "Use app filter input"
+    envs:
+    - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+    - GRADLE_FILE: ./build.gradle
+    - GRADLE_TASK: bundle
+    - GRADLEW_PATH: ./gradlew
+    - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+    - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+    - _common
+    - _check_output_aab
 
   test-gradlew-path:
     description: "CI workflow - this should always pass!"
@@ -46,6 +70,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
 
   test-multiple-tasks:
     envs:
@@ -57,6 +82,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
   
   test-subdir:
     envs:
@@ -68,6 +94,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
 
   test-no-gradlew-error:
     envs:
@@ -79,6 +106,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
 
   test-no-root-buildfile:
     envs:
@@ -90,6 +118,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
 
   test-apk-split:
     envs:
@@ -101,6 +130,7 @@ workflows:
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
+    - _check_output_apk
 
   test-gradle-kts:
     envs:
@@ -110,6 +140,7 @@ workflows:
     - GRADLEW_PATH: "./gradlew"
     after_run:
     - _common
+    - _check_output_apk
     
   _common:
     steps:
@@ -156,72 +187,37 @@ workflows:
             #!/bin/bash
             echo "[output] BITRISE_APK_PATH: ${BITRISE_APK_PATH}"
             echo "[output] BITRISE_APK_PATH_LIST: ${BITRISE_APK_PATH_LIST}"
+            echo "[output] BITRISE_AAB_PATH: ${BITRISE_AAB_PATH}"
+            echo "[output] BITRISE_AAB_PATH_LIST: ${BITRISE_AAB_PATH_LIST}"
             echo "[output] BITRISE_MAPPING_PATH: ${BITRISE_MAPPING_PATH}"
             echo "[output] BITRISE_CACHE_INCLUDE_PATHS: ${BITRISE_CACHE_INCLUDE_PATHS}"
             echo "[output] BITRISE_CACHE_EXCLUDE_PATHS: ${BITRISE_CACHE_EXCLUDE_PATHS}"
             set -x
             ls -alh "$BITRISE_DEPLOY_DIR"
 
-  go-tests:
-    before_run:
-    - _install-test-tools
+  _check_output_aab:
     steps:
     - script:
-        title: Export go files to test
+        title: Check if aab output exists
         inputs:
         - content: |-
-            #!/bin/bash
-            set -ex
+            if [ ! -f $BITRISE_AAB_PATH ]; then
+              echo "AAB bundle not found at ${BITRISE_AAB_PATH}"
+              exit 1
+            fi
+            echo "AAB bundle found at ${BITRISE_AAB_PATH}"
 
-            no_vendor_paths="$(go list ./... | grep -v vendor)"
-            envman add --key GOLIST_WITHOUT_VENDOR --value "$no_vendor_paths"
-    - script:
-        title: Err check
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-
-            errcheck -asserts=true -blank=true $GOLIST_WITHOUT_VENDOR
-    - script:
-        title: Go lint
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-
-            while read -r line; do
-              echo "-> Linting: $line"
-              golint_out="$(golint $line)"
-              if [[ "${golint_out}" != "" ]] ; then
-                echo "=> Golint issues found:"
-                echo "${golint_out}"
-                exit 1
-              fi
-            done <<< "$GOLIST_WITHOUT_VENDOR"
-    - script:
-        title: Go test
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-
-            go test ./...
-
-  _install-test-tools:
+  _check_output_apk:
     steps:
     - script:
-        title: Install required testing tools
+        title: Check if apk output exists
         inputs:
         - content: |-
-            #!/bin/bash
-            set -ex
-
-            # Check for unhandled errors
-            go get -u -v github.com/kisielk/errcheck
-
-            # Go lint
-            go get -u -v github.com/golang/lint/golint
+            if [ ! -f $BITRISE_APK_PATH ]; then
+              echo "APK not found at ${BITRISE_APK_PATH}"
+              exit 1
+            fi
+            echo "APK found at ${BITRISE_APK_PATH}"
 
   # ----------------------------------------------------------------
   # --- Utility workflows
