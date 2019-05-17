@@ -108,6 +108,16 @@ func Test_findArtifacts(t *testing.T) {
 			want:      []string{"a/b/test.apk"},
 			wantErr:   false,
 		},
+		{
+			name: "Incl: 2, Nested, path in include",
+			patterns: filePatterns{
+				include: []string{"*/a/*.apk", "*/b/*.aab"},
+				exclude: []string{},
+			},
+			filePaths: []string{"a/test.apk", "a.test.aab", "b/test.apk", "b/test.aab"},
+			want:      []string{"a/test.apk", "b/test.aab"},
+			wantErr:   false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
