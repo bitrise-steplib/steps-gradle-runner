@@ -62,9 +62,9 @@ inputs:
       description: |
         The step will copy the generated APK and AAB files that match this filter into the Bitrise Deploy Directory.
 
-        This filter is a standard find commands -path pattern, see: http://linux.die.net/man/1/find
+        If you specify an empty filter, the step will set this filter to: `*.apk \n *.aab`.
 
-        If you specify an empty filter, the step will set this filter to: `*.apk *.aab`.
+        Seperate patterns with a newline.
 
         Example:
 
@@ -89,9 +89,9 @@ inputs:
         One filter per line. The step will **not** copy the generated APK and AAB files that match this filters into the Bitrise Deploy Directory.
         You can use this filter to avoid moving unalinged and/or unsigned APK and AAB files.
 
-        This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
-
         If you specify an empty filter, every APK and AAB file (selected by `APK and AAB file include filter`) will be copied.
+
+        Seperate patterns with a newline.
 
         Examples:
 
@@ -115,8 +115,6 @@ inputs:
         One filter per line. The step will **not** copy the generated APK files that match these filters into the Bitrise Deploy Directory.
         You can use this filter to avoid moving unaligned and/or unsigned apk files.
 
-        This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
-
         If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied.
 
         Example:
@@ -134,8 +132,6 @@ inputs:
         One filter per line. The step will **not** copy the generated apk files that match this filters into the Bitrise Deploy Directory.
         You can use this filter to avoid moving unalinged and/or unsigned apk files.
 
-        This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
-
         If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied.
 
         Example:
@@ -151,8 +147,6 @@ inputs:
       title: "Mapping file include filter"
       description: |
         The step will copy the generated mapping files that match this filter into the Bitrise Deploy Directory.
-
-        This filter is a standard find commands -path pattern, see: http://linux.die.net/man/1/find
 
         If you specify an empty filter, no mapping files will be copied.
 
@@ -170,8 +164,6 @@ inputs:
       description: |
         The step will **not** copy the generated mapping files that match this filter into the Bitrise Deploy Directory.
         You can use this step to avoid moving beta mapping file.
-
-        This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
 
         If you specify an empty filter, every mapping files (selected by `mapping_file_include_filter`) will be copied.
 

@@ -60,7 +60,7 @@ type Config struct {
 	GradleTasks              string `env:"gradle_task,required"`
 	GradlewPath              string `env:"gradlew_path,file"`
 	GradleOptions            string `env:"gradle_options"`
-	AppFileIncludeFilter     string `env:"app_file_include_filter"`
+	AppFileIncludeFilter     string `env:"app_file_include_filter,required"`
 	AppFileExcludeFilter     string `env:"app_file_exclude_filter"`
 	TestApkFileIncludeFilter string `env:"test_apk_file_include_filter"`
 	TestApkFileExcludeFilter string `env:"test_apk_file_exclude_filter"`
