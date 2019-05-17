@@ -18,8 +18,8 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
-	"github.com/bitrise-io/go-utils/sliceutil"
 	"github.com/kballard/go-shellquote"
+	"github.com/ryanuber/go-glob"
 )
 
 const failedToFindTargetWithHashString = `Failed to find target with hash string `
@@ -174,6 +174,49 @@ func find(dir, nameInclude, nameExclude string) ([]string, error) {
 	}
 
 	return files, nil
+}
+
+func filterEmpty(in []string) (out []string) {
+	for _, item := range in {
+		if strings.TrimSpace(item) != "" {
+			out = append(out, item)
+		}
+	}
+	return
+}
+
+func findArtifacts(searchDir string, generatedAfter time.Time, includePatterns []string, excludePatterns []string) ([]string, error) {
+	var artifacts []string
+	return artifacts, filepath.Walk(searchDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Warnf("failed to walk path: %s", err)
+			return nil
+		}
+
+		if info.IsDir() || info.ModTime().Before(generatedAfter) {
+			return nil
+		}
+
+		includeMatch := false
+		for _, includePattern := range includePatterns {
+			if glob.Glob(includePattern, path) {
+				includeMatch = true
+				break
+			}
+		}
+		if !includeMatch {
+			return nil
+		}
+
+		for _, excludePattern := range excludePatterns {
+			if glob.Glob(excludePattern, path) {
+				return nil
+			}
+		}
+
+		artifacts = append(artifacts, path)
+		return nil
+	})
 }
 
 func createDeployPth(deployDir, apkName string) (string, error) {
@@ -395,19 +438,16 @@ func main() {
 		}
 	}
 
-	var appFiles []string
-	for _, includeFilter := range includeFilters {
-		matches, err := find(".", includeFilter, configs.AppFileExcludeFilter)
-		if err != nil {
-			failf("Failed to find APK or AAB files, error: %s", err)
-		}
-		appFiles = append(appFiles, matches...)
+	appFiles, err := findArtifacts(".",
+		gradleStarted,
+		filterEmpty(strings.Split(configs.AppFileIncludeFilter, "\n")),
+		filterEmpty(strings.Split(configs.AppFileExcludeFilter, "\n")))
+	if err != nil {
+		failf("Failed to find APK or AAB files, error: %s", err)
 	}
-
 	if len(appFiles) == 0 {
 		log.Warnf("No file name matched app filters")
 	}
-	appFiles = sliceutil.UniqueStringSlice(appFiles)
 
 	var copiedApkFiles []string
 	var copiedAabFiles []string
