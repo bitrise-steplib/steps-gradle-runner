@@ -39,6 +39,14 @@
   pruneopts = "UT"
   revision = "95032a82bc518f77982ea72343cc1ade730072f0"
 
+[[projects]]
+  digest = "1:6baa565fe16f8657cf93469b2b8a6c61a277827734400d27e44d589547297279"
+  name = "github.com/ryanuber/go-glob"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "51a8f68e6c24dc43f1e371749c89a267de4ebc53"
+  version = "v1.0.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -51,6 +59,7 @@
     "github.com/bitrise-io/go-utils/pathutil",
     "github.com/bitrise-io/go-utils/retry",
     "github.com/kballard/go-shellquote",
+    "github.com/ryanuber/go-glob",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
