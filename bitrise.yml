@@ -214,7 +214,7 @@ workflows:
         inputs:
         - content: |-
             if [ ! -f $BITRISE_APK_PATH ]; then
-              echo "AAB not found at ${BITRISE_APK_PATH}"
+              echo "APK not found at ${BITRISE_APK_PATH}"
               exit 1
             fi
             echo "APK found at ${BITRISE_APK_PATH}"
