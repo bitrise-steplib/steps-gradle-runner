@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"sort"
 	"testing"
-	"time"
 )
 
 func Test_findArtifacts(t *testing.T) {
@@ -134,12 +133,9 @@ func Test_findArtifacts(t *testing.T) {
 				}
 				return currentTestDir
 			}
-			startTime := time.Now()
 			currentTestDir := setupFiles(tempDir, tt.filePaths)
 
-			got, err := findArtifacts(currentTestDir, startTime, tt.args.nameInclude, tt.args.nameExclude)
-
-			// got, err := find2(currentTestDir, tt.args.nameInclude, tt.args.nameExclude)
+			got, err := findArtifacts(currentTestDir, tt.args.nameInclude, tt.args.nameExclude)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("findArtifacts() error = %v, wantErr %v", err, tt.wantErr)
 				return

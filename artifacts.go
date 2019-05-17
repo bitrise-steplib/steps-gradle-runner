@@ -3,13 +3,12 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/ryanuber/go-glob"
 )
 
-func findArtifacts(searchDir string, generatedAfter time.Time, includePatterns []string, excludePatterns []string) ([]string, error) {
+func findArtifacts(searchDir string, includePatterns []string, excludePatterns []string) ([]string, error) {
 	var artifacts []string
 	return artifacts, filepath.Walk(searchDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -17,7 +16,7 @@ func findArtifacts(searchDir string, generatedAfter time.Time, includePatterns [
 			return err
 		}
 
-		if info.IsDir() || info.ModTime().Before(generatedAfter) {
+		if info.IsDir() {
 			return nil
 		}
 

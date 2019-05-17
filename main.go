@@ -396,7 +396,6 @@ func main() {
 	fmt.Println()
 	log.Infof("Move APK and AAB files...")
 	appFiles, err := findArtifacts(".",
-		gradleStarted,
 		filterEmpty(strings.Split(configs.AppFileIncludeFilter, "\n")),
 		filterEmpty(strings.Split(configs.AppFileExcludeFilter, "\n")))
 	if err != nil {
