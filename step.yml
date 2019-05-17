@@ -209,13 +209,13 @@ inputs:
       category: Deprecated
       title: "APK file include filter"
       description: |
-        This input is **DEPRECATED** - use the `APK and AAB file include filter` input instead
+        This input is **DEPRECATED** - use the `APK and AAB file include filter` input instead and set this input to empty value.
 
         The step will copy the generated APK files that match this filter into the Bitrise Deploy Directory.
 
         This filter is a standard find commands -path pattern, see: http://linux.die.net/man/1/find
 
-        If you specify an empty filter, the step will set this filter to: `*.apk`.
+        If you specify an empty filter, the new input "APK and AAB file include filter" will be used.
 
         Example:
 
@@ -235,14 +235,14 @@ inputs:
       category: Deprecated
       title: "APK file exclude filter"
       description: |
-        This input is **DEPRECATED** - use the `APK and AAB file exclude filter` input instead
+        This input is **DEPRECATED** - use the `APK and AAB file exclude filter` input instead and set this input to empty value.
 
         One filter per line. The step will **not** copy the generated APK files that match this filters into the Bitrise Deploy Directory.
         You can use this filter to avoid moving unalinged and/or unsigned apk files.
 
         This filter is a standard find commands negated -path flag, see: http://linux.die.net/man/1/find
 
-        If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied.
+        If you specify an empty filter, the new input "APK and AAB file exclude filter" will be used.
 
         Examples:
 

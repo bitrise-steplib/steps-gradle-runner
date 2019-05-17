@@ -201,25 +201,24 @@ func validateAndMigrateConfig(config *Config) error {
 		}
 	}
 
-	if config.ApkFileIncludeFilter != "" {
-		log.Warnf("Please use *APK and AAB file include filter* instead of *APK file include filter*.")
+	if strings.TrimSpace(config.ApkFileIncludeFilter) != "" {
+		log.Warnf(`Step input 'APK file include filter' (apk_file_include_filter) is deprectad and will be removed soon,
+use 'APK and AAB file include filter' (app_file_include_filter) instead.`)
 		fmt.Println()
-	}
-	if config.ApkFileExcludeFilter != "" {
-		log.Warnf("Please use *APK and AAB file exclude filter* instead of *APK file exclude filter*.")
-		fmt.Println()
-	}
-	if config.AppFileIncludeFilter != "" && config.ApkFileIncludeFilter != "" {
-		log.Infof("*APK file include filter* is used, *APK and AAB file include filter* is ignored.")
+		log.Infof(`'APK file include filter' (apk_file_include_filter) is used, 'APK and AAB file include filter' (app_file_include_filter) is ignored.
+Use 'APK and AAB file include filter' and set 'APK file include filter' to empty value.`)
 		fmt.Println()
 		config.AppFileIncludeFilter = config.ApkFileIncludeFilter
 	}
-	if config.AppFileExcludeFilter != "" && config.ApkFileExcludeFilter != "" {
-		log.Infof("*APK file exclude filter* is used, *APK and AAB file exclude filter* is ignored.")
+	if strings.TrimSpace(config.ApkFileExcludeFilter) != "" {
+		log.Warnf(`Step input 'APK file exclude filter' (apk_file_exclude_filter) is deprectad and will be removed soon,
+use 'APK and AAB file exclude filter' (app_file_exclude_filter) instead.`)
+		fmt.Println()
+		log.Infof(`'APK file exclude filter' (apk_file_exclude_filter) is used, 'APK and AAB file exclude filter' (app_file_exclude_filter) is ignored.
+Use 'APK and AAB file exclude filter' and set 'APK file exclude filter' to empty value.`)
 		fmt.Println()
 		config.AppFileExcludeFilter = config.ApkFileExcludeFilter
 	}
-
 	return nil
 }
 
