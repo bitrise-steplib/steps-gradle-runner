@@ -146,35 +146,6 @@ func computeMD5String(filePath string) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func find(dir, nameInclude, nameExclude string) ([]string, error) {
-	cmdSlice := []string{"find", dir}
-	cmdSlice = append(cmdSlice, "-path", nameInclude)
-
-	for _, exclude := range strings.Split(nameExclude, "\n") {
-		if strings.TrimSpace(exclude) != "" {
-			cmdSlice = append(cmdSlice, "!", "-path", exclude)
-		}
-	}
-
-	log.Printf(command.PrintableCommandArgs(false, cmdSlice))
-
-	out, err := command.New(cmdSlice[0], cmdSlice[1:]...).RunAndReturnTrimmedOutput()
-	if err != nil {
-		return []string{}, err
-	}
-
-	split := strings.Split(out, "\n")
-	files := []string{}
-	for _, item := range split {
-		trimmed := strings.TrimSpace(item)
-		if trimmed != "" {
-			files = append(files, trimmed)
-		}
-	}
-
-	return files, nil
-}
-
 func filterEmpty(in []string) (out []string) {
 	for _, item := range in {
 		if strings.TrimSpace(item) != "" {
@@ -464,7 +435,9 @@ func main() {
 		}
 	}
 
-	testApkFiles, err := find(".", configs.TestApkFileIncludeFilter, configs.TestApkFileExcludeFilter)
+	testApkFiles, err := findArtifacts(".",
+		filterEmpty(strings.Split(configs.TestApkFileIncludeFilter, "\n")),
+		filterEmpty(strings.Split(configs.TestApkFileExcludeFilter, "\n")))
 	if err != nil {
 		failf("Failed to find test apk files, error: %s", err)
 	}
@@ -510,7 +483,9 @@ func main() {
 
 	// Move mapping files
 	log.Infof("Move mapping files...")
-	mappingFiles, err := find(".", configs.MappingFileIncludeFilter, configs.MappingFileExcludeFilter)
+	mappingFiles, err := findArtifacts(".",
+		filterEmpty(strings.Split(configs.MappingFileIncludeFilter, "\n")),
+		filterEmpty(strings.Split(configs.MappingFileExcludeFilter, "\n")))
 	if err != nil {
 		failf("Failed to find mapping files, error: %s", err)
 	}
