@@ -16,9 +16,5 @@
   unused-packages = true
 
 [[constraint]]
-  name = "github.com/bitrise-steplib/steps-gradle-unit-test"
-  version = "1.0.6"
-
-[[constraint]]
   name = "github.com/bitrise-steplib/bitrise-step-android-unit-test"
   version = "1.0.0"
