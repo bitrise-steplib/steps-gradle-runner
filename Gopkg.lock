@@ -3,6 +3,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:39597fa9ece2a865436233a9ce80f148ab6d17237f004742c6b37703d6318960"
+  name = "github.com/bitrise-io/go-android"
+  packages = ["gradle"]
+  pruneopts = "UT"
+  revision = "34d6f20488bf0e2256c034c03a2a589a4a608e3f"
+
+[[projects]]
+  branch = "master"
   digest = "1:53c3bf4c89488ab7d4459f4c7bf694dd4e69a5f35bd4d154b11c9673ac2ce040"
   name = "github.com/bitrise-io/go-steputils"
   packages = [
@@ -15,7 +23,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3416319d7a94118f9ad0e5d2a2f406bc34584e2de5df2900e40aa4df32d3cd27"
+  digest = "1:9761fbdb8bcdd173324bb84c52cbb718506da23013f858fbc3a68596c16ba77d"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -27,9 +35,23 @@
     "pathutil",
     "pointers",
     "retry",
+    "sliceutil",
+    "ziputil",
   ]
   pruneopts = "UT"
   revision = "8898129615c9e407fc6b0e60ea882f2b18ec4dc2"
+
+[[projects]]
+  digest = "1:380e29697ba6bbe60aa96b59461ad988c56271a441ae06028d2b87b3d5e89735"
+  name = "github.com/bitrise-steplib/bitrise-step-android-unit-test"
+  packages = [
+    ".",
+    "cache",
+    "testaddon",
+  ]
+  pruneopts = "UT"
+  revision = "9d5c1d4e8630a28a5d0d4a23fd29f15b02d45d75"
+  version = "1.0.0"
 
 [[projects]]
   branch = "master"
@@ -58,6 +80,7 @@
     "github.com/bitrise-io/go-utils/log",
     "github.com/bitrise-io/go-utils/pathutil",
     "github.com/bitrise-io/go-utils/retry",
+    "github.com/bitrise-steplib/bitrise-step-android-unit-test",
     "github.com/kballard/go-shellquote",
     "github.com/ryanuber/go-glob",
   ]
