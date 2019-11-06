@@ -16,5 +16,5 @@
   unused-packages = true
 
 [[constraint]]
-  name = "github.com/bitrise-steplib/bitrise-step-android-unit-test"
-  version = "1.0.0"
+  name = "github.com/bitrise-io/go-android"
+  branch = "master"
