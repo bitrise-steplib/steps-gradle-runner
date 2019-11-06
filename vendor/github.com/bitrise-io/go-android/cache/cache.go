@@ -14,7 +14,10 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 )
 
-// Level ...
+// Level defines the extent to which caching should be used.
+// - LevelNone: no caching
+// - LevelDeps: only dependencies will be cached
+// - LevelAll: caching will include gradle and android build cache
 type Level string
 
 // Cache level
@@ -24,7 +27,10 @@ const (
 	LevelAll  = Level("all")
 )
 
-// Collect ...
+// Collect walks the directory tree underneath projectRoot and registers matching
+// paths for caching based on the value of cacheLevel. Returns an error if there
+// was an underlying error that would lead to a corrupted cache file, otherwise
+// the given path is skipped.
 func Collect(projectRoot string, cacheLevel Level) error {
 	if cacheLevel != LevelNone {
 		gradleCache := cache.New()
