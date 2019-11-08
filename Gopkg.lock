@@ -3,7 +3,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:53c3bf4c89488ab7d4459f4c7bf694dd4e69a5f35bd4d154b11c9673ac2ce040"
+  digest = "1:62d7c9d697947fc6fdba5989d9fddd70c3dd3c415bb0e4e2cbd42a3acdc3ca9f"
+  name = "github.com/bitrise-io/go-android"
+  packages = ["cache"]
+  pruneopts = "UT"
+  revision = "a28433b493561a6575fcec699f93f124d22150d1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:5e4f167418977858782db1d8820e8c2ccd368c8857e0806bcbd07d0bc09e1e38"
   name = "github.com/bitrise-io/go-steputils"
   packages = [
     "cache",
@@ -11,11 +19,11 @@
     "tools",
   ]
   pruneopts = "UT"
-  revision = "cecc766da84859e37e780d9d1c416f0f3993e6b1"
+  revision = "f540824d77dfd382ce84fd0ee0a9da2fba1cce0a"
 
 [[projects]]
   branch = "master"
-  digest = "1:3416319d7a94118f9ad0e5d2a2f406bc34584e2de5df2900e40aa4df32d3cd27"
+  digest = "1:ac36f3a24032ff200ada6cdc84bd53713607ab2926556bc5d2bb99b7dd902029"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -29,7 +37,7 @@
     "retry",
   ]
   pruneopts = "UT"
-  revision = "8898129615c9e407fc6b0e60ea882f2b18ec4dc2"
+  revision = "2c67c48e7086cfd8f9a29bfac2cd420d4dd1d2f9"
 
 [[projects]]
   branch = "master"
@@ -51,10 +59,9 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/bitrise-io/go-steputils/cache",
+    "github.com/bitrise-io/go-android/cache",
     "github.com/bitrise-io/go-steputils/stepconf",
     "github.com/bitrise-io/go-utils/command",
-    "github.com/bitrise-io/go-utils/fileutil",
     "github.com/bitrise-io/go-utils/log",
     "github.com/bitrise-io/go-utils/pathutil",
     "github.com/bitrise-io/go-utils/retry",

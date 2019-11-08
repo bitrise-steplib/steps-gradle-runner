@@ -14,3 +14,7 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "github.com/bitrise-io/go-android"
+  branch = "master"
