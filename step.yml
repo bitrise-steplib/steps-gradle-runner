@@ -13,6 +13,7 @@ project_type_tags:
   - react-native
   - cordova
   - ionic
+  - flutter
 type_tags:
   - build
 is_requires_admin_user: false
@@ -195,6 +196,14 @@ inputs:
 
         You can use multiple options, separated by a space
         character. Example: `--stacktrace --debug`
+  - retry_on_failure: "yes"
+    opts:
+      category: Debug
+      title: Retry failed Gradle command, in case of temporary failure (for example a network timeout).
+      description: Retry failed Gradle command, in case of temporary failure (for example a network timeout).
+      value_options:
+      - "no"
+      - "yes"
   - apk_file_include_filter: null
     opts:
       category: Deprecated
