@@ -97,3 +97,31 @@ func TestIsStringFoundInOutput_failedToFindBuildToolRevision(t *testing.T) {
 		}
 	}
 }
+
+func Test_isCouldNotFindInOutput(t *testing.T) {
+	tests := []struct {
+		name             string
+		outputToSearchIn string
+		want1            bool
+		want2            string
+	}{
+		{
+			name:             "should not retry if could not find google-services.json",
+			outputToSearchIn: `Could not find google-services.json while looking in [src/live/debug, src/debug, src/live]`,
+			want1:            false,
+		},
+		{
+			name:             "should retry if could not find",
+			outputToSearchIn: `Could not find sample`,
+			want1:            true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got1, _ := isCouldNotFindInOutput(tt.outputToSearchIn)
+			if got1 != tt.want1 {
+				t.Errorf("isStringFoundInOutput() = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}

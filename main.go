@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/md5"
 	"fmt"
 	"io"
 	"os"
@@ -11,19 +10,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bitrise-io/go-android/cache"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
-	"github.com/bitrise-io/go-android/cache"
 	"github.com/kballard/go-shellquote"
 )
 
 const failedToFindTargetWithHashString = `Failed to find target with hash string `
 const failedToFindBuildToolRevision = `Failed to find Build Tools revision `
 const failedToFindPlatformSDKWithPath = `Failed to find Platform SDK with path: `
-const couldNotFind = `Could not find `
 const couldNotHEAD = `Could not HEAD `
 const connectionTimedOut = `Connection timed out`
 const couldNotRead = `Could not read `
@@ -39,7 +37,6 @@ var automaticRetryReasonPatterns = []string{
 	failedToFindTargetWithHashString,
 	failedToFindBuildToolRevision,
 	failedToFindPlatformSDKWithPath,
-	couldNotFind,
 	couldNotHEAD,
 	connectionTimedOut,
 	couldNotRead,
@@ -52,13 +49,22 @@ var automaticRetryReasonPatterns = []string{
 	failedToDownloadSHA1ForResource,
 }
 
+func isCouldNotFindInOutput(outputToSearchIn string) (shouldRetry bool, retryReasonPattern string) {
+	retryReasonPattern = `(?i)Could not find ([^ ]*)`
+	r := regexp.MustCompile(retryReasonPattern)
+	matches := r.FindStringSubmatch(outputToSearchIn)
+	shouldRetry = len(matches) == 2 && matches[1] != "google-services.json"
+	return
+}
+
 // Config ...
 type Config struct {
 	// Gradle Inputs
-	GradleFile               string `env:"gradle_file"`
-	GradleTasks              string `env:"gradle_task,required"`
-	GradlewPath              string `env:"gradlew_path,file"`
-	GradleOptions            string `env:"gradle_options"`
+	GradleFile    string `env:"gradle_file"`
+	GradleTasks   string `env:"gradle_task,required"`
+	GradlewPath   string `env:"gradlew_path,file"`
+	GradleOptions string `env:"gradle_options"`
+	// Export config
 	AppFileIncludeFilter     string `env:"app_file_include_filter,required"`
 	AppFileExcludeFilter     string `env:"app_file_exclude_filter"`
 	TestApkFileIncludeFilter string `env:"test_apk_file_include_filter"`
@@ -66,10 +72,12 @@ type Config struct {
 	MappingFileIncludeFilter string `env:"mapping_file_include_filter"`
 	MappingFileExcludeFilter string `env:"mapping_file_exclude_filter"`
 
+	// Debug
+	CacheLevel     string `env:"cache_level,opt['all','only_deps','none']"`
+	RetryOnFailure bool   `env:"retry_on_failure,opt['yes','no]"`
+
 	// Other configs
 	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
-	// Cache configs
-	CacheLevel string `env:"cache_level,opt['all','only_deps','none']"`
 
 	// Deprecated
 	ApkFileIncludeFilter string `env:"apk_file_include_filter"`
@@ -77,12 +85,17 @@ type Config struct {
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
-	r, err := regexp.Compile("(?i)" + searchStr)
-	if err != nil {
-		log.Warnf("Failed to compile regexp: %s", err)
-		return false
-	}
+	r := regexp.MustCompile("(?i)" + searchStr)
 	return r.MatchString(outputToSearchIn)
+}
+
+func shouldRetry(outputToSearchIn string) (bool, string) {
+	for _, retryReasonPattern := range automaticRetryReasonPatterns {
+		if isStringFoundInOutput(retryReasonPattern, outputToSearchIn) {
+			return true, retryReasonPattern
+		}
+	}
+	return isCouldNotFindInOutput(outputToSearchIn)
 }
 
 func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetryOnReason bool) error {
@@ -114,35 +127,14 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetr
 	cmd.SetStderr(outWriter)
 	if err := cmd.Run(); err != nil {
 		if isAutomaticRetryOnReason {
-			for _, retryReasonPattern := range automaticRetryReasonPatterns {
-				if isStringFoundInOutput(retryReasonPattern, outBuffer.String()) {
-					log.Warnf("Automatic retry reason found in log: %s - retrying...", retryReasonPattern)
-					return runGradleTask(gradleTool, buildFile, tasks, options, false)
-				}
+			if isRetry, retryReasonPattern := shouldRetry(outBuffer.String()); isRetry {
+				log.Warnf("Automatic retry reason found in log: %s - retrying...", retryReasonPattern)
+				return runGradleTask(gradleTool, buildFile, tasks, options, false)
 			}
 		}
 		return err
 	}
 	return nil
-}
-
-func computeMD5String(filePath string) (string, error) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Errorf("Failed to close file(%s), error: %s", filePath, err)
-		}
-	}()
-
-	h := md5.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
 func filterEmpty(in []string) (out []string) {
@@ -255,7 +247,7 @@ func main() {
 	gradleStarted := time.Now()
 
 	log.Infof("Running gradle task...")
-	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, true); err != nil {
+	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.RetryOnFailure); err != nil {
 		failf("Gradle task failed, error: %s", err)
 	}
 
@@ -323,7 +315,7 @@ func main() {
 		if len(appFiles) != 0 {
 			lastCopiedFile := appFiles[len(appFiles)-1]
 			if err := exportEnvironmentWithEnvman(appEnv, lastCopiedFile); err != nil {
-				failf("Failed to export enviroment (%s), error: %s", appEnv, err)
+				failf("Failed to export environment (%s), error: %s", appEnv, err)
 			}
 			log.Donef("The app path is now available in the Environment Variable: $%s (value: %s)", appEnv, lastCopiedFile)
 		}
@@ -334,7 +326,7 @@ func main() {
 		if len(appFiles) != 0 {
 			appList := strings.Join(appFiles, "|")
 			if err := exportEnvironmentWithEnvman(appListEnv, appList); err != nil {
-				failf("Failed to export enviroment (%s), error: %s", appListEnv, err)
+				failf("Failed to export environment (%s), error: %s", appListEnv, err)
 			}
 			log.Donef("The app paths list is now available in the Environment Variable: $%s (value: %s)", appListEnv, appList)
 		}
@@ -383,7 +375,7 @@ func main() {
 	}
 	if lastCopiedTestApkFile != "" {
 		if err := exportEnvironmentWithEnvman("BITRISE_TEST_APK_PATH", lastCopiedTestApkFile); err != nil {
-			failf("Failed to export enviroment (BITRISE_TEST_APK_PATH), error: %s", err)
+			failf("Failed to export environment (BITRISE_TEST_APK_PATH), error: %s", err)
 		}
 		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_TEST_APK_PATH (value: %s)", lastCopiedTestApkFile)
 	}
@@ -434,7 +426,7 @@ func main() {
 
 	if lastCopiedMappingFile != "" {
 		if err := exportEnvironmentWithEnvman("BITRISE_MAPPING_PATH", lastCopiedMappingFile); err != nil {
-			failf("Failed to export enviroment (BITRISE_MAPPING_PATH), error: %s", err)
+			failf("Failed to export environment (BITRISE_MAPPING_PATH), error: %s", err)
 		}
 		log.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
 	}
