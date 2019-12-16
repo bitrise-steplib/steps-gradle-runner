@@ -22,7 +22,6 @@ import (
 const failedToFindTargetWithHashString = `Failed to find target with hash string `
 const failedToFindBuildToolRevision = `Failed to find Build Tools revision `
 const failedToFindPlatformSDKWithPath = `Failed to find Platform SDK with path: `
-const couldNotFind = `Could not find `
 const couldNotHEAD = `Could not HEAD `
 const connectionTimedOut = `Connection timed out`
 const couldNotRead = `Could not read `
@@ -38,7 +37,6 @@ var automaticRetryReasonPatterns = []string{
 	failedToFindTargetWithHashString,
 	failedToFindBuildToolRevision,
 	failedToFindPlatformSDKWithPath,
-	couldNotFind,
 	couldNotHEAD,
 	connectionTimedOut,
 	couldNotRead,
@@ -49,6 +47,14 @@ var automaticRetryReasonPatterns = []string{
 	causeErrorInOpeningZipFile,
 	failedToDownloadResource,
 	failedToDownloadSHA1ForResource,
+}
+
+func isCouldNotFindInOutput(outputToSearchIn string) (shouldRetry bool, retryReasonPattern string) {
+	retryReasonPattern = `Could not find ([^ ]*)`
+	r := regexp.MustCompile(retryReasonPattern)
+	matches := r.FindStringSubmatch(outputToSearchIn)
+	shouldRetry = len(matches) == 2 && matches[1] != "google-services.json"
+	return
 }
 
 // Config ...
@@ -87,6 +93,15 @@ func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
 	return r.MatchString(outputToSearchIn)
 }
 
+func shouldRetry(outputToSearchIn string) (bool, string) {
+	for _, retryReasonPattern := range automaticRetryReasonPatterns {
+		if isStringFoundInOutput(retryReasonPattern, outputToSearchIn) {
+			return true, retryReasonPattern
+		}
+	}
+	return isCouldNotFindInOutput(outputToSearchIn)
+}
+
 func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetryOnReason bool) error {
 	optionSlice, err := shellquote.Split(options)
 	if err != nil {
@@ -116,11 +131,9 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetr
 	cmd.SetStderr(outWriter)
 	if err := cmd.Run(); err != nil {
 		if isAutomaticRetryOnReason {
-			for _, retryReasonPattern := range automaticRetryReasonPatterns {
-				if isStringFoundInOutput(retryReasonPattern, outBuffer.String()) {
-					log.Warnf("Automatic retry reason found in log: %s - retrying...", retryReasonPattern)
-					return runGradleTask(gradleTool, buildFile, tasks, options, false)
-				}
+			if isRetry, retryReasonPattern := shouldRetry(outBuffer.String()); isRetry {
+				log.Warnf("Automatic retry reason found in log: %s - retrying...", retryReasonPattern)
+				return runGradleTask(gradleTool, buildFile, tasks, options, false)
 			}
 		}
 		return err
