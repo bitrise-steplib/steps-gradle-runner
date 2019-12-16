@@ -50,7 +50,7 @@ var automaticRetryReasonPatterns = []string{
 }
 
 func isCouldNotFindInOutput(outputToSearchIn string) (shouldRetry bool, retryReasonPattern string) {
-	retryReasonPattern = `Could not find ([^ ]*)`
+	retryReasonPattern = `(?i)Could not find ([^ ]*)`
 	r := regexp.MustCompile(retryReasonPattern)
 	matches := r.FindStringSubmatch(outputToSearchIn)
 	shouldRetry = len(matches) == 2 && matches[1] != "google-services.json"
@@ -85,11 +85,7 @@ type Config struct {
 }
 
 func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
-	r, err := regexp.Compile("(?i)" + searchStr)
-	if err != nil {
-		log.Warnf("Failed to compile regexp: %s", err)
-		return false
-	}
+	r := regexp.MustCompile("(?i)" + searchStr)
 	return r.MatchString(outputToSearchIn)
 }
 
