@@ -112,17 +112,13 @@ inputs:
       category: Export Config
       title: "Test APK file include filter"
       description: |
-        One filter per line. The step will **not** copy the generated APK files that match these filters into the Bitrise Deploy Directory.
-        You can use this filter to avoid moving unaligned and/or unsigned apk files.
-
-        If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied.
-
+        The step will copy the generated apk files that match this filter into the Bitrise Deploy Directory.
+        
         Example:
-
-        Do not copy the test APK file if its filename contains `unaligned`:
-
+        Copy every APK if its filename contains Test, like (./app/build/outputs/apk/app-debug-androidTest-unaligned.apk):
+        
         ```
-        *unaligned*.apk
+        *Test*.apk
         ```
   - test_apk_file_exclude_filter: ""
     opts:
