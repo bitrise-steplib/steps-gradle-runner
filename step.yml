@@ -113,11 +113,9 @@ inputs:
       title: "Test APK file include filter"
       description: |
         The step will copy the generated apk files that match this filter into the Bitrise Deploy Directory.
-        This filter is a standard find commands -path pattern, see: http://linux.die.net/man/1/find
-        If you specify an empty filter, the step will set this filter to: `*.apk`.
         
         Example:
-        Copy every apk which filename contains `Test`, like (`./app/build/outputs/apk/app-debug-androidTest-unaligned.apk`):
+        Copy every APK if its filename contains Test, like (./app/build/outputs/apk/app-debug-androidTest-unaligned.apk):
         
         ```
         *Test*.apk
