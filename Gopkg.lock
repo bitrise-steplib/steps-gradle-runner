@@ -7,7 +7,7 @@
   name = "github.com/bitrise-io/go-android"
   packages = ["cache"]
   pruneopts = "UT"
-  revision = "a28433b493561a6575fcec699f93f124d22150d1"
+  revision = "a765b1761418206bd0bda269bee472efc1a77c4d"
 
 [[projects]]
   branch = "master"
@@ -37,7 +37,7 @@
     "retry",
   ]
   pruneopts = "UT"
-  revision = "e212188d99b41373b4ff8b69e7b1f677bc427bde"
+  revision = "0c47c16813a4209321c9d0dba2e75867d6901ff2"
 
 [[projects]]
   branch = "master"
