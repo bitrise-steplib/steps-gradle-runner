@@ -177,6 +177,7 @@ workflows:
         - gradle_file: $GRADLE_FILE
         - gradle_task: $GRADLE_TASK
         - gradlew_path: $GRADLEW_PATH
+        - gradle_options: "--debug"
         - apk_file_include_filter: $APK_FILE_INCLUDE_FILTER
         - apk_file_exclude_filter: $APK_FILE_EXCLUDE_FILTER
         - mapping_file_include_filter: $MAPPING_FILE_INCLUDE_FILTER

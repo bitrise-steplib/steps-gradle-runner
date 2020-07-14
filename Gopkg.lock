@@ -23,7 +23,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e188bd4ff7f6418d9203ad4a49b23f18d0a7d1b96f4a30bbff6dfea9d75a5dc6"
+  digest = "1:83c16d4a9923aeba249410b220cc4bce408a048ee621644b0027c3690d2b4ca5"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -33,11 +33,61 @@
     "log",
     "parseutil",
     "pathutil",
+    "pkcs12",
+    "pkcs12/internal/rc2",
     "pointers",
     "retry",
+    "sliceutil",
   ]
   pruneopts = "UT"
   revision = "0c47c16813a4209321c9d0dba2e75867d6901ff2"
+
+[[projects]]
+  branch = "master"
+  digest = "1:25536a1adb812e180ba9cb88809206b2339b7e8a324f1e9bc41c1eb9a7c88cd1"
+  name = "github.com/bitrise-io/go-xcode"
+  packages = [
+    "certificateutil",
+    "exportoptions",
+    "models",
+    "plistutil",
+    "profileutil",
+    "utility",
+  ]
+  pruneopts = "UT"
+  revision = "44336c3652b214617ec3f4f8cc82054edf76cbb9"
+
+[[projects]]
+  branch = "master"
+  digest = "1:5a0a434e00ef880e792870fdff66cc1125472494b7d6e14666738125c339a043"
+  name = "github.com/bitrise-io/xcode-project"
+  packages = [
+    ".",
+    "pretty",
+    "serialized",
+    "xcodebuild",
+    "xcodeproj",
+    "xcscheme",
+    "xcworkspace",
+  ]
+  pruneopts = "UT"
+  revision = "9481b30b489b9eaf073c818fcf4817b5b3224285"
+
+[[projects]]
+  digest = "1:2e5190f947f18948a99839539a0db24d57f8f52b6a059317971e07f3bde4f876"
+  name = "github.com/bitrise-steplib/steps-xcode-archive"
+  packages = ["utils"]
+  pruneopts = "UT"
+  revision = "f9b8f6015ab17b8abf4bd9d829504dce349830ca"
+  version = "2.8.5"
+
+[[projects]]
+  branch = "master"
+  digest = "1:0bd05495dbd0567480e48eac9e6602d87875a8747b13c3c0fcb7c83c7c921776"
+  name = "github.com/fullsailor/pkcs7"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d7302db945fa6ea264fb79d8e13e931ea514a602"
 
 [[projects]]
   branch = "master"
@@ -48,6 +98,14 @@
   revision = "95032a82bc518f77982ea72343cc1ade730072f0"
 
 [[projects]]
+  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
+
+[[projects]]
   digest = "1:6baa565fe16f8657cf93469b2b8a6c61a277827734400d27e44d589547297279"
   name = "github.com/ryanuber/go-glob"
   packages = ["."]
@@ -55,16 +113,41 @@
   revision = "51a8f68e6c24dc43f1e371749c89a267de4ebc53"
   version = "v1.0.0"
 
+[[projects]]
+  digest = "1:a2c690dfee42801a26a0e88f69206feca8a3c2437fd476d84767468d7d7708e9"
+  name = "golang.org/x/text"
+  packages = [
+    "internal/gen",
+    "internal/triegen",
+    "internal/ucd",
+    "transform",
+    "unicode/cldr",
+    "unicode/norm",
+  ]
+  pruneopts = "UT"
+  revision = "23ae387dee1f90d29a23c0e87ee0b46038fbed0e"
+  version = "v0.3.3"
+
+[[projects]]
+  branch = "master"
+  digest = "1:b5ead2120cd278858a83be14ef551f54295da350033dbc3f227fe0298b880256"
+  name = "howett.net/plist"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "3b63eb3a43b59c776909681ed1fcb412b47d3c9a"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
     "github.com/bitrise-io/go-android/cache",
     "github.com/bitrise-io/go-steputils/stepconf",
+    "github.com/bitrise-io/go-utils/colorstring",
     "github.com/bitrise-io/go-utils/command",
     "github.com/bitrise-io/go-utils/log",
     "github.com/bitrise-io/go-utils/pathutil",
     "github.com/bitrise-io/go-utils/retry",
+    "github.com/bitrise-steplib/steps-xcode-archive/utils",
     "github.com/kballard/go-shellquote",
     "github.com/ryanuber/go-glob",
   ]

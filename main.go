@@ -12,10 +12,12 @@ import (
 
 	"github.com/bitrise-io/go-android/cache"
 	"github.com/bitrise-io/go-steputils/stepconf"
+	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
+	"github.com/bitrise-steplib/steps-xcode-archive/utils"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -32,6 +34,8 @@ const receivedStatusCode503 = `Received status code 503 from server: Service Tem
 const causeErrorInOpeningZipFile = `Cause: error in opening zip file.`
 const failedToDownloadResource = `Failed to download resource`
 const failedToDownloadSHA1ForResource = `Failed to download SHA1 for resource`
+const bitriseGradleResultsTextEnvKey = "BITRISE_GRADLE_RAW_RESULT_TEXT_PATH"
+const rawGradleResultFileName = "raw-gradle-output.log"
 
 var automaticRetryReasonPatterns = []string{
 	failedToFindTargetWithHashString,
@@ -98,7 +102,7 @@ func shouldRetry(outputToSearchIn string) (bool, string) {
 	return isCouldNotFindInOutput(outputToSearchIn)
 }
 
-func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetryOnReason bool) error {
+func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetryOnReason bool, destDir string) error {
 	optionSlice, err := shellquote.Split(options)
 	if err != nil {
 		return err
@@ -123,18 +127,71 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetr
 	outWriter := io.MultiWriter(os.Stdout, &outBuffer)
 
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
-	cmd.SetStdout(outWriter)
-	cmd.SetStderr(outWriter)
-	if err := cmd.Run(); err != nil {
+
+	if shouldSaveOutputToLogFile(optionSlice) {
+		cmd.SetStdout(&outBuffer)
+		cmd.SetStderr(&outBuffer)
+	} else {
+		cmd.SetStdout(outWriter)
+		cmd.SetStderr(outWriter)
+	}
+
+	err = cmd.Run()
+
+	if shouldSaveOutputToLogFile(optionSlice) {
+		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
+		saveRawLogToFile(outBuffer.String(), rawOutputLogPath)
+	}
+
+	if err != nil {
 		if isAutomaticRetryOnReason {
 			if isRetry, retryReasonPattern := shouldRetry(outBuffer.String()); isRetry {
 				log.Warnf("Automatic retry reason found in log: %s - retrying...", retryReasonPattern)
-				return runGradleTask(gradleTool, buildFile, tasks, options, false)
+				return runGradleTask(gradleTool, buildFile, tasks, options, false, destDir)
 			}
 		}
 		return err
 	}
 	return nil
+}
+
+// RunAndPersistOutput ...
+// func (m Model) RunAndPersistOutput(logPath string) error {
+// 	var outBuffer bytes.Buffer
+// 	m.SetStdout(&outBuffer)
+// 	m.SetStderr(&outBuffer)
+
+// 	cmdError := m.cmd.Run()
+// 	persistError := fileutil.WriteStringToFile(logPath, outbuffer.String())
+// 	if cmdError != nil {
+// 		return cmdError
+// 	}
+// 	return persistError
+// }
+
+// RunAndPersistOutput ...
+func runCommand(cmd command.Model, logPath string) error {
+
+}
+
+func shouldSaveOutputToLogFile(options []string) bool {
+	for _, option := range options {
+		if option == "--debug" || option == "-d" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func saveRawLogToFile(content, filePath string) {
+	if err := utils.ExportOutputFileContent(content, filePath, bitriseGradleResultsTextEnvKey); err != nil {
+		log.Warnf("Failed to export %s, error: %s", bitriseGradleResultsTextEnvKey, err)
+	} else {
+		log.Infof(colorstring.Magenta(fmt.Sprintf(`You can find the last couple of lines of Xcode's build log above, but the full log is also available in the %s
+The log file is stored in $BITRISE_DEPLOY_DIR, and its full path is available in the $%s environment variable
+(value: %s)`, rawGradleResultFileName, bitriseGradleResultsTextEnvKey, filePath)))
+	}
 }
 
 func filterEmpty(in []string) (out []string) {
@@ -247,7 +304,7 @@ func main() {
 	gradleStarted := time.Now()
 
 	log.Infof("Running gradle task...")
-	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.RetryOnFailure); err != nil {
+	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.RetryOnFailure, configs.DeployDir); err != nil {
 		failf("Gradle task failed, error: %s", err)
 	}
 
