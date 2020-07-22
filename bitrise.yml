@@ -55,6 +55,7 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: bundle
     - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: ""
     - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -68,6 +69,7 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: gradlew
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -80,6 +82,7 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug assembleRelease
     - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -92,6 +95,7 @@ workflows:
     - GRADLE_FILE: ./src/build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./src/gradlew
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -104,6 +108,7 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ""
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -116,6 +121,7 @@ workflows:
     - GRADLE_FILE: ""
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: "./gradlew"
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -128,6 +134,7 @@ workflows:
     - GRADLE_FILE: ""
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: "./gradlew"
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -238,6 +245,8 @@ workflows:
                 exit 1
             fi
             echo "Log file found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
+
+            envman add --key BITRISE_GRADLE_RAW_RESULT_TEXT_PATH --value ""
 
   # ----------------------------------------------------------------
   # --- Utility workflows
