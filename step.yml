@@ -193,8 +193,8 @@ inputs:
         You can use multiple options, separated by a space
         character. Example: `--stacktrace --debug`
 
-        If `--debug` or `-d` options are set then only last 20 lines of the raw gradle output will be visible in the build log.
-        The full raw output will be exported to the $BITRISE_GRADLE_RAW_RESULT_TEXT_PATH variable and will added as an artifact.
+        If `--debug` or `-d` options are set then only the last 20 lines of the raw gradle output will be visible in the build log.
+        The full raw output will be exported to the $BITRISE_GRADLE_RAW_RESULT_TEXT_PATH variable and will be added as an artifact.
   - retry_on_failure: "yes"
     opts:
       category: Debug
