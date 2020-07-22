@@ -40,12 +40,13 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
-    - $GRADLE_OPTIONS: "--debug"
+    - GRADLE_OPTIONS: "--debug"
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
     - _check_output_apk
+    - _check_log_output
 
   test-aab:
     description: "Use app filter input"
@@ -220,6 +221,23 @@ workflows:
               exit 1
             fi
             echo "APK found at ${BITRISE_APK_PATH}"
+  
+  _check_log_output:
+    steps:
+    - script:
+        title: Check if log file exists and environment variable is set
+        inputs:
+        - content: |-
+            if [ -z "$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH" ] ; then 
+              echo "BITRISE_GRADLE_RAW_RESULT_TEXT_PATH env is empty"
+              exit 1
+            fi
+
+            if [ ! -f $BITRISE_GRADLE_RAW_RESULT_TEXT_PATH ]; then
+                echo "Log file not found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
+                exit 1
+            fi
+            echo "Log file found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
 
   # ----------------------------------------------------------------
   # --- Utility workflows

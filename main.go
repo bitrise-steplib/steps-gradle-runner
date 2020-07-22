@@ -13,30 +13,30 @@ import (
 	"github.com/bitrise-io/go-android/cache"
 	"github.com/bitrise-io/go-steputils/commandhelper"
 	"github.com/bitrise-io/go-steputils/stepconf"
-	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
-	"github.com/bitrise-steplib/steps-xcode-archive/utils"
 	"github.com/kballard/go-shellquote"
 )
 
-const failedToFindTargetWithHashString = `Failed to find target with hash string `
-const failedToFindBuildToolRevision = `Failed to find Build Tools revision `
-const failedToFindPlatformSDKWithPath = `Failed to find Platform SDK with path: `
-const couldNotHEAD = `Could not HEAD `
-const connectionTimedOut = `Connection timed out`
-const couldNotRead = `Could not read `
-const couldNotGetResource = `Could not get resource `
-const couldNotGET = `Could not GET `
-const couldNotDownload = `Could not download `
-const receivedStatusCode503 = `Received status code 503 from server: Service Temporarily Unavailable`
-const causeErrorInOpeningZipFile = `Cause: error in opening zip file.`
-const failedToDownloadResource = `Failed to download resource`
-const failedToDownloadSHA1ForResource = `Failed to download SHA1 for resource`
-const bitriseGradleResultsTextEnvKey = "BITRISE_GRADLE_RAW_RESULT_TEXT_PATH"
-const rawGradleResultFileName = "raw-gradle-output.log"
+const (
+	failedToFindTargetWithHashString = `Failed to find target with hash string `
+	failedToFindBuildToolRevision    = `Failed to find Build Tools revision `
+	failedToFindPlatformSDKWithPath  = `Failed to find Platform SDK with path: `
+	couldNotHEAD                     = `Could not HEAD `
+	connectionTimedOut               = `Connection timed out`
+	couldNotRead                     = `Could not read `
+	couldNotGetResource              = `Could not get resource `
+	couldNotGET                      = `Could not GET `
+	couldNotDownload                 = `Could not download `
+	receivedStatusCode503            = `Received status code 503 from server: Service Temporarily Unavailable`
+	causeErrorInOpeningZipFile       = `Cause: error in opening zip file.`
+	failedToDownloadResource         = `Failed to download resource`
+	failedToDownloadSHA1ForResource  = `Failed to download SHA1 for resource`
+	bitriseGradleResultsTextEnvKey   = "BITRISE_GRADLE_RAW_RESULT_TEXT_PATH"
+	rawGradleResultFileName          = "raw-gradle-output.log"
+)
 
 var automaticRetryReasonPatterns = []string{
 	failedToFindTargetWithHashString,
@@ -158,16 +158,6 @@ func shouldSaveOutputToLogFile(options []string) bool {
 	}
 
 	return false
-}
-
-func saveRawLogToFile(content, filePath string) {
-	if err := utils.ExportOutputFileContent(content, filePath, bitriseGradleResultsTextEnvKey); err != nil {
-		log.Warnf("Failed to export %s, error: %s", bitriseGradleResultsTextEnvKey, err)
-	} else {
-		log.Infof(colorstring.Magenta(fmt.Sprintf(`You can find the last couple of lines of Xcode's build log above, but the full log is also available in the %s
-The log file is stored in $BITRISE_DEPLOY_DIR, and its full path is available in the $%s environment variable
-(value: %s)`, rawGradleResultFileName, bitriseGradleResultsTextEnvKey, filePath)))
-	}
 }
 
 func filterEmpty(in []string) (out []string) {
