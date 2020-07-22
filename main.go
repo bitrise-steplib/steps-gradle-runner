@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bitrise-io/go-android/cache"
+	"github.com/bitrise-io/go-steputils/commandhelper"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/command"
@@ -129,18 +130,12 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetr
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
 
 	if shouldSaveOutputToLogFile(optionSlice) {
-		cmd.SetStdout(&outBuffer)
-		cmd.SetStderr(&outBuffer)
+		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
+		err = commandhelper.RunAndExportOutput(*cmd, rawOutputLogPath, bitriseGradleResultsTextEnvKey, 20)
 	} else {
 		cmd.SetStdout(outWriter)
 		cmd.SetStderr(outWriter)
-	}
-
-	err = cmd.Run()
-
-	if shouldSaveOutputToLogFile(optionSlice) {
-		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
-		saveRawLogToFile(outBuffer.String(), rawOutputLogPath)
+		err = cmd.Run()
 	}
 
 	if err != nil {
@@ -153,25 +148,6 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetr
 		return err
 	}
 	return nil
-}
-
-// RunAndPersistOutput ...
-// func (m Model) RunAndPersistOutput(logPath string) error {
-// 	var outBuffer bytes.Buffer
-// 	m.SetStdout(&outBuffer)
-// 	m.SetStderr(&outBuffer)
-
-// 	cmdError := m.cmd.Run()
-// 	persistError := fileutil.WriteStringToFile(logPath, outbuffer.String())
-// 	if cmdError != nil {
-// 		return cmdError
-// 	}
-// 	return persistError
-// }
-
-// RunAndPersistOutput ...
-func runCommand(cmd command.Model, logPath string) error {
-
 }
 
 func shouldSaveOutputToLogFile(options []string) bool {

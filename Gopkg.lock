@@ -11,19 +11,21 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a6c4b93cbf1598f39f75f8eb10aad73caf515d130c945da2fb9eb96743b23dc7"
+  digest = "1:92f42a1574d0e63eb1bc668446b2be42978b7e5d144d9d7cc2d3d38875fb83f4"
   name = "github.com/bitrise-io/go-steputils"
   packages = [
     "cache",
+    "commandhelper",
+    "output",
     "stepconf",
     "tools",
   ]
   pruneopts = "UT"
-  revision = "94490ca44ddb645764676a94988f6fc7e3187383"
+  revision = "6d5afa53c7b85b6135e382105116d245b5997ace"
 
 [[projects]]
   branch = "master"
-  digest = "1:83c16d4a9923aeba249410b220cc4bce408a048ee621644b0027c3690d2b4ca5"
+  digest = "1:18a613e27e8ea1f3a870915e2e04289a0eb54374b0378ec3e7def1e7a570d6c3"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -38,6 +40,8 @@
     "pointers",
     "retry",
     "sliceutil",
+    "stringutil",
+    "ziputil",
   ]
   pruneopts = "UT"
   revision = "0c47c16813a4209321c9d0dba2e75867d6901ff2"
@@ -141,6 +145,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/bitrise-io/go-android/cache",
+    "github.com/bitrise-io/go-steputils/commandhelper",
     "github.com/bitrise-io/go-steputils/stepconf",
     "github.com/bitrise-io/go-utils/colorstring",
     "github.com/bitrise-io/go-utils/command",
