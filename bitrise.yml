@@ -181,6 +181,9 @@ workflows:
             git remote add origin "${SAMPLE_APP_URL}"
             git fetch || exit 1
             [[ -n "${COMMIT}" ]] && git checkout "${COMMIT}" || git checkout "${BRANCH}"
+    - install-missing-android-tools:
+        inputs:
+        - gradlew_path: $GRADLEW_PATH
     - path::./:
         inputs:
         - gradle_file: $GRADLE_FILE
