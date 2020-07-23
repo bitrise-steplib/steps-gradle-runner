@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bitrise-io/go-android/cache"
+	"github.com/bitrise-io/go-steputils/commandhelper"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
@@ -19,19 +20,23 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
-const failedToFindTargetWithHashString = `Failed to find target with hash string `
-const failedToFindBuildToolRevision = `Failed to find Build Tools revision `
-const failedToFindPlatformSDKWithPath = `Failed to find Platform SDK with path: `
-const couldNotHEAD = `Could not HEAD `
-const connectionTimedOut = `Connection timed out`
-const couldNotRead = `Could not read `
-const couldNotGetResource = `Could not get resource `
-const couldNotGET = `Could not GET `
-const couldNotDownload = `Could not download `
-const receivedStatusCode503 = `Received status code 503 from server: Service Temporarily Unavailable`
-const causeErrorInOpeningZipFile = `Cause: error in opening zip file.`
-const failedToDownloadResource = `Failed to download resource`
-const failedToDownloadSHA1ForResource = `Failed to download SHA1 for resource`
+const (
+	failedToFindTargetWithHashString = `Failed to find target with hash string `
+	failedToFindBuildToolRevision    = `Failed to find Build Tools revision `
+	failedToFindPlatformSDKWithPath  = `Failed to find Platform SDK with path: `
+	couldNotHEAD                     = `Could not HEAD `
+	connectionTimedOut               = `Connection timed out`
+	couldNotRead                     = `Could not read `
+	couldNotGetResource              = `Could not get resource `
+	couldNotGET                      = `Could not GET `
+	couldNotDownload                 = `Could not download `
+	receivedStatusCode503            = `Received status code 503 from server: Service Temporarily Unavailable`
+	causeErrorInOpeningZipFile       = `Cause: error in opening zip file.`
+	failedToDownloadResource         = `Failed to download resource`
+	failedToDownloadSHA1ForResource  = `Failed to download SHA1 for resource`
+	bitriseGradleResultsTextEnvKey   = "BITRISE_GRADLE_RAW_RESULT_TEXT_PATH"
+	rawGradleResultFileName          = "raw-gradle-output.log"
+)
 
 var automaticRetryReasonPatterns = []string{
 	failedToFindTargetWithHashString,
@@ -98,7 +103,7 @@ func shouldRetry(outputToSearchIn string) (bool, string) {
 	return isCouldNotFindInOutput(outputToSearchIn)
 }
 
-func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetryOnReason bool) error {
+func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetryOnReason bool, destDir string) error {
 	optionSlice, err := shellquote.Split(options)
 	if err != nil {
 		return err
@@ -123,18 +128,36 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetr
 	outWriter := io.MultiWriter(os.Stdout, &outBuffer)
 
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
-	cmd.SetStdout(outWriter)
-	cmd.SetStderr(outWriter)
-	if err := cmd.Run(); err != nil {
+
+	if shouldSaveOutputToLogFile(optionSlice) {
+		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
+		err = commandhelper.RunAndExportOutput(*cmd, rawOutputLogPath, bitriseGradleResultsTextEnvKey, 20)
+	} else {
+		cmd.SetStdout(outWriter)
+		cmd.SetStderr(outWriter)
+		err = cmd.Run()
+	}
+
+	if err != nil {
 		if isAutomaticRetryOnReason {
 			if isRetry, retryReasonPattern := shouldRetry(outBuffer.String()); isRetry {
 				log.Warnf("Automatic retry reason found in log: %s - retrying...", retryReasonPattern)
-				return runGradleTask(gradleTool, buildFile, tasks, options, false)
+				return runGradleTask(gradleTool, buildFile, tasks, options, false, destDir)
 			}
 		}
 		return err
 	}
 	return nil
+}
+
+func shouldSaveOutputToLogFile(options []string) bool {
+	for _, option := range options {
+		if option == "--debug" || option == "-d" {
+			return true
+		}
+	}
+
+	return false
 }
 
 func filterEmpty(in []string) (out []string) {
@@ -247,7 +270,7 @@ func main() {
 	gradleStarted := time.Now()
 
 	log.Infof("Running gradle task...")
-	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.RetryOnFailure); err != nil {
+	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.RetryOnFailure, configs.DeployDir); err != nil {
 		failf("Gradle task failed, error: %s", err)
 	}
 

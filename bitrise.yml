@@ -40,11 +40,13 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: "--debug"
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
     - _common
     - _check_output_apk
+    - _check_log_output
 
   test-aab:
     description: "Use app filter input"
@@ -53,6 +55,7 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: bundle
     - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: ""
     - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -66,6 +69,7 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: gradlew
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -78,6 +82,7 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug assembleRelease
     - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -90,6 +95,7 @@ workflows:
     - GRADLE_FILE: ./src/build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./src/gradlew
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -102,6 +108,7 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ""
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -114,6 +121,7 @@ workflows:
     - GRADLE_FILE: ""
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: "./gradlew"
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -126,6 +134,7 @@ workflows:
     - GRADLE_FILE: ""
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: "./gradlew"
+    - GRADLE_OPTIONS: ""
     - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
     - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
@@ -172,11 +181,15 @@ workflows:
             git remote add origin "${SAMPLE_APP_URL}"
             git fetch || exit 1
             [[ -n "${COMMIT}" ]] && git checkout "${COMMIT}" || git checkout "${BRANCH}"
+    - install-missing-android-tools:
+        inputs:
+        - gradlew_path: $GRADLEW_PATH
     - path::./:
         inputs:
         - gradle_file: $GRADLE_FILE
         - gradle_task: $GRADLE_TASK
         - gradlew_path: $GRADLEW_PATH
+        - gradle_options: $GRADLE_OPTIONS
         - apk_file_include_filter: $APK_FILE_INCLUDE_FILTER
         - apk_file_exclude_filter: $APK_FILE_EXCLUDE_FILTER
         - mapping_file_include_filter: $MAPPING_FILE_INCLUDE_FILTER
@@ -218,6 +231,25 @@ workflows:
               exit 1
             fi
             echo "APK found at ${BITRISE_APK_PATH}"
+  
+  _check_log_output:
+    steps:
+    - script:
+        title: Check if log file exists and environment variable is set
+        inputs:
+        - content: |-
+            if [ -z "$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH" ] ; then 
+              echo "BITRISE_GRADLE_RAW_RESULT_TEXT_PATH env is empty"
+              exit 1
+            fi
+
+            if [ ! -f $BITRISE_GRADLE_RAW_RESULT_TEXT_PATH ]; then
+                echo "Log file not found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
+                exit 1
+            fi
+            echo "Log file found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
+
+            envman add --key BITRISE_GRADLE_RAW_RESULT_TEXT_PATH --value ""
 
   # ----------------------------------------------------------------
   # --- Utility workflows
