@@ -1,0 +1,32 @@
+# github.com/bitrise-io/go-android v0.0.0-20200828081831-f3aa5d01386b
+## explicit
+github.com/bitrise-io/go-android/cache
+# github.com/bitrise-io/go-steputils v0.0.0-20200722085210-6d5afa53c7b8
+## explicit
+github.com/bitrise-io/go-steputils/cache
+github.com/bitrise-io/go-steputils/commandhelper
+github.com/bitrise-io/go-steputils/output
+github.com/bitrise-io/go-steputils/stepconf
+github.com/bitrise-io/go-steputils/tools
+# github.com/bitrise-io/go-utils v0.0.0-20200629150542-0c47c16813a4
+## explicit
+github.com/bitrise-io/go-utils/colorstring
+github.com/bitrise-io/go-utils/command
+github.com/bitrise-io/go-utils/errorutil
+github.com/bitrise-io/go-utils/fileutil
+github.com/bitrise-io/go-utils/log
+github.com/bitrise-io/go-utils/parseutil
+github.com/bitrise-io/go-utils/pathutil
+github.com/bitrise-io/go-utils/pointers
+github.com/bitrise-io/go-utils/retry
+github.com/bitrise-io/go-utils/stringutil
+github.com/bitrise-io/go-utils/ziputil
+# github.com/hashicorp/go-version v1.2.1
+## explicit
+github.com/hashicorp/go-version
+# github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
+## explicit
+github.com/kballard/go-shellquote
+# github.com/ryanuber/go-glob v1.0.0
+## explicit
+github.com/ryanuber/go-glob
