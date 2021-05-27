@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bitrise-io/go-android/cache"
+	utilscache "github.com/bitrise-io/go-steputils/cache"
 	"github.com/bitrise-io/go-steputils/commandhelper"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
@@ -277,7 +278,7 @@ func main() {
 	// Collecting caches
 	log.Infof("Collecting cache:")
 	const defaultProjectRoot = "."
-	if warning := cache.Collect(defaultProjectRoot, cache.Level(configs.CacheLevel)); warning != nil {
+	if warning := cache.Collect(defaultProjectRoot, utilscache.Level(configs.CacheLevel)); warning != nil {
 		log.Warnf("%s", warning)
 	}
 
