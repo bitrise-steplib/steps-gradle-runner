@@ -205,6 +205,14 @@ workflows:
             echo "[output] BITRISE_MAPPING_PATH: ${BITRISE_MAPPING_PATH}"
             echo "[output] BITRISE_CACHE_INCLUDE_PATHS: ${BITRISE_CACHE_INCLUDE_PATHS}"
             echo "[output] BITRISE_CACHE_EXCLUDE_PATHS: ${BITRISE_CACHE_EXCLUDE_PATHS}"
+            if [ -z "${BITRISE_CACHE_INCLUDE_PATHS}" ]; then
+              echo "Include paths are not set"
+              exit 1
+            fi
+            if [ -z "${BITRISE_CACHE_EXCLUDE_PATHS}" ]; then
+              echo "Exclude paths are not set"
+              exit 1
+            fi
             set -x
             ls -alh "$BITRISE_DEPLOY_DIR"
 
