@@ -277,8 +277,7 @@ func main() {
 
 	// Collecting caches
 	log.Infof("Collecting cache:")
-	const defaultProjectRoot = "."
-	if warning := cache.Collect(defaultProjectRoot, utilscache.Level(configs.CacheLevel)); warning != nil {
+	if warning := cache.Collect(filepath.Dir(gradlewPath), utilscache.Level(configs.CacheLevel)); warning != nil {
 		log.Warnf("%s", warning)
 	}
 
