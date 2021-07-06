@@ -1,0 +1,236 @@
+format_version: "11"
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+
+app:
+  envs:
+    # Shared test configs
+    - ANDROID_HOME: $ANDROID_HOME
+    - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
+    - BRANCH: master
+
+workflows:
+  test:
+    description: "CI workflow - this should always pass!"
+    envs:
+      - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - GRADLE_FILE: ./build.gradle
+      - GRADLE_TASK: assembleDebug
+      - GRADLEW_PATH: ./gradlew
+      - GRADLE_OPTIONS: "--debug"
+      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+      - _common
+      - _check_output_apk
+      - _check_log_output
+
+  test_aab:
+    description: "Use app filter input"
+    envs:
+      - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - GRADLE_FILE: ./build.gradle
+      - GRADLE_TASK: bundle
+      - GRADLEW_PATH: ./gradlew
+      - GRADLE_OPTIONS: ""
+      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+      - _common
+      - _check_output_aab
+
+  test_gradlew_path:
+    description: "CI workflow - this should always pass!"
+    envs:
+      - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - GRADLE_FILE: ./build.gradle
+      - GRADLE_TASK: assembleDebug
+      - GRADLEW_PATH: gradlew
+      - GRADLE_OPTIONS: ""
+      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+      - _common
+      - _check_output_apk
+
+  test_multiple_tasks:
+    envs:
+      - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - GRADLE_FILE: ./build.gradle
+      - GRADLE_TASK: assembleDebug assembleRelease
+      - GRADLEW_PATH: ./gradlew
+      - GRADLE_OPTIONS: ""
+      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+      - _common
+      - _check_output_apk
+
+  test_subdir:
+    envs:
+      - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22-subdir.git
+      - GRADLE_FILE: ./src/build.gradle
+      - GRADLE_TASK: assembleDebug
+      - GRADLEW_PATH: ./src/gradlew
+      - GRADLE_OPTIONS: ""
+      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+      - _common
+      - _check_output_apk
+
+  test-no-gradlew-error:
+    envs:
+      - SAMPLE_APP_URL: https://github.com/bitrise-samples/android-sdk22-no-gradlew.git
+      - GRADLE_FILE: ./build.gradle
+      - GRADLE_TASK: assembleDebug
+      - GRADLEW_PATH: ""
+      - GRADLE_OPTIONS: ""
+      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+      - _common
+      - _check_output_apk
+
+  test_no_root_buildfile:
+    envs:
+      - SAMPLE_APP_URL: https://github.com/bitrise-samples/android-empty-library.git
+      - GRADLE_FILE: ""
+      - GRADLE_TASK: assembleDebug
+      - GRADLEW_PATH: "./gradlew"
+      - GRADLE_OPTIONS: ""
+      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+      - _common
+      - _check_output_apk
+
+  test_apk_split:
+    envs:
+      - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-android-abi-split.git
+      - GRADLE_FILE: ""
+      - GRADLE_TASK: assembleDebug
+      - GRADLEW_PATH: "./gradlew"
+      - GRADLE_OPTIONS: ""
+      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+    after_run:
+      - _common
+      - _check_output_apk
+
+  test_gradle_kts:
+    envs:
+      - SAMPLE_APP_URL: https://github.com/bitrise-samples/android-gradle-kotlin-dsl.git
+      - GRADLE_FILE: "./build.gradle.kts"
+      - GRADLE_TASK: assembleDebug
+      - GRADLEW_PATH: "./gradlew"
+    after_run:
+      - _common
+      - _check_output_apk
+
+  _common:
+    steps:
+      - script:
+          title: recreate _tmp directory
+          inputs:
+            - content: rm -rf "$ORIG_BITRISE_SOURCE_DIR/_tmp" && mkdir "$ORIG_BITRISE_SOURCE_DIR/_tmp"
+      - change-workdir:
+          title: Switch working dir to _tmp dir
+          description: |-
+            To prevent step testing issues, like referencing relative
+            files with just './some-file', which would work for local tests
+            but not if the step is included in another bitrise.yml!
+          run_if: "true"
+          inputs:
+            - path: "$ORIG_BITRISE_SOURCE_DIR/_tmp"
+      - script:
+          inputs:
+            - content: |-
+                #!/usr/bin/env bash
+                if [[ -z "${SAMPLE_APP_URL}" ]]; then
+                  echo "error: there is no SAMPLE_APP_URL env var specified"
+                  exit 1
+                elif [[ -z "${COMMIT}" && -z "${BRANCH}" ]]; then
+                  echo "error: can't checkout: there is no BRANCH or COMMIT env var specified"
+                  exit 1
+                fi
+                git init
+                git remote add origin "${SAMPLE_APP_URL}"
+                git fetch || exit 1
+                [[ -n "${COMMIT}" ]] && git checkout "${COMMIT}" || git checkout "${BRANCH}"
+      - install-missing-android-tools:
+          inputs:
+            - gradlew_path: $GRADLEW_PATH
+      - path::./:
+          inputs:
+            - gradle_file: $GRADLE_FILE
+            - gradle_task: $GRADLE_TASK
+            - gradlew_path: $GRADLEW_PATH
+            - gradle_options: $GRADLE_OPTIONS
+            - apk_file_include_filter: $APK_FILE_INCLUDE_FILTER
+            - apk_file_exclude_filter: $APK_FILE_EXCLUDE_FILTER
+            - mapping_file_include_filter: $MAPPING_FILE_INCLUDE_FILTER
+            - mapping_file_exclude_filter: $MAPPING_FILE_EXCLUDE_FILTER
+      - script:
+          inputs:
+            - content: |-
+                #!/bin/bash
+                echo "[output] BITRISE_APK_PATH: ${BITRISE_APK_PATH}"
+                echo "[output] BITRISE_APK_PATH_LIST: ${BITRISE_APK_PATH_LIST}"
+                echo "[output] BITRISE_AAB_PATH: ${BITRISE_AAB_PATH}"
+                echo "[output] BITRISE_AAB_PATH_LIST: ${BITRISE_AAB_PATH_LIST}"
+                echo "[output] BITRISE_MAPPING_PATH: ${BITRISE_MAPPING_PATH}"
+                echo "[output] BITRISE_CACHE_INCLUDE_PATHS: ${BITRISE_CACHE_INCLUDE_PATHS}"
+                echo "[output] BITRISE_CACHE_EXCLUDE_PATHS: ${BITRISE_CACHE_EXCLUDE_PATHS}"
+                if [ -z "${BITRISE_CACHE_INCLUDE_PATHS}" ]; then
+                  echo "Include paths are not set"
+                  exit 1
+                fi
+                if [ -z "${BITRISE_CACHE_EXCLUDE_PATHS}" ]; then
+                  echo "Exclude paths are not set"
+                  exit 1
+                fi
+                set -x
+                ls -alh "$BITRISE_DEPLOY_DIR"
+
+  _check_output_aab:
+    steps:
+      - script:
+          title: Check if aab output exists
+          inputs:
+            - content: |-
+                if [ ! -f $BITRISE_AAB_PATH ]; then
+                  echo "AAB bundle not found at ${BITRISE_AAB_PATH}"
+                  exit 1
+                fi
+                echo "AAB bundle found at ${BITRISE_AAB_PATH}"
+
+  _check_output_apk:
+    steps:
+      - script:
+          title: Check if apk output exists
+          inputs:
+            - content: |-
+                if [ ! -f $BITRISE_APK_PATH ]; then
+                  echo "APK not found at ${BITRISE_APK_PATH}"
+                  exit 1
+                fi
+                echo "APK found at ${BITRISE_APK_PATH}"
+
+  _check_log_output:
+    steps:
+      - script:
+          title: Check if log file exists and environment variable is set
+          inputs:
+            - content: |-
+                if [ -z "$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH" ] ; then
+                  echo "BITRISE_GRADLE_RAW_RESULT_TEXT_PATH env is empty"
+                  exit 1
+                fi
+
+                if [ ! -f $BITRISE_GRADLE_RAW_RESULT_TEXT_PATH ]; then
+                    echo "Log file not found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
+                    exit 1
+                fi
+                echo "Log file found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
+
+                envman add --key BITRISE_GRADLE_RAW_RESULT_TEXT_PATH --value ""
