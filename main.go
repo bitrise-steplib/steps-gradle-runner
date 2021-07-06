@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -22,46 +21,9 @@ import (
 )
 
 const (
-	failedToFindTargetWithHashString = `Failed to find target with hash string `
-	failedToFindBuildToolRevision    = `Failed to find Build Tools revision `
-	failedToFindPlatformSDKWithPath  = `Failed to find Platform SDK with path: `
-	couldNotHEAD                     = `Could not HEAD `
-	connectionTimedOut               = `Connection timed out`
-	couldNotRead                     = `Could not read `
-	couldNotGetResource              = `Could not get resource `
-	couldNotGET                      = `Could not GET `
-	couldNotDownload                 = `Could not download `
-	receivedStatusCode503            = `Received status code 503 from server: Service Temporarily Unavailable`
-	causeErrorInOpeningZipFile       = `Cause: error in opening zip file.`
-	failedToDownloadResource         = `Failed to download resource`
-	failedToDownloadSHA1ForResource  = `Failed to download SHA1 for resource`
-	bitriseGradleResultsTextEnvKey   = "BITRISE_GRADLE_RAW_RESULT_TEXT_PATH"
-	rawGradleResultFileName          = "raw-gradle-output.log"
+	bitriseGradleResultsTextEnvKey = "BITRISE_GRADLE_RAW_RESULT_TEXT_PATH"
+	rawGradleResultFileName        = "raw-gradle-output.log"
 )
-
-var automaticRetryReasonPatterns = []string{
-	failedToFindTargetWithHashString,
-	failedToFindBuildToolRevision,
-	failedToFindPlatformSDKWithPath,
-	couldNotHEAD,
-	connectionTimedOut,
-	couldNotRead,
-	couldNotGetResource,
-	couldNotGET,
-	couldNotDownload,
-	receivedStatusCode503,
-	causeErrorInOpeningZipFile,
-	failedToDownloadResource,
-	failedToDownloadSHA1ForResource,
-}
-
-func isCouldNotFindInOutput(outputToSearchIn string) (shouldRetry bool, retryReasonPattern string) {
-	retryReasonPattern = `(?i)Could not find ([^ ]*)`
-	r := regexp.MustCompile(retryReasonPattern)
-	matches := r.FindStringSubmatch(outputToSearchIn)
-	shouldRetry = len(matches) == 2 && matches[1] != "google-services.json"
-	return
-}
 
 // Config ...
 type Config struct {
@@ -79,8 +41,7 @@ type Config struct {
 	MappingFileExcludeFilter string `env:"mapping_file_exclude_filter"`
 
 	// Debug
-	CacheLevel     string `env:"cache_level,opt['all','only_deps','none']"`
-	RetryOnFailure bool   `env:"retry_on_failure,opt['yes','no]"`
+	CacheLevel string `env:"cache_level,opt['all','only_deps','none']"`
 
 	// Other configs
 	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
@@ -90,21 +51,7 @@ type Config struct {
 	ApkFileExcludeFilter string `env:"apk_file_exclude_filter"`
 }
 
-func isStringFoundInOutput(searchStr, outputToSearchIn string) bool {
-	r := regexp.MustCompile("(?i)" + searchStr)
-	return r.MatchString(outputToSearchIn)
-}
-
-func shouldRetry(outputToSearchIn string) (bool, string) {
-	for _, retryReasonPattern := range automaticRetryReasonPatterns {
-		if isStringFoundInOutput(retryReasonPattern, outputToSearchIn) {
-			return true, retryReasonPattern
-		}
-	}
-	return isCouldNotFindInOutput(outputToSearchIn)
-}
-
-func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetryOnReason bool, destDir string) error {
+func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string) error {
 	optionSlice, err := shellquote.Split(options)
 	if err != nil {
 		return err
@@ -140,12 +87,6 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, isAutomaticRetr
 	}
 
 	if err != nil {
-		if isAutomaticRetryOnReason {
-			if isRetry, retryReasonPattern := shouldRetry(outBuffer.String()); isRetry {
-				log.Warnf("Automatic retry reason found in log: %s - retrying...", retryReasonPattern)
-				return runGradleTask(gradleTool, buildFile, tasks, options, false, destDir)
-			}
-		}
 		return err
 	}
 	return nil
@@ -271,7 +212,7 @@ func main() {
 	gradleStarted := time.Now()
 
 	log.Infof("Running gradle task...")
-	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.RetryOnFailure, configs.DeployDir); err != nil {
+	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.DeployDir); err != nil {
 		failf("Gradle task failed, error: %s", err)
 	}
 
