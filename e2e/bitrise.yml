@@ -4,7 +4,6 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 app:
   envs:
     # Shared test configs
-    - ANDROID_HOME: $ANDROID_HOME
     - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
     - BRANCH: master
 
