@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +12,7 @@ import (
 	"github.com/bitrise-io/go-steputils/commandhelper"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/errorutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
@@ -69,26 +68,26 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string)
 	cmdSlice = append(cmdSlice, taskSlice...)
 	cmdSlice = append(cmdSlice, optionSlice...)
 
-	log.Printf(command.PrintableCommandArgs(false, cmdSlice))
+	log.Infof("$ %s", command.PrintableCommandArgs(false, cmdSlice))
 	fmt.Println()
-
-	var outBuffer bytes.Buffer
-	outWriter := io.MultiWriter(os.Stdout, &outBuffer)
 
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
 
-	if shouldSaveOutputToLogFile(optionSlice) {
+	if shouldSaveOutputToLogFile(optionSlice) { // Do not write to stdout as debug log may contain sensitive information
 		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
-		err = commandhelper.RunAndExportOutput(*cmd, rawOutputLogPath, bitriseGradleResultsTextEnvKey, 20)
-	} else {
-		cmd.SetStdout(outWriter)
-		cmd.SetStderr(outWriter)
-		err = cmd.Run()
+		return commandhelper.RunAndExportOutput(*cmd, rawOutputLogPath, bitriseGradleResultsTextEnvKey, 20)
 	}
 
-	if err != nil {
-		return err
+	cmd.SetStdout(os.Stdout)
+	cmd.SetStderr(os.Stderr)
+	if err := cmd.Run(); err != nil {
+		if errorutil.IsExitStatusError(err) {
+			return err
+		}
+
+		return fmt.Errorf("could not run gradlew command: %v", err)
 	}
+
 	return nil
 }
 
@@ -213,7 +212,7 @@ func main() {
 
 	log.Infof("Running gradle task...")
 	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.DeployDir); err != nil {
-		failf("Gradle task failed, error: %s", err)
+		failf("Gradle task failed: %s", err)
 	}
 
 	// Collecting caches
