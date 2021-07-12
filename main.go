@@ -68,7 +68,8 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string)
 	cmdSlice = append(cmdSlice, taskSlice...)
 	cmdSlice = append(cmdSlice, optionSlice...)
 
-	log.Infof("$ %s", command.PrintableCommandArgs(false, cmdSlice))
+	fmt.Println()
+	log.Donef("$ %s", command.PrintableCommandArgs(false, cmdSlice))
 	fmt.Println()
 
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
@@ -216,6 +217,7 @@ func main() {
 	}
 
 	// Collecting caches
+	fmt.Println()
 	log.Infof("Collecting cache:")
 	if warning := cache.Collect(filepath.Dir(gradlewPath), utilscache.Level(configs.CacheLevel)); warning != nil {
 		log.Warnf("%s", warning)
