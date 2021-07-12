@@ -9,7 +9,7 @@ app:
 
 workflows:
   test:
-    description: "CI workflow - this should always pass!"
+    description: "Debug option specified"
     envs:
       - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
       - CLONE_INTO_DIR: .
@@ -17,7 +17,7 @@ workflows:
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: ./gradlew
       - GRADLE_OPTIONS: "--debug"
-      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
       - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
@@ -25,7 +25,7 @@ workflows:
       - _check_log_output
 
   test_aab:
-    description: "Use app filter input"
+    description: "App bundle (.aab)"
     envs:
       - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
       - CLONE_INTO_DIR: .
@@ -40,7 +40,7 @@ workflows:
       - _check_output_aab
 
   test_gradlew_path:
-    description: "CI workflow - this should always pass!"
+    description: "Use 'gradlew' as Gradle wrapper path"
     envs:
       - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
       - CLONE_INTO_DIR: .
@@ -48,7 +48,7 @@ workflows:
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: gradlew
       - GRADLE_OPTIONS: ""
-      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
       - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
@@ -62,13 +62,14 @@ workflows:
       - GRADLE_TASK: assembleDebug assembleRelease
       - GRADLEW_PATH: ./gradlew
       - GRADLE_OPTIONS: ""
-      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
       - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
       - _check_output_apk
 
   test_subdir:
+    description: "Source code is in a subdirectory"
     envs:
       - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
       - CLONE_INTO_DIR: ./src
@@ -76,9 +77,8 @@ workflows:
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: ./src/gradlew
       - GRADLE_OPTIONS: ""
-      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
       - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
-    # steps: {}
     after_run:
       - _common
       - _check_output_apk
@@ -91,7 +91,7 @@ workflows:
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: ""
       - GRADLE_OPTIONS: ""
-      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
       - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
@@ -105,7 +105,7 @@ workflows:
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: "./gradlew"
       - GRADLE_OPTIONS: ""
-      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
       - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
@@ -119,7 +119,7 @@ workflows:
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: "./gradlew"
       - GRADLE_OPTIONS: ""
-      - APK_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
+      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
       - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
@@ -160,13 +160,13 @@ workflows:
           inputs:
             - gradlew_path: $GRADLEW_PATH
       - path::./:
+          title: Self-test
           inputs:
             - gradle_file: $GRADLE_FILE
             - gradle_task: $GRADLE_TASK
             - gradlew_path: $GRADLEW_PATH
             - gradle_options: $GRADLE_OPTIONS
-            - apk_file_include_filter: $APK_FILE_INCLUDE_FILTER
-            - apk_file_exclude_filter: $APK_FILE_EXCLUDE_FILTER
+            - app_file_exclude_filter: $APP_FILE_EXCLUDE_FILTER
             - mapping_file_include_filter: $MAPPING_FILE_INCLUDE_FILTER
             - mapping_file_exclude_filter: $MAPPING_FILE_EXCLUDE_FILTER
       - script:
