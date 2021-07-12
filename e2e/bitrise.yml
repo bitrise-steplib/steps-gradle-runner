@@ -50,7 +50,6 @@ workflows:
       - GRADLE_OPTIONS: ""
     after_run:
       - _common
-      - _check_cache
 
   test_invalid_task_debug:
     steps:
@@ -78,7 +77,6 @@ workflows:
       - GRADLE_OPTIONS: "--debug"
     after_run:
       - _common
-      - _check_cache
       - _check_log_output
 
   test_aab:
