@@ -5,108 +5,164 @@ app:
   envs:
     # Shared test configs
     - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
-    - TEST_APP_BRANCH: master
+    - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
 
 workflows:
   test:
-    description: "Debug option specified"
+    description: Debug option specified
     envs:
-      - SAMPLE_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - TEST_APP_BRANCH: master
       - CLONE_INTO_DIR: .
       - GRADLE_FILE: ./build.gradle
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: ./gradlew
       - GRADLE_OPTIONS: "--debug"
-      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
-      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
+      - _check_cache
       - _check_output_apk
       - _check_log_output
 
-  test_aab:
-    description: "App bundle (.aab)"
+  test_invalid_task:
+    steps:
+      - script:
+          title: Start a failing workflow, wrapped in a script.
+          inputs:
+            - content: |-
+                #!/bin/env bash
+                set -x # Do not set -e as bitrise command is expected to fail
+                bitrise run --config=./e2e/bitrise.yml utility_test_invalid_task
+                if [ $? -ne 1 ] ; then
+                  echo "Workflow was excepted to fail, exit code not 1."
+                  exit 1
+                fi
+
+  utility_test_invalid_task:
+    description: Invalid task specified
     envs:
       - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - TEST_APP_BRANCH: master
+      - CLONE_INTO_DIR: .
+      - GRADLE_FILE: ./build.gradle
+      - GRADLE_TASK: nonexistentTask
+      - GRADLEW_PATH: ./gradlew
+      - GRADLE_OPTIONS: ""
+    after_run:
+      - _common
+      - _check_cache
+
+  test_invalid_task_debug:
+    steps:
+      - script:
+          title: Start a failing workflow, wrapped in a script.
+          inputs:
+            - content: |-
+                #!/bin/env bash
+                set -x # Do not set -e as bitrise command is expected to fail
+                bitrise run --config=./e2e/bitrise.yml utility_test_invalid_task_debug
+                if [ $? -ne 1 ] ; then
+                  echo "Workflow was excepted to fail, exit code not 1."
+                  exit 1
+                fi
+
+  utility_test_invalid_task_debug:
+    description: Invalid task specified
+    envs:
+      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - TEST_APP_BRANCH: master
+      - CLONE_INTO_DIR: .
+      - GRADLE_FILE: ./build.gradle
+      - GRADLE_TASK: nonexistentTask
+      - GRADLEW_PATH: ./gradlew
+      - GRADLE_OPTIONS: "--debug"
+    after_run:
+      - _common
+      - _check_cache
+      - _check_log_output
+
+  test_aab:
+    description: App bundle (.aab)
+    envs:
+      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - TEST_APP_BRANCH: master
       - CLONE_INTO_DIR: .
       - GRADLE_FILE: ./build.gradle
       - GRADLE_TASK: bundle
       - GRADLEW_PATH: ./gradlew
       - GRADLE_OPTIONS: ""
-      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
-      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
+      - _check_cache
       - _check_output_aab
 
   test_gradlew_path:
-    description: "Use 'gradlew' as Gradle wrapper path"
+    description: Use 'gradlew' as Gradle wrapper path
     envs:
       - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - TEST_APP_BRANCH: master
       - CLONE_INTO_DIR: .
       - GRADLE_FILE: ./build.gradle
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: gradlew
       - GRADLE_OPTIONS: ""
-      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
-      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
+      - _check_cache
       - _check_output_apk
 
   test_multiple_tasks:
     envs:
       - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - TEST_APP_BRANCH: master
       - CLONE_INTO_DIR: .
       - GRADLE_FILE: ./build.gradle
       - GRADLE_TASK: assembleDebug assembleRelease
       - GRADLEW_PATH: ./gradlew
       - GRADLE_OPTIONS: ""
-      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
-      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
+      - _check_cache
       - _check_output_apk
 
   test_subdir:
-    description: "Source code is in a subdirectory"
+    description: Source code is in a subdirectory
     envs:
       - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+      - TEST_APP_BRANCH: master
       - CLONE_INTO_DIR: ./src
       - GRADLE_FILE: ./src/build.gradle
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: ./src/gradlew
       - GRADLE_OPTIONS: ""
-      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
-      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
+      - _check_cache
       - _check_output_apk
 
   test-no-gradlew-error:
     envs:
       - TEST_APP_URL: https://github.com/bitrise-samples/android-sdk22-no-gradlew.git
+      - TEST_APP_BRANCH: master
       - CLONE_INTO_DIR: .
       - GRADLE_FILE: ./build.gradle
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: ""
       - GRADLE_OPTIONS: ""
-      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
-      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
+      - _check_cache
       - _check_output_apk
 
   test_no_root_buildfile:
     envs:
       - TEST_APP_URL: https://github.com/bitrise-samples/android-empty-library.git
+      - TEST_APP_BRANCH: master
       - CLONE_INTO_DIR: .
       - GRADLE_FILE: ""
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: "./gradlew"
       - GRADLE_OPTIONS: ""
-      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
-      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
       - _check_output_apk
@@ -114,26 +170,29 @@ workflows:
   test_apk_split:
     envs:
       - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-abi-split.git
+      - TEST_APP_BRANCH: master
       - CLONE_INTO_DIR: .
       - GRADLE_FILE: ""
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: "./gradlew"
       - GRADLE_OPTIONS: ""
-      - APP_FILE_EXCLUDE_FILTER: "*-unaligned.apk"
-      - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
     after_run:
       - _common
+      - _check_cache
       - _check_output_apk
 
   test_gradle_kts:
     envs:
       - TEST_APP_URL: https://github.com/bitrise-samples/android-gradle-kotlin-dsl.git
+      - TEST_APP_BRANCH: master
       - CLONE_INTO_DIR: .
       - GRADLE_FILE: "./build.gradle.kts"
       - GRADLE_TASK: assembleDebug
       - GRADLEW_PATH: "./gradlew"
+      - GRADLE_OPTIONS: ""
     after_run:
       - _common
+      - _check_cache
       - _check_output_apk
 
   _common:
@@ -166,10 +225,10 @@ workflows:
             - gradle_task: $GRADLE_TASK
             - gradlew_path: $GRADLEW_PATH
             - gradle_options: $GRADLE_OPTIONS
-            - app_file_exclude_filter: $APP_FILE_EXCLUDE_FILTER
             - mapping_file_include_filter: $MAPPING_FILE_INCLUDE_FILTER
-            - mapping_file_exclude_filter: $MAPPING_FILE_EXCLUDE_FILTER
       - script:
+          title: Log outputs
+          is_always_run: true
           inputs:
             - content: |-
                 #!/bin/bash
@@ -180,14 +239,7 @@ workflows:
                 echo "[output] BITRISE_MAPPING_PATH: ${BITRISE_MAPPING_PATH}"
                 echo "[output] BITRISE_CACHE_INCLUDE_PATHS: ${BITRISE_CACHE_INCLUDE_PATHS}"
                 echo "[output] BITRISE_CACHE_EXCLUDE_PATHS: ${BITRISE_CACHE_EXCLUDE_PATHS}"
-                if [ -z "${BITRISE_CACHE_INCLUDE_PATHS}" ]; then
-                  echo "Include paths are not set"
-                  exit 1
-                fi
-                if [ -z "${BITRISE_CACHE_EXCLUDE_PATHS}" ]; then
-                  echo "Exclude paths are not set"
-                  exit 1
-                fi
+
                 set -x
                 ls -alh "$BITRISE_DEPLOY_DIR"
 
@@ -195,6 +247,7 @@ workflows:
     steps:
       - script:
           title: Check if aab output exists
+          is_always_run: true
           inputs:
             - content: |-
                 if [ ! -f $BITRISE_AAB_PATH ]; then
@@ -207,6 +260,7 @@ workflows:
     steps:
       - script:
           title: Check if apk output exists
+          is_always_run: true
           inputs:
             - content: |-
                 if [ ! -f $BITRISE_APK_PATH ]; then
@@ -219,6 +273,7 @@ workflows:
     steps:
       - script:
           title: Check if log file exists and environment variable is set
+          is_always_run: true
           inputs:
             - content: |-
                 if [ -z "$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH" ] ; then
@@ -233,3 +288,19 @@ workflows:
                 echo "Log file found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
 
                 envman add --key BITRISE_GRADLE_RAW_RESULT_TEXT_PATH --value ""
+
+  _check_cache:
+    steps:
+      - script:
+          title: Check if cache env vars are set
+          is_always_run: true
+          inputs:
+            - content: |-
+                if [[ -z "${BITRISE_CACHE_INCLUDE_PATHS}" ]]; then
+                  echo "Include paths (BITRISE_CACHE_INCLUDE_PATHS) are not set"
+                  exit 1
+                fi
+                if [[ -z "${BITRISE_CACHE_EXCLUDE_PATHS}" ]]; then
+                  echo "Exclude paths (BITRISE_CACHE_EXCLUDE_PATHS) are not set"
+                  exit 1
+                fi
