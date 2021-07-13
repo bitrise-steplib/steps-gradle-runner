@@ -138,60 +138,60 @@ workflows:
       - _check_cache
       - _check_output_apk
 
-  test-no-gradlew-error:
-    envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/android-sdk22-no-gradlew.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ./build.gradle
-      - GRADLE_TASK: assembleDebug
-      - GRADLEW_PATH: ""
-      - GRADLE_OPTIONS: ""
-    after_run:
-      - _common
-      - _check_cache
-      - _check_output_apk
+  # test-no-gradlew-error:
+  #   envs:
+  #     - TEST_APP_URL: https://github.com/bitrise-samples/android-sdk22-no-gradlew.git
+  #     - TEST_APP_BRANCH: master
+  #     - CLONE_INTO_DIR: .
+  #     - GRADLE_FILE: ./build.gradle
+  #     - GRADLE_TASK: assembleDebug
+  #     - GRADLEW_PATH: ""
+  #     - GRADLE_OPTIONS: ""
+  #   after_run:
+  #     - _common
+  #     - _check_cache
+  #     - _check_output_apk
 
-  # Ouptuts an *.aar
-  test_no_root_buildfile:
-    envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/android-empty-library.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ""
-      - GRADLE_TASK: assembleDebug
-      - GRADLEW_PATH: "./gradlew"
-      - GRADLE_OPTIONS: ""
-    after_run:
-      - _common
+  # # Ouptuts an *.aar
+  # test_no_root_buildfile:
+  #   envs:
+  #     - TEST_APP_URL: https://github.com/bitrise-samples/android-empty-library.git
+  #     - TEST_APP_BRANCH: master
+  #     - CLONE_INTO_DIR: .
+  #     - GRADLE_FILE: ""
+  #     - GRADLE_TASK: assembleDebug
+  #     - GRADLEW_PATH: "./gradlew"
+  #     - GRADLE_OPTIONS: ""
+  #   after_run:
+  #     - _common
 
-  test_apk_split:
-    envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-abi-split.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ""
-      - GRADLE_TASK: assembleDebug
-      - GRADLEW_PATH: "./gradlew"
-      - GRADLE_OPTIONS: ""
-    after_run:
-      - _common
-      - _check_cache
-      - _check_output_apk
+  # test_apk_split:
+  #   envs:
+  #     - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-abi-split.git
+  #     - TEST_APP_BRANCH: master
+  #     - CLONE_INTO_DIR: .
+  #     - GRADLE_FILE: ""
+  #     - GRADLE_TASK: assembleDebug
+  #     - GRADLEW_PATH: "./gradlew"
+  #     - GRADLE_OPTIONS: ""
+  #   after_run:
+  #     - _common
+  #     - _check_cache
+  #     - _check_output_apk
 
-  test_gradle_kts:
-    envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/android-gradle-kotlin-dsl.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: "./build.gradle.kts"
-      - GRADLE_TASK: assembleDebug
-      - GRADLEW_PATH: "./gradlew"
-      - GRADLE_OPTIONS: ""
-    after_run:
-      - _common
-      - _check_cache
-      - _check_output_apk
+  # test_gradle_kts:
+  #   envs:
+  #     - TEST_APP_URL: https://github.com/bitrise-samples/android-gradle-kotlin-dsl.git
+  #     - TEST_APP_BRANCH: master
+  #     - CLONE_INTO_DIR: .
+  #     - GRADLE_FILE: "./build.gradle.kts"
+  #     - GRADLE_TASK: assembleDebug
+  #     - GRADLEW_PATH: "./gradlew"
+  #     - GRADLE_OPTIONS: ""
+  #   after_run:
+  #     - _common
+  #     - _check_cache
+  #     - _check_output_apk
 
   _common:
     steps:
