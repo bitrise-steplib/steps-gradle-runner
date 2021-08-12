@@ -128,14 +128,14 @@ func findDeployPth(deployDir, baseName, ext string) (string, error) {
 	retryApkName := baseName + ext
 
 	err := retry.Times(10).Wait(1 * time.Second).Try(func(attempt uint) error {
+		requestedPath := filepath.Join(deployDir, retryApkName)
 		if attempt > 0 {
-			log.Warnf("  Retrying...")
+			log.Warnf("Trying %s instead", requestedPath)
 		}
 
 		pth, pathErr := createDeployPth(deployDir, retryApkName)
 		if pathErr != nil {
-			log.Warnf("  %d attempt failed:", attempt+1)
-			log.Printf(pathErr.Error())
+			log.Warnf("Couldn't open %s for writing: %s", requestedPath, pathErr.Error())
 		}
 
 		t := time.Now()
@@ -254,15 +254,17 @@ func main() {
 		ext := filepath.Ext(appFile)
 		baseName := filepath.Base(appFile)
 		baseName = strings.TrimSuffix(baseName, ext)
+		fileName := baseName + ext
+
+		log.Printf("Copying %s --> %s", appFile, filepath.Join(configs.DeployDir, fileName))
 
 		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
 		if err != nil {
-			failf("Failed to create apk deploy path, error: %s", err)
+			failf("Failed to create deploy path for %s, error: %s", fileName, err)
 		}
 
-		log.Printf("copy %s to %s", appFile, deployPth)
 		if err := command.CopyFile(appFile, deployPth); err != nil {
-			failf("Failed to copy apk, error: %s", err)
+			failf("Failed to copy %s, error: %s", fileName, err)
 		}
 
 		switch strings.ToLower(ext) {
@@ -325,15 +327,17 @@ func main() {
 		ext := filepath.Ext(apkFile)
 		baseName := filepath.Base(apkFile)
 		baseName = strings.TrimSuffix(baseName, ext)
+		fileName := baseName + ext
+
+		log.Printf("Copying %s --> %s", apkFile, filepath.Join(configs.DeployDir, fileName))
 
 		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
 		if err != nil {
-			failf("Failed to create apk deploy path, error: %s", err)
+			failf("Failed to create deploy path for %s, error: %s", fileName, err)
 		}
 
-		log.Printf("copy %s to %s", apkFile, deployPth)
 		if err := command.CopyFile(apkFile, deployPth); err != nil {
-			failf("Failed to copy apk, error: %s", err)
+			failf("Failed to copy %s, error: %s", fileName, err)
 		}
 
 		lastCopiedTestApkFile = deployPth
@@ -375,15 +379,17 @@ func main() {
 		ext := filepath.Ext(mappingFile)
 		baseName := filepath.Base(mappingFile)
 		baseName = strings.TrimSuffix(baseName, ext)
+		fileName := baseName + ext
+
+		log.Printf("Copying %s --> %s", mappingFile, filepath.Join(configs.DeployDir, fileName))
 
 		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
 		if err != nil {
-			failf("Failed to create mapping deploy path, error: %s", err)
+			failf("Failed to create deploy path for %s, error: %s", fileName, err)
 		}
 
-		log.Printf("copy %s to %s", mappingFile, deployPth)
 		if err := command.CopyFile(mappingFile, deployPth); err != nil {
-			failf("Failed to copy mapping file, error: %s", err)
+			failf("Failed to copy %s, error: %s", fileName, err)
 		}
 
 		lastCopiedMappingFile = deployPth
