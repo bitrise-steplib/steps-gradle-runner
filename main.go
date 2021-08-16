@@ -128,14 +128,14 @@ func findDeployPth(deployDir, baseName, ext string) (string, error) {
 	retryApkName := baseName + ext
 
 	err := retry.Times(10).Wait(1 * time.Second).Try(func(attempt uint) error {
+		requestedPath := filepath.Join(deployDir, retryApkName)
 		if attempt > 0 {
-			log.Warnf("  Retrying...")
+			log.Warnf("Trying %s instead", requestedPath)
 		}
 
 		pth, pathErr := createDeployPth(deployDir, retryApkName)
 		if pathErr != nil {
-			log.Warnf("  %d attempt failed:", attempt+1)
-			log.Printf(pathErr.Error())
+			log.Warnf("Couldn't open %s for writing: %s", requestedPath, pathErr.Error())
 		}
 
 		t := time.Now()
@@ -151,7 +151,7 @@ func findDeployPth(deployDir, baseName, ext string) (string, error) {
 func validateAndMigrateConfig(config *Config) error {
 	if config.GradleFile != "" {
 		if exist, err := pathutil.IsPathExists(config.GradleFile); err != nil {
-			return fmt.Errorf("failed to check if GradleFile exists at: %s, error: %s", config.GradleFile, err)
+			return fmt.Errorf("failed to check if GradleFile exists at: %s: %s", config.GradleFile, err)
 		} else if !exist {
 			return fmt.Errorf("GradleFile does not exist at: %s", config.GradleFile)
 		}
@@ -202,11 +202,11 @@ func main() {
 
 	gradlewPath, err := filepath.Abs(configs.GradlewPath)
 	if err != nil {
-		failf("Can't get absolute path for gradlew file (%s), error: %s", configs.GradlewPath, err)
+		failf("Can't get absolute path for gradlew file (%s): %s", configs.GradlewPath, err)
 	}
 
 	if err := os.Chmod(gradlewPath, 0770); err != nil {
-		failf("Failed to add executable permission on gradlew file (%s), error: %s", gradlewPath, err)
+		failf("Failed to add executable permission on gradlew file (%s): %s", gradlewPath, err)
 	}
 
 	gradleStarted := time.Now()
@@ -232,7 +232,7 @@ func main() {
 			exclude: filterEmpty(strings.Split(configs.AppFileExcludeFilter, "\n")),
 		})
 	if err != nil {
-		failf("Failed to find APK or AAB files, error: %s", err)
+		failf("Failed to find APK or AAB files: %s", err)
 	}
 	if len(appFiles) == 0 {
 		log.Warnf("No file name matched app filters")
@@ -243,7 +243,7 @@ func main() {
 	for _, appFile := range appFiles {
 		fi, err := os.Lstat(appFile)
 		if err != nil {
-			failf("Failed to get file info, error: %s", err)
+			failf("Failed to get file info: %s", err)
 		}
 
 		if fi.ModTime().Before(gradleStarted) {
@@ -254,15 +254,17 @@ func main() {
 		ext := filepath.Ext(appFile)
 		baseName := filepath.Base(appFile)
 		baseName = strings.TrimSuffix(baseName, ext)
+		fileName := baseName + ext
+
+		log.Printf("Copying %s --> %s", appFile, filepath.Join(configs.DeployDir, fileName))
 
 		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
 		if err != nil {
-			failf("Failed to create apk deploy path, error: %s", err)
+			failf("Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		log.Printf("copy %s to %s", appFile, deployPth)
 		if err := command.CopyFile(appFile, deployPth); err != nil {
-			failf("Failed to copy apk, error: %s", err)
+			failf("Failed to copy %s: %s", fileName, err)
 		}
 
 		switch strings.ToLower(ext) {
@@ -280,7 +282,7 @@ func main() {
 		if len(appFiles) != 0 {
 			lastCopiedFile := appFiles[len(appFiles)-1]
 			if err := exportEnvironmentWithEnvman(appEnv, lastCopiedFile); err != nil {
-				failf("Failed to export environment (%s), error: %s", appEnv, err)
+				failf("Failed to export environment (%s): %s", appEnv, err)
 			}
 			log.Donef("The app path is now available in the Environment Variable: $%s (value: %s)", appEnv, lastCopiedFile)
 		}
@@ -291,7 +293,7 @@ func main() {
 		if len(appFiles) != 0 {
 			appList := strings.Join(appFiles, "|")
 			if err := exportEnvironmentWithEnvman(appListEnv, appList); err != nil {
-				failf("Failed to export environment (%s), error: %s", appListEnv, err)
+				failf("Failed to export environment (%s): %s", appListEnv, err)
 			}
 			log.Donef("The app paths list is now available in the Environment Variable: $%s (value: %s)", appListEnv, appList)
 		}
@@ -303,7 +305,7 @@ func main() {
 			exclude: filterEmpty(strings.Split(configs.TestApkFileExcludeFilter, "\n")),
 		})
 	if err != nil {
-		failf("Failed to find test apk files, error: %s", err)
+		failf("Failed to find test apk files: %s", err)
 	}
 
 	if len(testApkFiles) == 0 {
@@ -314,7 +316,7 @@ func main() {
 	for _, apkFile := range testApkFiles {
 		fi, err := os.Lstat(apkFile)
 		if err != nil {
-			failf("Failed to get file info, error: %s", err)
+			failf("Failed to get file info: %s", err)
 		}
 
 		if fi.ModTime().Before(gradleStarted) {
@@ -325,22 +327,24 @@ func main() {
 		ext := filepath.Ext(apkFile)
 		baseName := filepath.Base(apkFile)
 		baseName = strings.TrimSuffix(baseName, ext)
+		fileName := baseName + ext
+
+		log.Printf("Copying %s --> %s", apkFile, filepath.Join(configs.DeployDir, fileName))
 
 		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
 		if err != nil {
-			failf("Failed to create apk deploy path, error: %s", err)
+			failf("Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		log.Printf("copy %s to %s", apkFile, deployPth)
 		if err := command.CopyFile(apkFile, deployPth); err != nil {
-			failf("Failed to copy apk, error: %s", err)
+			failf("Failed to copy %s: %s", fileName, err)
 		}
 
 		lastCopiedTestApkFile = deployPth
 	}
 	if lastCopiedTestApkFile != "" {
 		if err := exportEnvironmentWithEnvman("BITRISE_TEST_APK_PATH", lastCopiedTestApkFile); err != nil {
-			failf("Failed to export environment (BITRISE_TEST_APK_PATH), error: %s", err)
+			failf("Failed to export environment (BITRISE_TEST_APK_PATH): %s", err)
 		}
 		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_TEST_APK_PATH (value: %s)", lastCopiedTestApkFile)
 	}
@@ -353,7 +357,7 @@ func main() {
 			exclude: filterEmpty(strings.Split(configs.MappingFileExcludeFilter, "\n")),
 		})
 	if err != nil {
-		failf("Failed to find mapping files, error: %s", err)
+		failf("Failed to find mapping files: %s", err)
 	}
 
 	if len(mappingFiles) == 0 {
@@ -364,7 +368,7 @@ func main() {
 	for _, mappingFile := range mappingFiles {
 		fi, err := os.Lstat(mappingFile)
 		if err != nil {
-			failf("Failed to get file info, error: %s", err)
+			failf("Failed to get file info: %s", err)
 		}
 
 		if fi.ModTime().Before(gradleStarted) {
@@ -375,15 +379,17 @@ func main() {
 		ext := filepath.Ext(mappingFile)
 		baseName := filepath.Base(mappingFile)
 		baseName = strings.TrimSuffix(baseName, ext)
+		fileName := baseName + ext
+
+		log.Printf("Copying %s --> %s", mappingFile, filepath.Join(configs.DeployDir, fileName))
 
 		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
 		if err != nil {
-			failf("Failed to create mapping deploy path, error: %s", err)
+			failf("Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		log.Printf("copy %s to %s", mappingFile, deployPth)
 		if err := command.CopyFile(mappingFile, deployPth); err != nil {
-			failf("Failed to copy mapping file, error: %s", err)
+			failf("Failed to copy %s: %s", fileName, err)
 		}
 
 		lastCopiedMappingFile = deployPth
@@ -391,7 +397,7 @@ func main() {
 
 	if lastCopiedMappingFile != "" {
 		if err := exportEnvironmentWithEnvman("BITRISE_MAPPING_PATH", lastCopiedMappingFile); err != nil {
-			failf("Failed to export environment (BITRISE_MAPPING_PATH), error: %s", err)
+			failf("Failed to export environment (BITRISE_MAPPING_PATH): %s", err)
 		}
 		log.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
 	}

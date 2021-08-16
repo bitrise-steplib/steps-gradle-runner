@@ -117,6 +117,7 @@ inputs:
   - app_file_exclude_filter: |
       *unaligned.apk
       *Test*.apk
+      */intermediates/*
     opts:
       category: Export Config
       title: "APK and AAB file exclude filter"
@@ -174,7 +175,7 @@ inputs:
         ```
         *mapping.txt
         ```
-  - mapping_file_exclude_filter:
+  - mapping_file_exclude_filter: "*/tmp/*"
     opts:
       category: Export Config
       title: "Mapping file exclude filter"
