@@ -3,304 +3,320 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
-    # Shared test configs
-    - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
-    - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+  # Shared test configs
+  - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
+  - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
 
 workflows:
   test:
     description: Debug option specified
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ./build.gradle
-      - GRADLE_TASK: assembleDebug
-      - GRADLEW_PATH: ./gradlew
-      - GRADLE_OPTIONS: "--debug"
+    - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: .
+    - GRADLE_FILE: ./build.gradle
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: "--debug"
     after_run:
-      - _common
-      - _check_cache
-      - _check_output_apk
-      - _check_log_output
+    - _common
+    - _check_cache
+    - _check_output_apk
+    - _check_log_output
 
   test_invalid_task:
     steps:
-      - script:
-          title: Start a failing workflow, wrapped in a script.
-          inputs:
-            - content: |-
-                #!/bin/env bash
-                set -x # Do not set -e as bitrise command is expected to fail
-                bitrise run --config=./e2e/bitrise.yml utility_test_invalid_task
-                if [ $? -ne 1 ] ; then
-                  echo "Workflow was excepted to fail, exit code not 1."
-                  exit 1
-                fi
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -x # Do not set -e as bitrise command is expected to fail
+            bitrise run --config=./e2e/bitrise.yml utility_test_invalid_task
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was excepted to fail, exit code not 1."
+              exit 1
+            fi
 
   utility_test_invalid_task:
     description: Invalid task specified
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ./build.gradle
-      - GRADLE_TASK: nonexistentTask
-      - GRADLEW_PATH: ./gradlew
-      - GRADLE_OPTIONS: ""
+    - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: .
+    - GRADLE_FILE: ./build.gradle
+    - GRADLE_TASK: nonexistentTask
+    - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: ""
     after_run:
-      - _common
+    - _common
 
   test_invalid_task_debug:
     steps:
-      - script:
-          title: Start a failing workflow, wrapped in a script.
-          inputs:
-            - content: |-
-                #!/bin/env bash
-                set -x # Do not set -e as bitrise command is expected to fail
-                bitrise run --config=./e2e/bitrise.yml utility_test_invalid_task_debug
-                if [ $? -ne 1 ] ; then
-                  echo "Workflow was excepted to fail, exit code not 1."
-                  exit 1
-                fi
+    - script:
+        title: Start a failing workflow, wrapped in a script.
+        inputs:
+        - content: |-
+            #!/bin/env bash
+            set -x # Do not set -e as bitrise command is expected to fail
+            bitrise run --config=./e2e/bitrise.yml utility_test_invalid_task_debug
+            if [ $? -ne 1 ] ; then
+              echo "Workflow was excepted to fail, exit code not 1."
+              exit 1
+            fi
 
   utility_test_invalid_task_debug:
     description: Invalid task specified
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ./build.gradle
-      - GRADLE_TASK: nonexistentTask
-      - GRADLEW_PATH: ./gradlew
-      - GRADLE_OPTIONS: "--debug"
+    - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: .
+    - GRADLE_FILE: ./build.gradle
+    - GRADLE_TASK: nonexistentTask
+    - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: "--debug"
     after_run:
-      - _common
-      - _check_log_output
+    - _common
+    - _check_log_output
 
   test_aab:
     description: App bundle (.aab)
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ./build.gradle
-      - GRADLE_TASK: bundle
-      - GRADLEW_PATH: ./gradlew
-      - GRADLE_OPTIONS: ""
+    - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: .
+    - GRADLE_FILE: ./build.gradle
+    - GRADLE_TASK: bundle
+    - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: ""
     after_run:
-      - _common
-      - _check_cache
-      - _check_output_aab
+    - _common
+    - _check_cache
+    - _check_output_aab
 
   test_gradlew_path:
     description: Use 'gradlew' as Gradle wrapper path
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ./build.gradle
-      - GRADLE_TASK: assembleDebug
-      - GRADLEW_PATH: gradlew
-      - GRADLE_OPTIONS: ""
+    - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: .
+    - GRADLE_FILE: ./build.gradle
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: gradlew
+    - GRADLE_OPTIONS: ""
     after_run:
-      - _common
-      - _check_cache
-      - _check_output_apk
+    - _common
+    - _check_cache
+    - _check_output_apk
 
   test_multiple_tasks:
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ./build.gradle
-      - GRADLE_TASK: assembleDebug assembleRelease
-      - GRADLEW_PATH: ./gradlew
-      - GRADLE_OPTIONS: ""
+    - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: .
+    - GRADLE_FILE: ./build.gradle
+    - GRADLE_TASK: assembleDebug assembleRelease
+    - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: ""
     after_run:
-      - _common
-      - _check_cache
-      - _check_output_apk
+    - _common
+    - _check_cache
+    - _check_output_apk
 
   test_subdir:
     description: Source code is in a subdirectory
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: ./src
-      - GRADLE_FILE: ./src/build.gradle
-      - GRADLE_TASK: assembleDebug
-      - GRADLEW_PATH: ./src/gradlew
-      - GRADLE_OPTIONS: ""
+    - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: ./src
+    - GRADLE_FILE: ./src/build.gradle
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: ./src/gradlew
+    - GRADLE_OPTIONS: ""
     after_run:
-      - _common
-      - _check_cache
-      - _check_output_apk
+    - _common
+    - _check_cache
+    - _check_output_apk
 
   test-no-gradlew-error:
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/android-sdk22-no-gradlew.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ./build.gradle
-      - GRADLE_TASK: assembleDebug
-      - GRADLEW_PATH: ""
-      - GRADLE_OPTIONS: ""
+    - TEST_APP_URL: https://github.com/bitrise-samples/android-sdk22-no-gradlew.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: .
+    - GRADLE_FILE: ./build.gradle
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: ""
+    - GRADLE_OPTIONS: ""
     after_run:
-      - _common
-      - _check_cache
-      - _check_output_apk
+    - _common
+    - _check_cache
+    - _check_output_apk
 
   # Ouptuts an *.aar
   test_no_root_buildfile:
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/android-empty-library.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ""
-      - GRADLE_TASK: assembleDebug
-      - GRADLEW_PATH: "./gradlew"
-      - GRADLE_OPTIONS: ""
+    - TEST_APP_URL: https://github.com/bitrise-samples/android-empty-library.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: .
+    - GRADLE_FILE: ""
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: "./gradlew"
+    - GRADLE_OPTIONS: ""
     after_run:
-      - _common
+    - _common
 
   test_apk_split:
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-abi-split.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: ""
-      - GRADLE_TASK: assembleDebug
-      - GRADLEW_PATH: "./gradlew"
-      - GRADLE_OPTIONS: ""
+    - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-abi-split.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: .
+    - GRADLE_FILE: ""
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: "./gradlew"
+    - GRADLE_OPTIONS: ""
     after_run:
-      - _common
-      - _check_cache
-      - _check_output_apk
+    - _common
+    - _check_cache
+    - _check_output_apk
 
   test_gradle_kts:
     envs:
-      - TEST_APP_URL: https://github.com/bitrise-samples/android-gradle-kotlin-dsl.git
-      - TEST_APP_BRANCH: master
-      - CLONE_INTO_DIR: .
-      - GRADLE_FILE: "./build.gradle.kts"
-      - GRADLE_TASK: assembleDebug
-      - GRADLEW_PATH: "./gradlew"
-      - GRADLE_OPTIONS: ""
+    - TEST_APP_URL: https://github.com/bitrise-samples/android-gradle-kotlin-dsl.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: .
+    - GRADLE_FILE: "./build.gradle.kts"
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: "./gradlew"
+    - GRADLE_OPTIONS: ""
     after_run:
-      - _common
-      - _check_cache
-      - _check_output_apk
+    - _common
+    - _check_cache
+    - _check_output_apk
 
   _common:
     steps:
-      - script:
-          title: recreate _tmp directory
-          inputs:
-            - content: rm -rf "$ORIG_BITRISE_SOURCE_DIR/_tmp" && mkdir "$ORIG_BITRISE_SOURCE_DIR/_tmp"
-      - change-workdir:
-          title: Switch working dir to _tmp dir
-          description: |-
-            To prevent step testing issues, like referencing relative
-            files with just './some-file', which would work for local tests
-            but not if the step is included in another bitrise.yml!
-          run_if: "true"
-          inputs:
-            - path: "$ORIG_BITRISE_SOURCE_DIR/_tmp"
-      - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
-          inputs:
-            - repository_url: $TEST_APP_URL
-            - clone_into_dir: $CLONE_INTO_DIR
-            - branch: $TEST_APP_BRANCH
-      - install-missing-android-tools:
-          inputs:
-            - gradlew_path: $GRADLEW_PATH
-      - path::./:
-          title: Self-test
-          inputs:
-            - gradle_file: $GRADLE_FILE
-            - gradle_task: $GRADLE_TASK
-            - gradlew_path: $GRADLEW_PATH
-            - gradle_options: $GRADLE_OPTIONS
-            - mapping_file_include_filter: $MAPPING_FILE_INCLUDE_FILTER
-      - script:
-          title: Log outputs
-          is_always_run: true
-          inputs:
-            - content: |-
-                #!/bin/bash
-                echo "[output] BITRISE_APK_PATH: ${BITRISE_APK_PATH}"
-                echo "[output] BITRISE_APK_PATH_LIST: ${BITRISE_APK_PATH_LIST}"
-                echo "[output] BITRISE_AAB_PATH: ${BITRISE_AAB_PATH}"
-                echo "[output] BITRISE_AAB_PATH_LIST: ${BITRISE_AAB_PATH_LIST}"
-                echo "[output] BITRISE_MAPPING_PATH: ${BITRISE_MAPPING_PATH}"
-                echo "[output] BITRISE_CACHE_INCLUDE_PATHS: ${BITRISE_CACHE_INCLUDE_PATHS}"
-                echo "[output] BITRISE_CACHE_EXCLUDE_PATHS: ${BITRISE_CACHE_EXCLUDE_PATHS}"
+    - script:
+        run_if: $.IsCI
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -ex
+            if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+              sudo update-alternatives --set javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac
+              sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+              export JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"
+              envman add --key JAVA_HOME --value "/usr/lib/jvm/java-11-openjdk-amd64"
+            elif [[ "$OSTYPE" == "darwin"* ]]; then
+              jenv global 11
+              export JAVA_HOME="$(jenv prefix)"
+              envman add --key JAVA_HOME --value "$(jenv prefix)"
+            fi
+    - script:
+        title: recreate _tmp directory
+        inputs:
+        - content: rm -rf "$ORIG_BITRISE_SOURCE_DIR/_tmp" && mkdir "$ORIG_BITRISE_SOURCE_DIR/_tmp"
+    - change-workdir:
+        title: Switch working dir to _tmp dir
+        description: |-
+          To prevent step testing issues, like referencing relative
+          files with just './some-file', which would work for local tests
+          but not if the step is included in another bitrise.yml!
+        run_if: "true"
+        inputs:
+        - path: "$ORIG_BITRISE_SOURCE_DIR/_tmp"
+    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
+        inputs:
+        - repository_url: $TEST_APP_URL
+        - clone_into_dir: $CLONE_INTO_DIR
+        - branch: $TEST_APP_BRANCH
+    - install-missing-android-tools:
+        inputs:
+        - gradlew_path: $GRADLEW_PATH
+    - path::./:
+        title: Self-test
+        inputs:
+        - gradle_file: $GRADLE_FILE
+        - gradle_task: $GRADLE_TASK
+        - gradlew_path: $GRADLEW_PATH
+        - gradle_options: $GRADLE_OPTIONS
+        - mapping_file_include_filter: $MAPPING_FILE_INCLUDE_FILTER
+    - script:
+        title: Log outputs
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/bash
+            echo "[output] BITRISE_APK_PATH: ${BITRISE_APK_PATH}"
+            echo "[output] BITRISE_APK_PATH_LIST: ${BITRISE_APK_PATH_LIST}"
+            echo "[output] BITRISE_AAB_PATH: ${BITRISE_AAB_PATH}"
+            echo "[output] BITRISE_AAB_PATH_LIST: ${BITRISE_AAB_PATH_LIST}"
+            echo "[output] BITRISE_MAPPING_PATH: ${BITRISE_MAPPING_PATH}"
+            echo "[output] BITRISE_CACHE_INCLUDE_PATHS: ${BITRISE_CACHE_INCLUDE_PATHS}"
+            echo "[output] BITRISE_CACHE_EXCLUDE_PATHS: ${BITRISE_CACHE_EXCLUDE_PATHS}"
 
-                set -x
-                ls -alh "$BITRISE_DEPLOY_DIR"
+            set -x
+            ls -alh "$BITRISE_DEPLOY_DIR"
 
   _check_output_aab:
     steps:
-      - script:
-          title: Check if aab output exists
-          is_always_run: true
-          inputs:
-            - content: |-
-                set -e
-                if [ ! -f "$BITRISE_AAB_PATH" ]; then
-                  echo "AAB bundle not found at '${BITRISE_AAB_PATH}'"
-                  exit 1
-                fi
-                echo "AAB bundle found at '${BITRISE_AAB_PATH}'"
+    - script:
+        title: Check if aab output exists
+        is_always_run: true
+        inputs:
+        - content: |-
+            set -e
+            if [ ! -f "$BITRISE_AAB_PATH" ]; then
+              echo "AAB bundle not found at '${BITRISE_AAB_PATH}'"
+              exit 1
+            fi
+            echo "AAB bundle found at '${BITRISE_AAB_PATH}'"
 
   _check_output_apk:
     steps:
-      - script:
-          title: Check if apk output exists
-          is_always_run: true
-          inputs:
-            - content: |-
-                set -e
-                if [ ! -f "$BITRISE_APK_PATH" ]; then
-                  echo "APK not found at '${BITRISE_APK_PATH}'"
-                  exit 1
-                fi
-                echo "APK found at '${BITRISE_APK_PATH}'"
+    - script:
+        title: Check if apk output exists
+        is_always_run: true
+        inputs:
+        - content: |-
+            set -e
+            if [ ! -f "$BITRISE_APK_PATH" ]; then
+              echo "APK not found at '${BITRISE_APK_PATH}'"
+              exit 1
+            fi
+            echo "APK found at '${BITRISE_APK_PATH}'"
 
   _check_log_output:
     steps:
-      - script:
-          title: Check if log file exists and environment variable is set
-          is_always_run: true
-          inputs:
-            - content: |-
-                if [ -z "$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH" ] ; then
-                  echo "BITRISE_GRADLE_RAW_RESULT_TEXT_PATH env is empty"
-                  exit 1
-                fi
+    - script:
+        title: Check if log file exists and environment variable is set
+        is_always_run: true
+        inputs:
+        - content: |-
+            if [ -z "$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH" ] ; then
+              echo "BITRISE_GRADLE_RAW_RESULT_TEXT_PATH env is empty"
+              exit 1
+            fi
 
-                if [ ! -f "$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH" ]; then
-                    echo "Log file not found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
-                    exit 1
-                fi
-                echo "Log file found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
+            if [ ! -f "$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH" ]; then
+                echo "Log file not found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
+                exit 1
+            fi
+            echo "Log file found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
 
-                envman add --key BITRISE_GRADLE_RAW_RESULT_TEXT_PATH --value ""
+            envman add --key BITRISE_GRADLE_RAW_RESULT_TEXT_PATH --value ""
 
   _check_cache:
     steps:
-      - script:
-          title: Check if cache env vars are set
-          is_always_run: true
-          inputs:
-            - content: |-
-                if [ -z "${BITRISE_CACHE_INCLUDE_PATHS}" ]; then
-                  echo "Include paths (BITRISE_CACHE_INCLUDE_PATHS) are not set"
-                  exit 1
-                fi
-                if [ -z "${BITRISE_CACHE_EXCLUDE_PATHS}" ]; then
-                  echo "Exclude paths (BITRISE_CACHE_EXCLUDE_PATHS) are not set"
-                  exit 1
-                fi
+    - script:
+        title: Check if cache env vars are set
+        is_always_run: true
+        inputs:
+        - content: |-
+            if [ -z "${BITRISE_CACHE_INCLUDE_PATHS}" ]; then
+              echo "Include paths (BITRISE_CACHE_INCLUDE_PATHS) are not set"
+              exit 1
+            fi
+            if [ -z "${BITRISE_CACHE_EXCLUDE_PATHS}" ]; then
+              echo "Exclude paths (BITRISE_CACHE_EXCLUDE_PATHS) are not set"
+              exit 1
+            fi
