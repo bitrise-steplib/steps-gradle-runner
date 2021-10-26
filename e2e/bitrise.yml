@@ -17,7 +17,7 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
-    - GRADLE_OPTIONS: "--debug"
+    - GRADLE_OPTIONS: --debug
     after_run:
     - _common
     - _check_cache
@@ -74,7 +74,7 @@ workflows:
     - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: nonexistentTask
     - GRADLEW_PATH: ./gradlew
-    - GRADLE_OPTIONS: "--debug"
+    - GRADLE_OPTIONS: --debug
     after_run:
     - _common
     - _check_log_output
@@ -160,7 +160,7 @@ workflows:
     - CLONE_INTO_DIR: .
     - GRADLE_FILE: ""
     - GRADLE_TASK: assembleDebug
-    - GRADLEW_PATH: "./gradlew"
+    - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
     after_run:
     - _common
@@ -172,7 +172,7 @@ workflows:
     - CLONE_INTO_DIR: .
     - GRADLE_FILE: ""
     - GRADLE_TASK: assembleDebug
-    - GRADLEW_PATH: "./gradlew"
+    - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
     after_run:
     - _common
@@ -184,9 +184,9 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/android-gradle-kotlin-dsl.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: .
-    - GRADLE_FILE: "./build.gradle.kts"
+    - GRADLE_FILE: ./build.gradle.kts
     - GRADLE_TASK: assembleDebug
-    - GRADLEW_PATH: "./gradlew"
+    - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
     after_run:
     - _common
@@ -223,7 +223,7 @@ workflows:
           but not if the step is included in another bitrise.yml!
         run_if: "true"
         inputs:
-        - path: "$ORIG_BITRISE_SOURCE_DIR/_tmp"
+        - path: $ORIG_BITRISE_SOURCE_DIR/_tmp
     - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
         inputs:
         - repository_url: $TEST_APP_URL
