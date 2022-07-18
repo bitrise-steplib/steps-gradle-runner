@@ -40,7 +40,6 @@ description: |-
 
   * [Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html)
   * [Caching Gradle](https://devcenter.bitrise.io/builds/caching/caching-gradle/)
-  * [Gradle Runner vs Android Build](https://devcenter.bitrise.io/tips-and-tricks/android-tips-and-tricks/#gradle-runner-vs-android-build)
 
   ### Related Steps
 
