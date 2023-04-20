@@ -21,4 +21,5 @@ You can also set up file path filters to avoid exporting unwanted archives or ma
     - test_apk_file_exclude_filter: "*/immediate/*"
     - mapping_file_include_filter: "*/mapping.txt"
     - mapping_file_exclude_filter: "*/tmp/*"
+    - export_gradle_log: true
 ```
