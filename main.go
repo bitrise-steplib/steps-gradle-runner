@@ -38,6 +38,7 @@ type Config struct {
 	TestApkFileExcludeFilter string `env:"test_apk_file_exclude_filter"`
 	MappingFileIncludeFilter string `env:"mapping_file_include_filter"`
 	MappingFileExcludeFilter string `env:"mapping_file_exclude_filter"`
+	ExportBuildLog bool `env:"export_gradle_log"`
 
 	// Debug
 	CacheLevel string `env:"cache_level,opt['all','only_deps','none']"`
@@ -50,7 +51,7 @@ type Config struct {
 	ApkFileExcludeFilter string `env:"apk_file_exclude_filter"`
 }
 
-func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string) error {
+func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string, exportBuildLog bool) error {
 	optionSlice, err := shellquote.Split(options)
 	if err != nil {
 		return err
@@ -74,7 +75,7 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string)
 
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
 
-	if shouldSaveOutputToLogFile(optionSlice) { // Do not write to stdout as debug log may contain sensitive information
+	if shouldSaveOutputToLogFile(optionSlice) || exportBuildLog { // Do not write to stdout as debug log may contain sensitive information
 		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
 		return commandhelper.RunAndExportOutput(*cmd, rawOutputLogPath, bitriseGradleResultsTextEnvKey, 20)
 	}
@@ -212,7 +213,7 @@ func main() {
 	gradleStarted := time.Now()
 
 	log.Infof("Running gradle task...")
-	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.DeployDir); err != nil {
+	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.DeployDir, configs.ExportBuildLog); err != nil {
 		failf("Gradle task failed: %s", err)
 	}
 
