@@ -75,9 +75,14 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string,
 
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
 
-	if shouldSaveOutputToLogFile(optionSlice) || exportBuildLog { // Do not write to stdout as debug log may contain sensitive information
+	if shouldSaveOutputToLogFile(optionSlice) { // Do not write to stdout as debug log may contain sensitive information
 		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
 		return commandhelper.RunAndExportOutput(*cmd, rawOutputLogPath, bitriseGradleResultsTextEnvKey, 20)
+	}
+
+	if exportBuildLog { 
+		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
+		return commandhelper.RunAndExportFullOutput(*cmd, rawOutputLogPath, bitriseGradleResultsTextEnvKey)
 	}
 
 	cmd.SetStdout(os.Stdout)

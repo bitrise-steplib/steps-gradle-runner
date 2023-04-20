@@ -193,8 +193,7 @@ inputs:
     category: Export Config
     title: Export gradle log
     description: |
-      If `true` then only the last 20 lines of the raw gradle output will be visible in the build log. 
-      The full raw output will be exported to the `$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH` variable and will be added as an artifact.
+      If `true` then the full raw output will be exported to the `$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH` variable and will be added as an artifact.
 - cache_level: only_deps
   opts:
     category: Debug
