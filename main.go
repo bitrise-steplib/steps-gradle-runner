@@ -16,6 +16,10 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
+	v2command "github.com/bitrise-io/go-utils/v2/command"
+	v2pathutil "github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-steplib/steps-gradle-runner/metrics"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -400,5 +404,15 @@ func main() {
 			failf("Failed to export environment (BITRISE_MAPPING_PATH): %s", err)
 		}
 		log.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
+	}
+
+	// Metrics collection
+	cmdFactory := v2command.NewFactory(env.NewRepository())
+	pathProvider := v2pathutil.NewPathProvider()
+	collector := metrics.NewMetricsCollector(cmdFactory, pathProvider, gradlewPath)
+
+	err = collector.CollectMetrics()
+	if err != nil {
+		log.Warnf("Metrics collection failed: %s", err)
 	}
 }

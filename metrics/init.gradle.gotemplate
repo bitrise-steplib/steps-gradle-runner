@@ -1,0 +1,30 @@
+initscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'io.bitrise.gradle:remote-cache:{{ .Version }}'
+    }
+}
+
+import io.bitrise.gradle.cache.BitriseBuildCache
+import io.bitrise.gradle.cache.BitriseBuildCacheServiceFactory
+
+gradle.settingsEvaluated { settings ->
+    settings.buildCache {
+        local {
+            enabled = false
+        }
+
+        registerBuildCacheService(BitriseBuildCache.class, BitriseBuildCacheServiceFactory.class)
+        remote(BitriseBuildCache.class) {
+            endpoint = '{{ .Endpoint }}'
+            authToken = '{{ .AuthToken }}'
+            enabled = true
+            push = {{ .PushEnabled }}
+            debug = {{ .DebugEnabled }}
+            blobValidationLevel = '{{ .ValidationLevel }}'
+        }
+    }
+}

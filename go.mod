@@ -1,13 +1,18 @@
 module github.com/bitrise-steplib/steps-gradle-runner
 
-go 1.16
+go 1.18
 
 require (
-	github.com/bitrise-io/go-android v0.0.0-20210527143215-3ad22ad02e2e
-	github.com/bitrise-io/go-steputils v0.0.0-20210527075147-910ce7a105a1
-	github.com/bitrise-io/go-utils v0.0.0-20210713111255-08be784d45d0
-	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
+	github.com/bitrise-io/go-android v1.0.3
+	github.com/bitrise-io/go-steputils v1.0.5
+	github.com/bitrise-io/go-utils v1.0.8
+	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.16
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/ryanuber/go-glob v1.0.0
+)
+
+require (
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
+	github.com/hashicorp/go-version v1.6.0 // indirect
 )
