@@ -407,9 +407,10 @@ func main() {
 	}
 
 	// Metrics collection
-	cmdFactory := v2command.NewFactory(env.NewRepository())
+	envRepo := env.NewRepository()
+	cmdFactory := v2command.NewFactory(envRepo)
 	pathProvider := v2pathutil.NewPathProvider()
-	collector := metrics.NewMetricsCollector(cmdFactory, pathProvider, gradlewPath)
+	collector := metrics.NewMetricsCollector(envRepo, cmdFactory, pathProvider, gradlewPath)
 
 	err = collector.CollectMetrics()
 	if err != nil {

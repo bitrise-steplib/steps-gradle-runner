@@ -13,12 +13,10 @@ import (
 var initTemplate string
 
 type templateInventory struct {
-	Version         string
-	Endpoint        string
-	AuthToken       string
-	PushEnabled     bool
-	DebugEnabled    bool
-	ValidationLevel string
+	Version   string
+	Endpoint  string
+	Port      int
+	AuthToken string
 }
 
 func renderTemplate(inventory templateInventory) (string, error) {
@@ -31,6 +29,10 @@ func renderTemplate(inventory templateInventory) (string, error) {
 
 	if inventory.AuthToken == "" {
 		return "", fmt.Errorf("auth token cannot be empty")
+	}
+
+	if inventory.Port == 0 {
+		return "", fmt.Errorf("invalid port number: %d", inventory.Port)
 	}
 
 	tmpl, err := template.New("init.gradle").Parse(initTemplate)
