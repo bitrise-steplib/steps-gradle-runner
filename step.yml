@@ -247,6 +247,14 @@ inputs:
       *unaligned*.apk
       *Test*.apk
       ```
+- collect_metrics: false
+  opts:
+    title: Collect Gradle metrics
+    description: |
+      Enable Gradle metrics collection and send data to Bitrise.
+    value_options:
+    - "yes"
+    - "no"
 outputs:
 - BITRISE_APK_PATH:
   opts:

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
@@ -20,41 +21,62 @@ const defaultPort = 443
 const defaultPluginVersion = "1.+"
 
 type MetricsCollector struct {
-	envRepo env.Repository
-	cmdFactory  command.Factory
+	envRepo      env.Repository
+	cmdFactory   command.Factory
 	pathProvider pathutil.PathProvider
-	logger log.Logger
-	gradlewPath string
+	logger       log.Logger
+	gradlewPath  string
+
+	initScriptPath string
 }
 
 func NewMetricsCollector(envRepo env.Repository, cmdFactory command.Factory, pathProvider pathutil.PathProvider, gradlewPath string) MetricsCollector {
 	return MetricsCollector{
-		envRepo: envRepo,
-		cmdFactory:  cmdFactory,
+		envRepo:      envRepo,
+		cmdFactory:   cmdFactory,
 		pathProvider: pathProvider,
-		gradlewPath: gradlewPath,
+		gradlewPath:  gradlewPath,
 	}
 }
 
-func (c MetricsCollector) CollectMetrics() error {
+func (c *MetricsCollector) CanBeEnabled(gradleFlags string) bool {
+	initScriptDefined := strings.Contains(gradleFlags, "--init-script")
+	if initScriptDefined {
+		c.logger.Warnf("An init script is already defined via the additional Gradle flags step input. Metrics collection will be disabled.")
+	}
+	return !initScriptDefined
+}
+
+func (c *MetricsCollector) SetupMetricsCollection() error {
 	authToken := c.envRepo.Get("BITRISEIO_BITRISE_SERVICES_ACCESS_TOKEN")
 	if authToken == "" {
 		return fmt.Errorf("$BITRISEIO_BITRISE_SERVICES_ACCESS_TOKEN is empty. This step is only supposed to run in Bitrise CI builds")
 	}
 
-	initScriptPath, err := c.createInitScript(authToken)
-	if err != nil {
-		return err
+	return c.createInitScript(authToken)
+}
+
+func (c *MetricsCollector) UpdateGradleFlagsWithInitScript(gradleFlags string) string {
+	if c.initScriptPath == "" {
+		return gradleFlags
 	}
 
-	if err := c.runGradleTask(initScriptPath); err != nil {
+	return fmt.Sprintf("%s --init-script %s", gradleFlags, c.initScriptPath)
+}
+
+func (c *MetricsCollector) SendMetrics() error {
+	if c.initScriptPath == "" {
+		return fmt.Errorf("init script path is empty, this can't run without an existing init script")
+	}
+
+	if err := c.runGradleTask(c.initScriptPath); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c MetricsCollector) runGradleTask(initScriptPath string) error {
+func (c *MetricsCollector) runGradleTask(initScriptPath string) error {
 	args := []string{
 		"producer",
 		"--init-script",
@@ -64,31 +86,32 @@ func (c MetricsCollector) runGradleTask(initScriptPath string) error {
 	return cmd.Run()
 }
 
-func (c MetricsCollector) createInitScript(authToken string) (string, error) {
+func (c *MetricsCollector) createInitScript(authToken string) error {
 	inventory := templateInventory{
-		Endpoint: defaultEndpoint,
-		Port:     defaultPort,
-		Version: defaultPluginVersion,
+		Endpoint:  defaultEndpoint,
+		Port:      defaultPort,
+		Version:   defaultPluginVersion,
 		AuthToken: authToken,
 	}
 	scriptContent, err := renderTemplate(inventory)
 	if err != nil {
-		return "", fmt.Errorf("failed to create init script contents: %w", err)
+		return fmt.Errorf("failed to create init script contents: %w", err)
 	}
 
 	dir, err := c.pathProvider.CreateTempDir("gradle-runner")
 	if err != nil {
-		return "", fmt.Errorf("failed to create temp dir for init script: %w", err)
+		return fmt.Errorf("failed to create temp dir for init script: %w", err)
 	}
 	initPath := path.Join(dir, "init.gradle")
 	if err != nil {
-		return "", fmt.Errorf("failed to create temp file for init script: %w", err)
+		return fmt.Errorf("failed to create temp file for init script: %w", err)
 	}
 
 	err = os.WriteFile(initPath, []byte(scriptContent), 0755)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return "", nil
+	c.initScriptPath = initPath
+	return nil
 }

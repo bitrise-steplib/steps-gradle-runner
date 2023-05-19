@@ -17,8 +17,8 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
 	v2command "github.com/bitrise-io/go-utils/v2/command"
-	v2pathutil "github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/v2/env"
+	v2pathutil "github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-steplib/steps-gradle-runner/metrics"
 	"github.com/kballard/go-shellquote"
 )
@@ -48,6 +48,9 @@ type Config struct {
 
 	// Other configs
 	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
+
+	// Metrics
+	CollectMetrics bool `env:"collect_metrics,opt[yes,no]"`
 
 	// Deprecated
 	ApkFileIncludeFilter string `env:"apk_file_include_filter"`
@@ -211,6 +214,21 @@ func main() {
 
 	if err := os.Chmod(gradlewPath, 0770); err != nil {
 		failf("Failed to add executable permission on gradlew file (%s): %s", gradlewPath, err)
+	}
+
+	// Enable metrics collection
+	envRepo := env.NewRepository()
+	cmdFactory := v2command.NewFactory(envRepo)
+	pathProvider := v2pathutil.NewPathProvider()
+	collector := metrics.NewMetricsCollector(envRepo, cmdFactory, pathProvider, gradlewPath)
+	if configs.CollectMetrics && collector.CanBeEnabled(configs.GradleOptions) {
+		err = collector.SetupMetricsCollection()
+		if err == nil {
+			configs.GradleOptions = collector.UpdateGradleFlagsWithInitScript(configs.GradleOptions)
+		} else {
+			log.Warnf("Failed to set up metrics collection: %s", err)
+			log.Infof("Continuing task execution without metrics collection")
+		}
 	}
 
 	gradleStarted := time.Now()
@@ -406,14 +424,10 @@ func main() {
 		log.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
 	}
 
-	// Metrics collection
-	envRepo := env.NewRepository()
-	cmdFactory := v2command.NewFactory(envRepo)
-	pathProvider := v2pathutil.NewPathProvider()
-	collector := metrics.NewMetricsCollector(envRepo, cmdFactory, pathProvider, gradlewPath)
-
-	err = collector.CollectMetrics()
-	if err != nil {
-		log.Warnf("Metrics collection failed: %s", err)
+	if configs.CollectMetrics {
+		err := collector.SendMetrics()
+		if err != nil {
+			log.Warnf("Failed to send collected metrics: %s", err)
+		}
 	}
 }
