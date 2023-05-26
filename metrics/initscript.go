@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"net/url"
 	"text/template"
 )
 
@@ -23,8 +22,8 @@ func renderTemplate(inventory templateInventory) (string, error) {
 	if inventory.Version == "" {
 		return "", fmt.Errorf("version cannot be empty")
 	}
-	if _, err := url.ParseRequestURI(inventory.Endpoint); err != nil {
-		return "", fmt.Errorf("invalid remote cache URL: %w", err)
+	if inventory.Endpoint == "" {
+		return "", fmt.Errorf("endpoint cannot be empty")
 	}
 
 	if inventory.AuthToken == "" {

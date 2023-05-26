@@ -1,30 +1,30 @@
 initscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'io.bitrise.gradle:remote-cache:{{ .Version }}'
-    }
+   repositories {
+      // TODO: remove this once we publish 1.0.0
+      maven {
+         url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+      }
+      maven {
+         url 'https://plugins.gradle.org/m2/'
+      }
+      mavenCentral()
+   }
+   dependencies {
+      classpath 'io.bitrise.gradle:gradle-analytics:{{ .Version }}'
+   }
 }
 
-import io.bitrise.gradle.cache.BitriseBuildCache
-import io.bitrise.gradle.cache.BitriseBuildCacheServiceFactory
+rootProject {
+    apply plugin: io.bitrise.gradle.analytics.AnalyticsPlugin
 
-gradle.settingsEvaluated { settings ->
-    settings.buildCache {
-        local {
-            enabled = false
-        }
-
-        registerBuildCacheService(BitriseBuildCache.class, BitriseBuildCacheServiceFactory.class)
-        remote(BitriseBuildCache.class) {
-            endpoint = '{{ .Endpoint }}'
-            authToken = '{{ .AuthToken }}'
-            enabled = true
-            push = {{ .PushEnabled }}
-            debug = {{ .DebugEnabled }}
-            blobValidationLevel = '{{ .ValidationLevel }}'
+    analytics {
+        ignoreErrors = false
+        bitrise {
+            remote {
+                authorization = '{{ .AuthToken }}'
+                endpoint = '{{ .Endpoint }}'
+                port = {{ .Port }}
+            }
         }
     }
 }

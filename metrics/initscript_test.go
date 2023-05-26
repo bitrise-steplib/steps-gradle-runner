@@ -1,6 +1,9 @@
 package metrics
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func Test_renderTemplate(t *testing.T) {
 	tests := []struct {
@@ -12,12 +15,10 @@ func Test_renderTemplate(t *testing.T) {
 		{
 			name: "happy path",
 			inventory: templateInventory{
-				Version:         "1.+",
-				Endpoint:        "grpcs://example.com",
-				AuthToken:       "example_token",
-				PushEnabled:     true,
-				DebugEnabled:    true,
-				ValidationLevel: "error",
+				Version:   "1.+",
+				Endpoint:  "gradle-analytics.services.bitrise.io",
+				AuthToken: "example_token",
+				Port:      443,
 			},
 			want: expectedInitScript,
 		},
@@ -38,43 +39,50 @@ func Test_renderTemplate(t *testing.T) {
 				t.Errorf("renderTemplate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("renderTemplate() got = %v, want %v", got, tt.want)
+			gotTrimmed := trimAllWhitespace(got)
+			wantTrimmed := trimAllWhitespace(tt.want)
+			if gotTrimmed != wantTrimmed {
+				t.Errorf("renderTemplate() got = %v, want %v", gotTrimmed, wantTrimmed)
 			}
 		})
 	}
 }
 
-const expectedInitScript = `initscript {
-    repositories {
-        mavenCentral()
-        maven {
-            url 'https://jitpack.io'
-        }
-    }
+func trimAllWhitespace(s string) string {
+	trimmed := strings.ReplaceAll(s, "\n", "")
+	trimmed = strings.ReplaceAll(trimmed, "\t", "")
+	trimmed = strings.ReplaceAll(trimmed, " ", "")
+	return trimmed
+}
 
+const expectedInitScript = `
+initscript {
+    repositories {
+	    // TODO: remove this once we publish 1.0.0
+	    maven {
+            url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+        }
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+        mavenCentral()
+    }
     dependencies {
-        classpath 'io.bitrise.gradle:remote-cache:1.+'
+        classpath 'io.bitrise.gradle:gradle-analytics:1.+'
     }
 }
 
-import io.bitrise.gradle.cache.BitriseBuildCache
-import io.bitrise.gradle.cache.BitriseBuildCacheServiceFactory
+rootProject {
+    apply plugin: io.bitrise.gradle.analytics.AnalyticsPlugin
 
-gradle.settingsEvaluated { settings ->
-    settings.buildCache {
-        local {
-            enabled = false
-        }
-
-        registerBuildCacheService(BitriseBuildCache.class, BitriseBuildCacheServiceFactory.class)
-        remote(BitriseBuildCache.class) {
-            endpoint = 'grpcs://example.com'
-            authToken = 'example_token'
-            enabled = true
-            push = true
-            debug = true
-            blobValidationLevel = 'error'
+    analytics {
+        ignoreErrors = false
+        bitrise {
+            remote {
+                authorization = 'example_token'
+                endpoint = 'gradle-analytics.services.bitrise.io'
+                port = 443
+			}
         }
     }
 }
