@@ -247,7 +247,7 @@ inputs:
       *unaligned*.apk
       *Test*.apk
       ```
-- collect_metrics: false
+- collect_metrics: "no"
   opts:
     title: Collect Gradle metrics
     description: |

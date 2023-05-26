@@ -18,7 +18,7 @@ const defaultPort = 443
 // Sync the major version of this step and the plugin.
 // Use the latest 1.x version of the plugin, so we don't have to update this definition after every plugin release.
 // But don't forget to update this to `2.+` if the library reaches version 2.0!
-const defaultPluginVersion = "1.+"
+const defaultPluginVersion = "main-SNAPSHOT" // TODO: change to 1.+
 
 type MetricsCollector struct {
 	envRepo      env.Repository
