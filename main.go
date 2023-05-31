@@ -13,7 +13,9 @@ import (
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
+	v2errorutil "github.com/bitrise-io/go-utils/v2/errorutil"
 	"github.com/bitrise-io/go-utils/log"
+	v2log "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
 	v2command "github.com/bitrise-io/go-utils/v2/command"
@@ -220,13 +222,15 @@ func main() {
 	envRepo := env.NewRepository()
 	cmdFactory := v2command.NewFactory(envRepo)
 	pathProvider := v2pathutil.NewPathProvider()
-	collector := metrics.NewMetricsCollector(envRepo, cmdFactory, pathProvider, gradlewPath)
+	logger := v2log.NewLogger()
+	collector := metrics.NewMetricsCollector(envRepo, cmdFactory, pathProvider, logger, gradlewPath, configs.GradleFile)
 	if configs.CollectMetrics && collector.CanBeEnabled(configs.GradleOptions) {
 		err = collector.SetupMetricsCollection()
 		if err == nil {
 			configs.GradleOptions = collector.UpdateGradleFlagsWithInitScript(configs.GradleOptions)
+			log.Donef("Metrics collection is set up")
 		} else {
-			log.Warnf("Failed to set up metrics collection: %s", err)
+			log.Warnf(v2errorutil.FormattedError(err))
 			log.Infof("Continuing task execution without metrics collection")
 		}
 	}
@@ -425,9 +429,13 @@ func main() {
 	}
 
 	if configs.CollectMetrics {
+		log.Printf("\n")
+		log.Infof("Sending collected metrics...")
 		err := collector.SendMetrics()
 		if err != nil {
-			log.Warnf("Failed to send collected metrics: %s", err)
+			log.Warnf(v2errorutil.FormattedError(err))
+		} else {
+			log.Donef("Done")
 		}
 	}
 }

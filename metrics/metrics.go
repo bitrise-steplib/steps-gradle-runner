@@ -26,16 +26,26 @@ type MetricsCollector struct {
 	pathProvider pathutil.PathProvider
 	logger       log.Logger
 	gradlewPath  string
+	buildFilePath string
 
 	initScriptPath string
 }
 
-func NewMetricsCollector(envRepo env.Repository, cmdFactory command.Factory, pathProvider pathutil.PathProvider, gradlewPath string) MetricsCollector {
-	return MetricsCollector{
+func NewMetricsCollector(
+	envRepo env.Repository,
+	cmdFactory command.Factory,
+	pathProvider pathutil.PathProvider,
+	logger log.Logger,
+	gradlewPath string,
+	buildFilePath string,
+) MetricsCollector {
+	return MetricsCollector {
 		envRepo:      envRepo,
 		cmdFactory:   cmdFactory,
 		pathProvider: pathProvider,
+		logger: logger,
 		gradlewPath:  gradlewPath,
+		buildFilePath: buildFilePath,
 	}
 }
 
@@ -79,11 +89,19 @@ func (c *MetricsCollector) SendMetrics() error {
 func (c *MetricsCollector) runGradleTask(initScriptPath string) error {
 	args := []string{
 		"producer",
-		"--init-script",
-		initScriptPath,
+		"--build-file", c.buildFilePath,
+		"--init-script", initScriptPath,
 	}
-	cmd := c.cmdFactory.Create(c.gradlewPath, args, nil)
-	return cmd.Run()
+	opts := command.Opts{
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	}
+	cmd := c.cmdFactory.Create(c.gradlewPath, args, &opts)
+	err := cmd.Run()
+	if err != nil {
+		c.logger.Warnf("Failed to run gradle task: %s", err)
+	}
+	return nil
 }
 
 func (c *MetricsCollector) createInitScript(authToken string) error {
@@ -102,7 +120,7 @@ func (c *MetricsCollector) createInitScript(authToken string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir for init script: %w", err)
 	}
-	initPath := path.Join(dir, "init.gradle")
+	initPath := path.Join(dir, "init-analytics.gradle")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for init script: %w", err)
 	}
