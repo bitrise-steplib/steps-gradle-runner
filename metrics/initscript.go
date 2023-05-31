@@ -7,7 +7,6 @@ import (
 	"text/template"
 )
 
-// TODO: finalize this once the init script is final
 //go:embed init.gradle.gotemplate
 var initTemplate string
 

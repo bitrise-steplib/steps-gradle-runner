@@ -192,7 +192,7 @@ workflows:
     - _common
     - _check_cache
     - _check_output_apk
-  
+
   test_metrics:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-io/bitrise-android-sample.git
@@ -244,9 +244,9 @@ workflows:
         - repository_url: $TEST_APP_URL
         - clone_into_dir: $CLONE_INTO_DIR
         - branch: $TEST_APP_BRANCH
-    # - install-missing-android-tools:
-    #     inputs:
-    #     - gradlew_path: $GRADLEW_PATH
+    - install-missing-android-tools:
+        inputs:
+        - gradlew_path: $GRADLEW_PATH
     - path::./:
         title: Self-test
         inputs:

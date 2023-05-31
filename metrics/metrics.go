@@ -99,7 +99,7 @@ func (c *MetricsCollector) runGradleTask(initScriptPath string) error {
 	cmd := c.cmdFactory.Create(c.gradlewPath, args, &opts)
 	err := cmd.Run()
 	if err != nil {
-		c.logger.Warnf("Failed to run gradle task: %s", err)
+		c.logger.Warnf("Failed to run Gradle task: %s", err)
 	}
 	return nil
 }
