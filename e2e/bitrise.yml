@@ -212,7 +212,7 @@ workflows:
     - GRADLE_FILE: ./src/build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./src/gradlew
-    - GRADLE_OPTIONS: "--stacktrace"
+    - GRADLE_OPTIONS: --stacktrace
     - COLLECT_METRICS: "yes"
     after_run:
     - _common
