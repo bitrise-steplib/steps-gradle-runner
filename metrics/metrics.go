@@ -20,36 +20,36 @@ const defaultPort = 443
 // But don't forget to update this to `2.+` if the library reaches version 2.0!
 const defaultPluginVersion = "main-SNAPSHOT" // TODO: change to 1.+
 
-type MetricsCollector struct {
-	envRepo      env.Repository
-	cmdFactory   command.Factory
-	pathProvider pathutil.PathProvider
-	logger       log.Logger
-	gradlewPath  string
+type Collector struct {
+	envRepo       env.Repository
+	cmdFactory    command.Factory
+	pathProvider  pathutil.PathProvider
+	logger        log.Logger
+	gradlewPath   string
 	buildFilePath string
 
 	initScriptPath string
 }
 
-func NewMetricsCollector(
+func NewCollector(
 	envRepo env.Repository,
 	cmdFactory command.Factory,
 	pathProvider pathutil.PathProvider,
 	logger log.Logger,
 	gradlewPath string,
 	buildFilePath string,
-) MetricsCollector {
-	return MetricsCollector {
-		envRepo:      envRepo,
-		cmdFactory:   cmdFactory,
-		pathProvider: pathProvider,
-		logger: logger,
-		gradlewPath:  gradlewPath,
+) Collector {
+	return Collector{
+		envRepo:       envRepo,
+		cmdFactory:    cmdFactory,
+		pathProvider:  pathProvider,
+		logger:        logger,
+		gradlewPath:   gradlewPath,
 		buildFilePath: buildFilePath,
 	}
 }
 
-func (c *MetricsCollector) CanBeEnabled(gradleFlags string) bool {
+func (c *Collector) CanBeEnabled(gradleFlags string) bool {
 	initScriptDefined := strings.Contains(gradleFlags, "--init-script")
 	if initScriptDefined {
 		c.logger.Warnf("An init script is already defined via the additional Gradle flags step input. Metrics collection will be disabled.")
@@ -57,7 +57,7 @@ func (c *MetricsCollector) CanBeEnabled(gradleFlags string) bool {
 	return !initScriptDefined
 }
 
-func (c *MetricsCollector) SetupMetricsCollection() error {
+func (c *Collector) SetupMetricsCollection() error {
 	authToken := c.envRepo.Get("BITRISEIO_BITRISE_SERVICES_ACCESS_TOKEN")
 	if authToken == "" {
 		return fmt.Errorf("$BITRISEIO_BITRISE_SERVICES_ACCESS_TOKEN is empty. This step is only supposed to run in Bitrise CI builds")
@@ -66,7 +66,7 @@ func (c *MetricsCollector) SetupMetricsCollection() error {
 	return c.createInitScript(authToken)
 }
 
-func (c *MetricsCollector) UpdateGradleFlagsWithInitScript(gradleFlags string) string {
+func (c *Collector) UpdateGradleFlagsWithInitScript(gradleFlags string) string {
 	if c.initScriptPath == "" {
 		return gradleFlags
 	}
@@ -74,7 +74,7 @@ func (c *MetricsCollector) UpdateGradleFlagsWithInitScript(gradleFlags string) s
 	return fmt.Sprintf("%s --init-script %s", gradleFlags, c.initScriptPath)
 }
 
-func (c *MetricsCollector) SendMetrics() error {
+func (c *Collector) SendMetrics() error {
 	if c.initScriptPath == "" {
 		return fmt.Errorf("init script path is empty, this can't run without an existing init script")
 	}
@@ -86,7 +86,7 @@ func (c *MetricsCollector) SendMetrics() error {
 	return nil
 }
 
-func (c *MetricsCollector) runGradleTask(initScriptPath string) error {
+func (c *Collector) runGradleTask(initScriptPath string) error {
 	args := []string{
 		"producer",
 		"--build-file", c.buildFilePath,
@@ -104,7 +104,7 @@ func (c *MetricsCollector) runGradleTask(initScriptPath string) error {
 	return nil
 }
 
-func (c *MetricsCollector) createInitScript(authToken string) error {
+func (c *Collector) createInitScript(authToken string) error {
 	inventory := templateInventory{
 		Endpoint:  defaultEndpoint,
 		Port:      defaultPort,

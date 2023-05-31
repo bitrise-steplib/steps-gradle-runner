@@ -13,13 +13,13 @@ import (
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
-	v2errorutil "github.com/bitrise-io/go-utils/v2/errorutil"
 	"github.com/bitrise-io/go-utils/log"
-	v2log "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
 	v2command "github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
+	v2errorutil "github.com/bitrise-io/go-utils/v2/errorutil"
+	v2log "github.com/bitrise-io/go-utils/v2/log"
 	v2pathutil "github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-steplib/steps-gradle-runner/metrics"
 	"github.com/kballard/go-shellquote"
@@ -223,7 +223,7 @@ func main() {
 	cmdFactory := v2command.NewFactory(envRepo)
 	pathProvider := v2pathutil.NewPathProvider()
 	logger := v2log.NewLogger()
-	collector := metrics.NewMetricsCollector(envRepo, cmdFactory, pathProvider, logger, gradlewPath, configs.GradleFile)
+	collector := metrics.NewCollector(envRepo, cmdFactory, pathProvider, logger, gradlewPath, configs.GradleFile)
 	if configs.CollectMetrics && collector.CanBeEnabled(configs.GradleOptions) {
 		err = collector.SetupMetricsCollection()
 		if err == nil {
