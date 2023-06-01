@@ -16,6 +16,12 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
+	v2command "github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/env"
+	v2errorutil "github.com/bitrise-io/go-utils/v2/errorutil"
+	v2log "github.com/bitrise-io/go-utils/v2/log"
+	v2pathutil "github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-steplib/steps-gradle-runner/metrics"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -44,6 +50,9 @@ type Config struct {
 
 	// Other configs
 	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
+
+	// Metrics
+	CollectMetrics bool `env:"collect_metrics,opt[yes,no]"`
 
 	// Deprecated
 	ApkFileIncludeFilter string `env:"apk_file_include_filter"`
@@ -207,6 +216,23 @@ func main() {
 
 	if err := os.Chmod(gradlewPath, 0770); err != nil {
 		failf("Failed to add executable permission on gradlew file (%s): %s", gradlewPath, err)
+	}
+
+	// Enable metrics collection
+	envRepo := env.NewRepository()
+	cmdFactory := v2command.NewFactory(envRepo)
+	pathProvider := v2pathutil.NewPathProvider()
+	logger := v2log.NewLogger()
+	collector := metrics.NewCollector(envRepo, cmdFactory, pathProvider, logger, gradlewPath, configs.GradleFile)
+	if configs.CollectMetrics && collector.CanBeEnabled(configs.GradleOptions) {
+		err = collector.SetupMetricsCollection()
+		if err == nil {
+			configs.GradleOptions = collector.UpdateGradleFlagsWithInitScript(configs.GradleOptions)
+			log.Donef("Metrics collection is set up")
+		} else {
+			log.Warnf(v2errorutil.FormattedError(err))
+			log.Infof("Continuing task execution without metrics collection")
+		}
 	}
 
 	gradleStarted := time.Now()
@@ -400,5 +426,16 @@ func main() {
 			failf("Failed to export environment (BITRISE_MAPPING_PATH): %s", err)
 		}
 		log.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
+	}
+
+	if configs.CollectMetrics {
+		log.Printf("\n")
+		log.Infof("Sending collected metrics...")
+		err := collector.SendMetrics()
+		if err != nil {
+			log.Warnf(v2errorutil.FormattedError(err))
+		} else {
+			log.Donef("Done")
+		}
 	}
 }

@@ -1,0 +1,30 @@
+initscript {
+   repositories {
+      // TODO: remove this once we publish 1.0.0
+      maven {
+         url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+      }
+      maven {
+         url 'https://plugins.gradle.org/m2/'
+      }
+      mavenCentral()
+   }
+   dependencies {
+      classpath 'io.bitrise.gradle:gradle-analytics:{{ .Version }}'
+   }
+}
+
+rootProject {
+    apply plugin: io.bitrise.gradle.analytics.AnalyticsPlugin
+
+    analytics {
+        ignoreErrors = false
+        bitrise {
+            remote {
+                authorization = '{{ .AuthToken }}'
+                endpoint = '{{ .Endpoint }}'
+                port = {{ .Port }}
+            }
+        }
+    }
+}
