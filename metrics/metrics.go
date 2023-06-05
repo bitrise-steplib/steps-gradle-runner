@@ -89,9 +89,12 @@ func (c *Collector) SendMetrics() error {
 func (c *Collector) runGradleTask(initScriptPath string) error {
 	args := []string{
 		"producer",
-		"--build-file", c.buildFilePath,
 		"--init-script", initScriptPath,
 	}
+	if c.buildFilePath != "" {
+		args = append(args, "--build-file", c.buildFilePath)
+	}
+
 	opts := command.Opts{
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
