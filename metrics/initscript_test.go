@@ -58,10 +58,6 @@ func trimAllWhitespace(s string) string {
 const expectedInitScript = `
 initscript {
     repositories {
-	    // TODO: remove this once we publish 1.0.0
-	    maven {
-            url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
-        }
         maven {
             url 'https://plugins.gradle.org/m2/'
         }
