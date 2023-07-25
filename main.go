@@ -224,7 +224,9 @@ func main() {
 	pathProvider := v2pathutil.NewPathProvider()
 	logger := v2log.NewLogger()
 	collector := metrics.NewCollector(envRepo, cmdFactory, pathProvider, logger, gradlewPath, configs.GradleFile)
-	if configs.CollectMetrics && collector.CanBeEnabled(configs.GradleOptions) {
+	collectMetrics := collector.CanBeEnabled(configs.GradleOptions) &&
+		(configs.CollectMetrics || envRepo.Get("BITRISEIO_GRADLE_COLLECT_METRICS") == "true")
+	if collectMetrics {
 		err = collector.SetupMetricsCollection()
 		if err == nil {
 			configs.GradleOptions = collector.UpdateGradleFlagsWithInitScript(configs.GradleOptions)
@@ -428,7 +430,7 @@ func main() {
 		log.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
 	}
 
-	if configs.CollectMetrics {
+	if collectMetrics {
 		log.Printf("\n")
 		log.Infof("Sending collected metrics...")
 		err := collector.SendMetrics()
