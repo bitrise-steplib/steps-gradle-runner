@@ -70,13 +70,15 @@ func RunAndExportFullOutput(cmd command.Model, destinationPath, envKey string) e
 	cmd.SetStderr(&outBuffer)
 
 	cmdError := cmd.Run()
-	if cmdError != nil {
-		return cmdError
-	}
 	rawOutput := outBuffer.String()
 	log.Infof(rawOutput)
+	if cmdError != nil {
+		log.Infof(colorstring.Red(fmt.Sprintf(`Command failed with error: %s`, cmdError)))
+		return cmdError
+	}
 	err := output.ExportOutputFileContent(rawOutput, destinationPath, envKey)
 	if err != nil {
+		log.Infof(colorstring.Red(fmt.Sprintf(`Export failed with error: %s`, err)))
 		return err
 	}
 	log.Infof(colorstring.Magenta(fmt.Sprintf(`The log file is stored in %s, and its full path is available in the $%s environment variable.`, destinationPath, envKey)))
