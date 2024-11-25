@@ -223,7 +223,7 @@ workflows:
     steps:
     - set-java-version:
         inputs:
-        - java-version: "17"
+        - set_java_version: "17"
     - script:
         title: recreate _tmp directory
         inputs:
