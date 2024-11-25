@@ -201,16 +201,15 @@ inputs:
     - all
     - only_deps
     - none
-- gradle_options: --stacktrace --no-daemon
+- gradle_options: --stacktrace
   opts:
     category: Debug
-    title: Additional options for Gradle call
+    title: Additional flags for Gradle
     description: |-
-      Options added to the end of the Gradle call.
-      You can use multiple options, separated by a space
-      character. Example: `--stacktrace --debug`
+      Flags added to the end of the Gradle call.
+      You can use multiple options, separated by a space. Example: `--stacktrace --debug`
       If `--debug` or `-d` options are set then only the last 20 lines of the raw gradle output will be visible in the build log.
-      The full raw output will be exported to the `$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH` variable and will be added as an artifact.
+      The full raw output will be exported to the `$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH` variable and will be added as a build artifact.
 - apk_file_include_filter: null
   opts:
     category: Deprecated
