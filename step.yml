@@ -210,42 +210,6 @@ inputs:
       You can use multiple options, separated by a space. Example: `--stacktrace --debug`
       If `--debug` or `-d` options are set then only the last 20 lines of the raw gradle output will be visible in the build log.
       The full raw output will be exported to the `$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH` variable and will be added as a build artifact.
-- apk_file_include_filter: null
-  opts:
-    category: Deprecated
-    title: APK file include filter
-    description: |
-      This input is **DEPRECATED** - use the `APK and AAB file include filter` input instead and set this input to empty value.
-      The step will copy the generated APK files that match this filter into the Bitrise Deploy Directory.
-      If you specify an empty filter, the new input "APK and AAB file include filter" will be used.
-      Example:
-      Copy every APK file:
-      ```
-      "*.apk"
-      ```
-      Copy every APK file with a filename that contains `release`, like (`./app/build/outputs/apk/app-release-unsigned.apk`):
-      ```
-      *release*.apk
-      ```
-- apk_file_exclude_filter: null
-  opts:
-    category: Deprecated
-    title: APK file exclude filter
-    description: |
-      This input is **DEPRECATED** - use the `APK and AAB file exclude filter` input instead and set this input to empty value.
-      One filter per line. The step will **not** copy the generated APK files that match this filters into the Bitrise Deploy Directory.
-      You can use this filter to avoid moving unalinged and/or unsigned apk files.
-      If you specify an empty filter, the new input "APK and AAB file exclude filter" will be used.
-      Examples:
-      Do not copy APK files with a filename that contains `unaligned`:
-      ```
-      *unaligned*.apk
-      ```
-      Do not copy APK files with a filename that contains `unaligned` and/or `Test`:
-      ```
-      *unaligned*.apk
-      *Test*.apk
-      ```
 - collect_metrics: "no"
   opts:
     title: Collect Gradle metrics

@@ -53,10 +53,6 @@ type Config struct {
 
 	// Metrics
 	CollectMetrics bool `env:"collect_metrics,opt[yes,no]"`
-
-	// Deprecated
-	ApkFileIncludeFilter string `env:"apk_file_include_filter"`
-	ApkFileExcludeFilter string `env:"apk_file_exclude_filter"`
 }
 
 func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string) error {
@@ -166,24 +162,6 @@ func validateAndMigrateConfig(config *Config) error {
 		}
 	}
 
-	if strings.TrimSpace(config.ApkFileIncludeFilter) != "" {
-		log.Warnf(`Step input 'APK file include filter' (apk_file_include_filter) is deprecated and will be removed soon,
-use 'APK and AAB file include filter' (app_file_include_filter) instead.`)
-		fmt.Println()
-		log.Infof(`'APK file include filter' (apk_file_include_filter) is used, 'APK and AAB file include filter' (app_file_include_filter) is ignored.
-Use 'APK and AAB file include filter' and set 'APK file include filter' to empty value.`)
-		fmt.Println()
-		config.AppFileIncludeFilter = config.ApkFileIncludeFilter
-	}
-	if strings.TrimSpace(config.ApkFileExcludeFilter) != "" {
-		log.Warnf(`Step input 'APK file exclude filter' (apk_file_exclude_filter) is deprecated and will be removed soon,
-use 'APK and AAB file exclude filter' (app_file_exclude_filter) instead.`)
-		fmt.Println()
-		log.Infof(`'APK file exclude filter' (apk_file_exclude_filter) is used, 'APK and AAB file exclude filter' (app_file_exclude_filter) is ignored.
-Use 'APK and AAB file exclude filter' and set 'APK file exclude filter' to empty value.`)
-		fmt.Println()
-		config.AppFileExcludeFilter = config.ApkFileExcludeFilter
-	}
 	return nil
 }
 
