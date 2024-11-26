@@ -18,6 +18,7 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: --debug
+    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_cache
@@ -48,6 +49,7 @@ workflows:
     - GRADLE_TASK: nonexistentTask
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
+    - COLLECT_METRICS: "no"
     after_run:
     - _common
 
@@ -75,6 +77,7 @@ workflows:
     - GRADLE_TASK: nonexistentTask
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: --debug
+    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_log_output
@@ -89,6 +92,7 @@ workflows:
     - GRADLE_TASK: bundle
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
+    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_cache
@@ -104,6 +108,7 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: gradlew
     - GRADLE_OPTIONS: ""
+    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_cache
@@ -118,6 +123,7 @@ workflows:
     - GRADLE_TASK: assembleDebug assembleRelease
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
+    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_cache
@@ -133,6 +139,7 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./src/gradlew
     - GRADLE_OPTIONS: ""
+    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_cache
@@ -147,6 +154,7 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ""
     - GRADLE_OPTIONS: ""
+    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_cache
@@ -162,6 +170,7 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
+    - COLLECT_METRICS: "no"
     after_run:
     - _common
 
@@ -174,6 +183,7 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
+    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_cache
@@ -188,6 +198,22 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
+    - COLLECT_METRICS: "no"
+    after_run:
+    - _common
+    - _check_cache
+    - _check_output_apk
+
+  test_metrics:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/bitrise-android-sample.git
+    - TEST_APP_BRANCH: main
+    - CLONE_INTO_DIR: ./src
+    - GRADLE_FILE: ./src/build.gradle
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: ./src/gradlew
+    - GRADLE_OPTIONS: --stacktrace
+    - COLLECT_METRICS: "yes"
     after_run:
     - _common
     - _check_cache
@@ -195,22 +221,9 @@ workflows:
 
   _common:
     steps:
-    - script:
-        run_if: $.IsCI
+    - set-java-version:
         inputs:
-        - content: |-
-            #!/usr/bin/env bash
-            set -ex
-            if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-              sudo update-alternatives --set javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac
-              sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
-              export JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"
-              envman add --key JAVA_HOME --value "/usr/lib/jvm/java-11-openjdk-amd64"
-            elif [[ "$OSTYPE" == "darwin"* ]]; then
-              jenv global 11 || jenv global 11.0
-              export JAVA_HOME="$(jenv prefix)"
-              envman add --key JAVA_HOME --value "$(jenv prefix)"
-            fi
+        - set_java_version: "17"
     - script:
         title: recreate _tmp directory
         inputs:
@@ -240,6 +253,7 @@ workflows:
         - gradlew_path: $GRADLEW_PATH
         - gradle_options: $GRADLE_OPTIONS
         - mapping_file_include_filter: $MAPPING_FILE_INCLUDE_FILTER
+        - collect_metrics: $COLLECT_METRICS
     - script:
         title: Log outputs
         is_always_run: true
