@@ -82,6 +82,7 @@ You can also set up file path filters to avoid exporting unwanted archives or ma
     - test_apk_file_exclude_filter: "*/immediate/*"
     - mapping_file_include_filter: "*/mapping.txt"
     - mapping_file_exclude_filter: "*/tmp/*"
+    - export_gradle_log: true
 ```
 
 
@@ -99,8 +100,7 @@ You can also set up file path filters to avoid exporting unwanted archives or ma
 | `app_file_exclude_filter` | One filter per line. The Step will NOT copy the generated APK and AAB files that match these filters into the Bitrise deploy directory. You can use this filter to avoid moving unaligned and/or unsigned APK and AAB files. If you specify an empty filter, every APK and AAB file (selected by `APK and AAB file include filter`) will be copied. Seperate patterns with a newline. Examples: Do not copy APK files with a filename that contains `unaligned`: ``` *unaligned*.apk ``` Do not copy APK files with a filename that contains `unaligned` and/or `Test`: ``` *unaligned*.apk *Test*.apk ```  |  | `*unaligned.apk *Test*.apk */intermediates/* ` |
 | `test_apk_file_include_filter` | The Step will copy the generated apk files that match this filter into the Bitrise deploy directory.  Example: Copy every APK if its filename contains Test, like (./app/build/outputs/apk/app-debug-androidTest-unaligned.apk):  ``` *Test*.apk ```  |  | `*Test*.apk` |
 | `test_apk_file_exclude_filter` | One filter per line. The Step will NOT copy the generated apk files that match this filters into the Bitrise deploy directory. You can use this filter to avoid moving unalinged and/or unsigned apk files. If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied. Example: Do not copy the test APK file if its filename contains `unaligned`: ``` *unaligned*.apk ```  |  |  |
-| `mapping_file_include_filter` | The Step will copy the generated mapping files that match this filter into the Bitrise deploy directory. If you specify an empty filter, no mapping files will be copied. Example:  Copy every mapping.txt file: ``` *mapping.txt ```  |  | `*/mapping.txt` |
-| `mapping_file_exclude_filter` | The Step will **not** copy the generated mapping files that match this filter into the Bitrise deploy directory. You can use this input to avoid moving a beta mapping file, for example. If you specify an empty filter, every mapping file (selected by `mapping_file_include_filter`) will be copied. Example:  Do not copy any mapping.txt file that is in a `beta` directoy: ``` */beta/mapping.txt ```  |  | `*/tmp/*` |
+| `export_gradle_log` | If `true` then the full raw output will be exported to the `$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH` variable and will be added as an artifact.  |  | `false` |
 | `cache_level` | `all` - will cache build-cache and dependencies `only_deps` - will cache dependencies only `none` - won't cache any of the above | required | `only_deps` |
 | `gradle_options` | Flags added to the end of the Gradle call. You can use multiple options, separated by a space. Example: `--stacktrace --debug` If `--debug` or `-d` options are set then only the last 20 lines of the raw gradle output will be visible in the build log. The full raw output will be exported to the `$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH` variable and will be added as a build artifact. |  | `--stacktrace` |
 </details>

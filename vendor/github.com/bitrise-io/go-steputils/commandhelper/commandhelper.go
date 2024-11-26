@@ -59,3 +59,28 @@ func RunAndExportOutput(cmd command.Model, destinationPath, envKey string, lines
 
 	return cmdErr
 }
+
+// RunAndExportFullOutput runs a command and captures it's output to a file.
+// The genereated output file will be exported to the envKey environment variable.
+// It returns the error of the command and if any error happened during
+// exporting the output file.
+func RunAndExportFullOutput(cmd command.Model, destinationPath, envKey string) error {
+	var outBuffer bytes.Buffer
+	cmd.SetStdout(&outBuffer)
+	cmd.SetStderr(&outBuffer)
+
+	cmdError := cmd.Run()
+	rawOutput := outBuffer.String()
+	log.Infof(rawOutput)
+	if cmdError != nil {
+		log.Infof(colorstring.Red(fmt.Sprintf(`Command failed with error: %s`, cmdError)))
+		return cmdError
+	}
+	err := output.ExportOutputFileContent(rawOutput, destinationPath, envKey)
+	if err != nil {
+		log.Infof(colorstring.Red(fmt.Sprintf(`Export failed with error: %s`, err)))
+		return err
+	}
+	log.Infof(colorstring.Magenta(fmt.Sprintf(`The log file is stored in %s, and its full path is available in the $%s environment variable.`, destinationPath, envKey)))
+	return nil
+}
