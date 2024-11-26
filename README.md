@@ -103,7 +103,6 @@ You can also set up file path filters to avoid exporting unwanted archives or ma
 | `mapping_file_exclude_filter` | The Step will **not** copy the generated mapping files that match this filter into the Bitrise deploy directory. You can use this input to avoid moving a beta mapping file, for example. If you specify an empty filter, every mapping file (selected by `mapping_file_include_filter`) will be copied. Example:  Do not copy any mapping.txt file that is in a `beta` directoy: ``` */beta/mapping.txt ```  |  | `*/tmp/*` |
 | `cache_level` | `all` - will cache build-cache and dependencies `only_deps` - will cache dependencies only `none` - won't cache any of the above | required | `only_deps` |
 | `gradle_options` | Flags added to the end of the Gradle call. You can use multiple options, separated by a space. Example: `--stacktrace --debug` If `--debug` or `-d` options are set then only the last 20 lines of the raw gradle output will be visible in the build log. The full raw output will be exported to the `$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH` variable and will be added as a build artifact. |  | `--stacktrace` |
-| `collect_metrics` | Enable Gradle metrics collection and send data to Bitrise.  |  | `no` |
 </details>
 
 <details>
