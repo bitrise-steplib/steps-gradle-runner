@@ -27,7 +27,6 @@ const (
 // Config ...
 type Config struct {
 	// Gradle Inputs
-	GradleFile    string `env:"gradle_file"`
 	GradleTasks   string `env:"gradle_task,required"`
 	GradlewPath   string `env:"gradlew_path,file"`
 	GradleOptions string `env:"gradle_options"`
@@ -46,7 +45,7 @@ type Config struct {
 	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
 }
 
-func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string) error {
+func runGradleTask(gradleTool, tasks, options string, destDir string) error {
 	optionSlice, err := shellquote.Split(options)
 	if err != nil {
 		return err
@@ -58,9 +57,6 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string)
 	}
 
 	cmdSlice := []string{gradleTool}
-	if buildFile != "" {
-		cmdSlice = append(cmdSlice, "--build-file", buildFile)
-	}
 	cmdSlice = append(cmdSlice, taskSlice...)
 	cmdSlice = append(cmdSlice, optionSlice...)
 
@@ -144,18 +140,6 @@ func findDeployPth(deployDir, baseName, ext string) (string, error) {
 	return deployPth, err
 }
 
-func validateAndMigrateConfig(config *Config) error {
-	if config.GradleFile != "" {
-		if exist, err := pathutil.IsPathExists(config.GradleFile); err != nil {
-			return fmt.Errorf("failed to check if GradleFile exists at: %s: %s", config.GradleFile, err)
-		} else if !exist {
-			return fmt.Errorf("GradleFile does not exist at: %s", config.GradleFile)
-		}
-	}
-
-	return nil
-}
-
 func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
 	cmd := command.New("envman", "add", "--key", keyStr)
 	cmd.SetStdin(strings.NewReader(valueStr))
@@ -173,9 +157,6 @@ func main() {
 		failf("Issue with input: %s", err)
 	}
 	stepconf.Print(configs)
-	if err := validateAndMigrateConfig(&configs); err != nil {
-		failf("Issue with input: %s", err)
-	}
 	fmt.Println()
 
 	gradlewPath, err := filepath.Abs(configs.GradlewPath)
@@ -190,7 +171,7 @@ func main() {
 	gradleStarted := time.Now()
 
 	log.Infof("Running gradle task...")
-	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.DeployDir); err != nil {
+	if err := runGradleTask(gradlewPath, configs.GradleTasks, configs.GradleOptions, configs.DeployDir); err != nil {
 		failf("Gradle task failed: %s", err)
 	}
 
