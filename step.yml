@@ -92,7 +92,7 @@ inputs:
       You can find more information about the Gradle Wrapper (gradlew),
       and about how you can generate one
       in the official guide at: [https://docs.gradle.org/current/userguide/gradle_wrapper.html](https://docs.gradle.org/current/userguide/gradle_wrapper.html).
-      The path should be relative to the repository root. For example, `./gradlew`,
+      The path should be relative to the build_root_directory input. For example, `./gradlew`,
       or if it is in a sub directory, `./sub/dir/gradlew`.
     is_required: true
 - app_file_include_filter: |

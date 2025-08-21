@@ -29,7 +29,7 @@ type Config struct {
 	// Gradle Inputs
 	BuildRootDirectory string `env:"build_root_directory,required"`
 	GradleTasks        string `env:"gradle_task,required"`
-	GradlewPath        string `env:"gradlew_path,file"`
+	GradlewPath        string `env:"gradlew_path"`
 	GradleOptions      string `env:"gradle_options"`
 	// Export config
 	AppFileIncludeFilter     string `env:"app_file_include_filter,required"`
