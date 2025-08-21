@@ -81,10 +81,10 @@ inputs:
       You can call `gradle tasks` or `gradle tasks --all` in your
       Gradle project directory to get the list of available tasks.
     is_required: true
-- gradlew_path: $GRADLEW_PATH
+- gradlew_path: ./gradlew
   opts:
     category: Config
-    title: gradlew file path
+    title: Gradle Wrapper path
     description: |
       Using a Gradle Wrapper (gradlew) is required, as the wrapper ensures
       that the right Gradle version is installed and used for the build.
