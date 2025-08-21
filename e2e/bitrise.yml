@@ -5,7 +5,7 @@ app:
   envs:
   # Shared test configs
   - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
-  - BUILD_ROOT_DIRECTORY: "."
+  - BUILD_ROOT_DIRECTORY: .
   - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
 
 workflows:

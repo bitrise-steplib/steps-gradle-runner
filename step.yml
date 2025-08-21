@@ -65,7 +65,7 @@ toolkit:
   go:
     package_name: github.com/bitrise-io/steps-gradle-runner
 inputs:
-- build_root_directory: "."
+- build_root_directory: .
   opts:
     category: Config
     title: Build root directory
