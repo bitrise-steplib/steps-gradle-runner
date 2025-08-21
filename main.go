@@ -27,9 +27,10 @@ const (
 // Config ...
 type Config struct {
 	// Gradle Inputs
-	GradleTasks   string `env:"gradle_task,required"`
-	GradlewPath   string `env:"gradlew_path,file"`
-	GradleOptions string `env:"gradle_options"`
+	BuildRootDirectory string `env:"build_root_directory,required"`
+	GradleTasks        string `env:"gradle_task,required"`
+	GradlewPath        string `env:"gradlew_path,file"`
+	GradleOptions      string `env:"gradle_options"`
 	// Export config
 	AppFileIncludeFilter     string `env:"app_file_include_filter,required"`
 	AppFileExcludeFilter     string `env:"app_file_exclude_filter"`
@@ -45,7 +46,7 @@ type Config struct {
 	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
 }
 
-func runGradleTask(gradleTool, tasks, options string, destDir string) error {
+func runGradleTask(gradleTool, tasks, options, workDir, destDir string) error {
 	optionSlice, err := shellquote.Split(options)
 	if err != nil {
 		return err
@@ -65,6 +66,7 @@ func runGradleTask(gradleTool, tasks, options string, destDir string) error {
 	fmt.Println()
 
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
+	cmd.SetDir(workDir)
 
 	if shouldSaveOutputToLogFile(optionSlice) { // Do not write to stdout as debug log may contain sensitive information
 		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
@@ -159,7 +161,20 @@ func main() {
 	stepconf.Print(configs)
 	fmt.Println()
 
-	gradlewPath, err := filepath.Abs(configs.GradlewPath)
+	buildRootAbs, err := filepath.Abs(configs.BuildRootDirectory)
+	if err != nil {
+		failf("Can't get absolute path for build_root_directory (%s): %s", configs.BuildRootDirectory, err)
+	}
+
+	if exist, err := pathutil.IsPathExists(buildRootAbs); err != nil {
+		failf("Failed to check if build_root_directory exists at: %s: %s", buildRootAbs, err)
+	} else if !exist {
+		failf("build_root_directory does not exist at: %s", buildRootAbs)
+	}
+
+	log.Infof("Using build root directory: %s", buildRootAbs)
+
+	gradlewPath := filepath.Join(buildRootAbs, configs.GradlewPath)
 	if err != nil {
 		failf("Can't get absolute path for gradlew file (%s): %s", configs.GradlewPath, err)
 	}
@@ -171,21 +186,21 @@ func main() {
 	gradleStarted := time.Now()
 
 	log.Infof("Running gradle task...")
-	if err := runGradleTask(gradlewPath, configs.GradleTasks, configs.GradleOptions, configs.DeployDir); err != nil {
+	if err := runGradleTask(gradlewPath, configs.GradleTasks, configs.GradleOptions, buildRootAbs, configs.DeployDir); err != nil {
 		failf("Gradle task failed: %s", err)
 	}
 
 	// Collecting caches
 	fmt.Println()
 	log.Infof("Collecting cache:")
-	if warning := cache.Collect(filepath.Dir(gradlewPath), utilscache.Level(configs.CacheLevel)); warning != nil {
+	if warning := cache.Collect(buildRootAbs, utilscache.Level(configs.CacheLevel)); warning != nil {
 		log.Warnf("%s", warning)
 	}
 
 	// Move apk and aab files
 	fmt.Println()
 	log.Infof("Move APK and AAB files...")
-	appFiles, err := findArtifacts(".",
+	appFiles, err := findArtifacts(buildRootAbs,
 		filePatterns{
 			include: filterEmpty(strings.Split(configs.AppFileIncludeFilter, "\n")),
 			exclude: filterEmpty(strings.Split(configs.AppFileExcludeFilter, "\n")),
@@ -258,7 +273,7 @@ func main() {
 		}
 	}
 
-	testApkFiles, err := findArtifacts(".",
+	testApkFiles, err := findArtifacts(buildRootAbs,
 		filePatterns{
 			include: filterEmpty(strings.Split(configs.TestApkFileIncludeFilter, "\n")),
 			exclude: filterEmpty(strings.Split(configs.TestApkFileExcludeFilter, "\n")),
@@ -310,7 +325,7 @@ func main() {
 
 	// Move mapping files
 	log.Infof("Move mapping files...")
-	mappingFiles, err := findArtifacts(".",
+	mappingFiles, err := findArtifacts(buildRootAbs,
 		filePatterns{
 			include: filterEmpty(strings.Split(configs.MappingFileIncludeFilter, "\n")),
 			exclude: filterEmpty(strings.Split(configs.MappingFileExcludeFilter, "\n")),

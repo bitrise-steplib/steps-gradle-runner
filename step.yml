@@ -65,6 +65,14 @@ toolkit:
   go:
     package_name: github.com/bitrise-io/steps-gradle-runner
 inputs:
+- build_root_directory: "."
+  opts:
+    category: Config
+    title: Build root directory
+    description: |
+      The root directory of the Gradle project where the gradlew file and build.gradle are located.
+      This can be either a relative path (relative to the working directory) or an absolute path.
+      For example, if your Android project is in a subdirectory called `android`, set this to `./android`.
 - gradle_task: assemble
   opts:
     category: Config

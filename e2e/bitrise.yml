@@ -5,6 +5,7 @@ app:
   envs:
   # Shared test configs
   - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
+  - BUILD_ROOT_DIRECTORY: "."
   - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
 
 workflows:
@@ -129,8 +130,9 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: ./src
+    - BUILD_ROOT_DIRECTORY: ./src
     - GRADLE_TASK: assembleDebug
-    - GRADLEW_PATH: ./src/gradlew
+    - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
     - COLLECT_METRICS: "no"
     after_run:
@@ -198,8 +200,9 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-io/bitrise-android-sample.git
     - TEST_APP_BRANCH: main
     - CLONE_INTO_DIR: ./src
+    - BUILD_ROOT_DIRECTORY: ./src
     - GRADLE_TASK: assembleDebug
-    - GRADLEW_PATH: ./src/gradlew
+    - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: --stacktrace
     - COLLECT_METRICS: "yes"
     after_run:
@@ -236,6 +239,7 @@ workflows:
     - path::./:
         title: Self-test
         inputs:
+        - build_root_directory: $BUILD_ROOT_DIRECTORY
         - gradle_task: $GRADLE_TASK
         - gradlew_path: $GRADLEW_PATH
         - gradle_options: $GRADLE_OPTIONS
