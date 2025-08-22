@@ -161,20 +161,14 @@ func main() {
 	stepconf.Print(configs)
 	fmt.Println()
 
+	gradlewPath, err := resolveGradlewPath(configs.BuildRootDirectory, configs.GradlewPath)
+	if err != nil {
+		failf("Failed to resolve gradlew path: %s", err)
+	}
+
 	buildRootAbs, err := filepath.Abs(configs.BuildRootDirectory)
 	if err != nil {
 		failf("Can't get absolute path for build_root_directory (%s): %s", configs.BuildRootDirectory, err)
-	}
-
-	if exist, err := pathutil.IsPathExists(buildRootAbs); err != nil {
-		failf("Failed to check if build_root_directory exists at: %s: %s", buildRootAbs, err)
-	} else if !exist {
-		failf("build_root_directory does not exist at: %s", buildRootAbs)
-	}
-
-	gradlewPath := filepath.Join(buildRootAbs, configs.GradlewPath)
-	if err != nil {
-		failf("Can't get absolute path for gradlew file (%s): %s", configs.GradlewPath, err)
 	}
 
 	if err := os.Chmod(gradlewPath, 0770); err != nil {
