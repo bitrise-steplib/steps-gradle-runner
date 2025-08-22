@@ -5,6 +5,7 @@ app:
   envs:
   # Shared test configs
   - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
+  - BUILD_ROOT_DIRECTORY: .
   - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
 
 workflows:
@@ -14,7 +15,6 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: .
-    - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: --debug
@@ -45,7 +45,6 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: .
-    - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: nonexistentTask
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
@@ -73,7 +72,6 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: .
-    - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: nonexistentTask
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: --debug
@@ -88,7 +86,6 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: .
-    - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: bundle
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
@@ -104,7 +101,6 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: .
-    - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: gradlew
     - GRADLE_OPTIONS: ""
@@ -119,7 +115,6 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: .
-    - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug assembleRelease
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
@@ -135,9 +130,9 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: ./src
-    - GRADLE_FILE: ./src/build.gradle
+    - BUILD_ROOT_DIRECTORY: ./src
     - GRADLE_TASK: assembleDebug
-    - GRADLEW_PATH: ./src/gradlew
+    - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
     - COLLECT_METRICS: "no"
     after_run:
@@ -150,7 +145,6 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/android-sdk22-no-gradlew.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: .
-    - GRADLE_FILE: ./build.gradle
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ""
     - GRADLE_OPTIONS: ""
@@ -166,7 +160,6 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/android-empty-library.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: .
-    - GRADLE_FILE: ""
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
@@ -179,7 +172,6 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-abi-split.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: .
-    - GRADLE_FILE: ""
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
@@ -194,7 +186,6 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-samples/android-gradle-kotlin-dsl.git
     - TEST_APP_BRANCH: master
     - CLONE_INTO_DIR: .
-    - GRADLE_FILE: ./build.gradle.kts
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
@@ -209,9 +200,9 @@ workflows:
     - TEST_APP_URL: https://github.com/bitrise-io/bitrise-android-sample.git
     - TEST_APP_BRANCH: main
     - CLONE_INTO_DIR: ./src
-    - GRADLE_FILE: ./src/build.gradle
+    - BUILD_ROOT_DIRECTORY: ./src
     - GRADLE_TASK: assembleDebug
-    - GRADLEW_PATH: ./src/gradlew
+    - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: --stacktrace
     - COLLECT_METRICS: "yes"
     after_run:
@@ -242,13 +233,10 @@ workflows:
         - repository_url: $TEST_APP_URL
         - clone_into_dir: $CLONE_INTO_DIR
         - branch: $TEST_APP_BRANCH
-    - install-missing-android-tools:
-        inputs:
-        - gradlew_path: $GRADLEW_PATH
     - path::./:
         title: Self-test
         inputs:
-        - gradle_file: $GRADLE_FILE
+        - build_root_directory: $BUILD_ROOT_DIRECTORY
         - gradle_task: $GRADLE_TASK
         - gradlew_path: $GRADLEW_PATH
         - gradle_options: $GRADLE_OPTIONS
