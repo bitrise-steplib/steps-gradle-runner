@@ -27,10 +27,10 @@ const (
 // Config ...
 type Config struct {
 	// Gradle Inputs
-	GradleFile    string `env:"gradle_file"`
-	GradleTasks   string `env:"gradle_task,required"`
-	GradlewPath   string `env:"gradlew_path,file"`
-	GradleOptions string `env:"gradle_options"`
+	BuildRootDirectory string `env:"build_root_directory,required"`
+	GradleTasks        string `env:"gradle_task,required"`
+	GradlewPath        string `env:"gradlew_path"`
+	GradleOptions      string `env:"gradle_options"`
 	// Export config
 	AppFileIncludeFilter     string `env:"app_file_include_filter,required"`
 	AppFileExcludeFilter     string `env:"app_file_exclude_filter"`
@@ -46,7 +46,7 @@ type Config struct {
 	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
 }
 
-func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string) error {
+func runGradleTask(gradleTool, tasks, options, workDir, destDir string) error {
 	optionSlice, err := shellquote.Split(options)
 	if err != nil {
 		return err
@@ -58,9 +58,6 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string)
 	}
 
 	cmdSlice := []string{gradleTool}
-	if buildFile != "" {
-		cmdSlice = append(cmdSlice, "--build-file", buildFile)
-	}
 	cmdSlice = append(cmdSlice, taskSlice...)
 	cmdSlice = append(cmdSlice, optionSlice...)
 
@@ -69,6 +66,7 @@ func runGradleTask(gradleTool, buildFile, tasks, options string, destDir string)
 	fmt.Println()
 
 	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
+	cmd.SetDir(workDir)
 
 	if shouldSaveOutputToLogFile(optionSlice) { // Do not write to stdout as debug log may contain sensitive information
 		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
@@ -144,18 +142,6 @@ func findDeployPth(deployDir, baseName, ext string) (string, error) {
 	return deployPth, err
 }
 
-func validateAndMigrateConfig(config *Config) error {
-	if config.GradleFile != "" {
-		if exist, err := pathutil.IsPathExists(config.GradleFile); err != nil {
-			return fmt.Errorf("failed to check if GradleFile exists at: %s: %s", config.GradleFile, err)
-		} else if !exist {
-			return fmt.Errorf("GradleFile does not exist at: %s", config.GradleFile)
-		}
-	}
-
-	return nil
-}
-
 func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
 	cmd := command.New("envman", "add", "--key", keyStr)
 	cmd.SetStdin(strings.NewReader(valueStr))
@@ -173,14 +159,16 @@ func main() {
 		failf("Issue with input: %s", err)
 	}
 	stepconf.Print(configs)
-	if err := validateAndMigrateConfig(&configs); err != nil {
-		failf("Issue with input: %s", err)
-	}
 	fmt.Println()
 
-	gradlewPath, err := filepath.Abs(configs.GradlewPath)
+	gradlewPath, err := resolveGradlewPath(configs.BuildRootDirectory, configs.GradlewPath)
 	if err != nil {
-		failf("Can't get absolute path for gradlew file (%s): %s", configs.GradlewPath, err)
+		failf("Failed to resolve gradlew path: %s", err)
+	}
+
+	buildRootAbs, err := filepath.Abs(configs.BuildRootDirectory)
+	if err != nil {
+		failf("Can't get absolute path for build_root_directory (%s): %s", configs.BuildRootDirectory, err)
 	}
 
 	if err := os.Chmod(gradlewPath, 0770); err != nil {
@@ -190,21 +178,21 @@ func main() {
 	gradleStarted := time.Now()
 
 	log.Infof("Running gradle task...")
-	if err := runGradleTask(gradlewPath, configs.GradleFile, configs.GradleTasks, configs.GradleOptions, configs.DeployDir); err != nil {
+	if err := runGradleTask(gradlewPath, configs.GradleTasks, configs.GradleOptions, buildRootAbs, configs.DeployDir); err != nil {
 		failf("Gradle task failed: %s", err)
 	}
 
 	// Collecting caches
 	fmt.Println()
 	log.Infof("Collecting cache:")
-	if warning := cache.Collect(filepath.Dir(gradlewPath), utilscache.Level(configs.CacheLevel)); warning != nil {
+	if warning := cache.Collect(buildRootAbs, utilscache.Level(configs.CacheLevel)); warning != nil {
 		log.Warnf("%s", warning)
 	}
 
 	// Move apk and aab files
 	fmt.Println()
 	log.Infof("Move APK and AAB files...")
-	appFiles, err := findArtifacts(".",
+	appFiles, err := findArtifacts(buildRootAbs,
 		filePatterns{
 			include: filterEmpty(strings.Split(configs.AppFileIncludeFilter, "\n")),
 			exclude: filterEmpty(strings.Split(configs.AppFileExcludeFilter, "\n")),
@@ -277,7 +265,7 @@ func main() {
 		}
 	}
 
-	testApkFiles, err := findArtifacts(".",
+	testApkFiles, err := findArtifacts(buildRootAbs,
 		filePatterns{
 			include: filterEmpty(strings.Split(configs.TestApkFileIncludeFilter, "\n")),
 			exclude: filterEmpty(strings.Split(configs.TestApkFileExcludeFilter, "\n")),
@@ -329,7 +317,7 @@ func main() {
 
 	// Move mapping files
 	log.Infof("Move mapping files...")
-	mappingFiles, err := findArtifacts(".",
+	mappingFiles, err := findArtifacts(buildRootAbs,
 		filePatterns{
 			include: filterEmpty(strings.Split(configs.MappingFileIncludeFilter, "\n")),
 			exclude: filterEmpty(strings.Split(configs.MappingFileExcludeFilter, "\n")),
