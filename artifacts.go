@@ -25,9 +25,18 @@ func findArtifacts(searchDir string, patterns filePatterns) ([]string, error) {
 			return nil
 		}
 
+		// Convert absolute path to relative path for pattern matching.
+		// According to the docs of `fs.WalkFunc`, the "relativeness" of `path` is determined by the `searchDir`.
+		// That is, if we call `filepath.Walk` with an absolute path, the `path` will be absolute as well.
+		relPath, err := filepath.Rel(searchDir, path)
+		if err != nil {
+			log.Warnf("failed to get relative path for %s: %s", path, err)
+			return nil
+		}
+
 		includeMatch := false
 		for _, includePattern := range patterns.include {
-			if glob.Glob(includePattern, path) {
+			if glob.Glob(includePattern, relPath) {
 				includeMatch = true
 				break
 			}
@@ -37,7 +46,7 @@ func findArtifacts(searchDir string, patterns filePatterns) ([]string, error) {
 		}
 
 		for _, excludePattern := range patterns.exclude {
-			if glob.Glob(excludePattern, path) {
+			if excludePattern != "" && glob.Glob(excludePattern, relPath) {
 				return nil
 			}
 		}
