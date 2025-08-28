@@ -73,6 +73,8 @@ inputs:
       The root directory of the Gradle project where the gradlew file and build.gradle are located.
       This can be either a relative path (relative to the working directory) or an absolute path.
       For example, if your Android project is in a subdirectory called `android`, set this to `./android`.
+      The step will change directory to the path set by this input and run the gradle command from that directory.
+      The directory is not changed for subsequent steps--only for the execution of the gradle command in this step. 
 - gradle_task: assemble
   opts:
     category: Config
@@ -92,8 +94,10 @@ inputs:
       You can find more information about the Gradle Wrapper (gradlew),
       and about how you can generate one
       in the official guide at: [https://docs.gradle.org/current/userguide/gradle_wrapper.html](https://docs.gradle.org/current/userguide/gradle_wrapper.html).
-      The path should be relative to the build_root_directory input. For example, `./gradlew`,
-      or if it is in a sub directory, `./sub/dir/gradlew`.
+      The path should be relative to the build_root_directory input. 
+      For the root gradle project, use the default value, `./gradlew`.
+      If a `gradlew` is in a sub directory of the root direcotry, `./sub/dir/gradlew`
+      where `.` is the `build_root_directory`.
     is_required: true
 - app_file_include_filter: |
     *.apk
