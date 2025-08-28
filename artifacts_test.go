@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
@@ -10,17 +9,6 @@ import (
 )
 
 func Test_findArtifacts(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "glob-test")
-	if err != nil {
-		t.Errorf("setup: failed to create temp dir, error: %s", err)
-	}
-	defer func() {
-
-		if err := os.RemoveAll(tempDir); err != nil {
-			t.Logf("failed to remove temp dir, error: %s", err)
-		}
-	}()
-
 	tests := []struct {
 		name      string
 		patterns  filePatterns
@@ -111,7 +99,7 @@ func Test_findArtifacts(t *testing.T) {
 		{
 			name: "Incl: 2, Nested, path in include",
 			patterns: filePatterns{
-				include: []string{"*/a/*.apk", "*/b/*.aab"},
+				include: []string{"a/*.apk", "b/*.aab"},
 				exclude: []string{},
 			},
 			filePaths: []string{"a/test.apk", "a.test.aab", "b/test.apk", "b/test.aab"},
@@ -121,11 +109,8 @@ func Test_findArtifacts(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupFiles := func(tempDir string, filePaths []string) string {
-				currentTestDir, err := ioutil.TempDir(tempDir, "")
-				if err != nil {
-					t.Errorf("setup: failed to create temp dir, error: %s", err)
-				}
+			setupFiles := func(filePaths []string) string {
+				currentTestDir := t.TempDir()
 				for _, partialFilePath := range filePaths {
 					dirPath := path.Join(currentTestDir, path.Dir(partialFilePath))
 					if err := os.MkdirAll(dirPath, 0700); err != nil {
@@ -133,13 +118,13 @@ func Test_findArtifacts(t *testing.T) {
 					}
 
 					filePath := path.Join(currentTestDir, partialFilePath)
-					if err := ioutil.WriteFile(filePath, nil, 0600); err != nil {
+					if err := os.WriteFile(filePath, nil, 0600); err != nil {
 						t.Errorf("setup: failed to create file (%s), error: %s", filePath, err)
 					}
 				}
 				return currentTestDir
 			}
-			currentTestDir := setupFiles(tempDir, tt.filePaths)
+			currentTestDir := setupFiles(tt.filePaths)
 
 			got, err := findArtifacts(currentTestDir, tt.patterns)
 			if (err != nil) != tt.wantErr {
