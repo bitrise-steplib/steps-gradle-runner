@@ -54,35 +54,9 @@ Remember, the path must be relative to the root of the repository.
 
 ## 🧩 Get started
 
-Add this step directly to your workflow in the [Bitrise Workflow Editor](https://devcenter.bitrise.io/steps-and-workflows/steps-and-workflows-index/).
+Add this step directly to your workflow in the [Bitrise Workflow Editor](https://docs.bitrise.io/en/bitrise-ci/workflows-and-pipelines/steps/adding-steps-to-a-workflow.html).
 
 You can also run this step directly with [Bitrise CLI](https://github.com/bitrise-io/bitrise).
-
-### Examples
-
-This configuration builds all variant's `aab`:
-
-```yaml
-- gradle-runner@2:
-    inputs:
-    - gradlew_path: "./gradlew"
-    - gradle_task: bundleRelease
-```
-You can also set up file path filters to avoid exporting unwanted archives or mapping files:
-
-```yaml
-- gradle-runner@2:
-    inputs:
-    - gradlew_path: "./gradlew"
-    - gradle_task: bundleRelease
-    - app_file_include_filter: "*release.aab"
-    - app_file_exclude_filter: "*/temporary/*"
-    - test_apk_file_include_filter: "*Test*.apk"
-    - test_apk_file_exclude_filter: "*/immediate/*"
-    - mapping_file_include_filter: "*/mapping.txt"
-    - mapping_file_exclude_filter: "*/tmp/*"
-```
-
 
 ## ⚙️ Configuration
 
@@ -121,9 +95,8 @@ You can also set up file path filters to avoid exporting unwanted archives or ma
 
 We welcome [pull requests](https://github.com/bitrise-io/steps-gradle-runner/pulls) and [issues](https://github.com/bitrise-io/steps-gradle-runner/issues) against this repository.
 
-For pull requests, work on your changes in a forked repository and use the Bitrise CLI to [run step tests locally](https://devcenter.bitrise.io/bitrise-cli/run-your-first-build/).
+For pull requests, work on your changes in a forked repository and use the Bitrise CLI to [run step tests locally](https://docs.bitrise.io/en/bitrise-ci/bitrise-cli/running-your-first-local-build-with-the-cli.html).
 
 Learn more about developing steps:
 
-- [Create your own step](https://devcenter.bitrise.io/contributors/create-your-own-step/)
-- [Testing your Step](https://devcenter.bitrise.io/contributors/testing-and-versioning-your-steps/)
+- [Create your own step](https://docs.bitrise.io/en/bitrise-ci/workflows-and-pipelines/developing-your-own-bitrise-step/developing-a-new-step.html)
