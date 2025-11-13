@@ -52,10 +52,12 @@ support_url: https://github.com/bitrise-io/steps-gradle-runner/issues
 
 project_type_tags:
 - android
-- react-native
 - cordova
-- ionic
 - flutter
+- ionic
+- java
+- kotlin-multiplatform
+- react-native
 type_tags:
 - build
 is_requires_admin_user: false
