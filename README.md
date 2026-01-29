@@ -47,9 +47,9 @@ Remember, the path must be relative to the root of the repository.
 
 ### Related Steps
 
-* [Generate Gradle Wrapper](https://www.bitrise.io/integrations/steps/generate-gradle-wrapper)
 * [Gradle Unit Test](https://www.bitrise.io/integrations/steps/gradle-unit-test)
 * [Android Build](https://www.bitrise.io/integrations/steps/android-build)
+* Gradle cache [save](https://github.com/bitrise-steplib/bitrise-step-save-gradle-cache) and [restore](https://github.com/bitrise-steplib/bitrise-step-restore-gradle-cache) Steps
 </details>
 
 ## 🧩 Get started
