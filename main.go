@@ -7,15 +7,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bitrise-io/go-android/cache"
-	utilscache "github.com/bitrise-io/go-steputils/cache"
 	"github.com/bitrise-io/go-steputils/commandhelper"
-	"github.com/bitrise-io/go-steputils/stepconf"
+	"github.com/bitrise-io/go-steputils/v2/export"
+	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
+	"github.com/bitrise-io/go-utils/v2/env"
+	v2command "github.com/bitrise-io/go-utils/v2/command"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -38,9 +39,6 @@ type Config struct {
 	TestApkFileExcludeFilter string `env:"test_apk_file_exclude_filter"`
 	MappingFileIncludeFilter string `env:"mapping_file_include_filter"`
 	MappingFileExcludeFilter string `env:"mapping_file_exclude_filter"`
-
-	// Debug
-	CacheLevel string `env:"cache_level,opt['all','only_deps','none']"`
 
 	// Other configs
 	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
@@ -142,12 +140,6 @@ func findDeployPth(deployDir, baseName, ext string) (string, error) {
 	return deployPth, err
 }
 
-func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
-	cmd := command.New("envman", "add", "--key", keyStr)
-	cmd.SetStdin(strings.NewReader(valueStr))
-	return cmd.Run()
-}
-
 func failf(message string, args ...interface{}) {
 	log.Errorf(message, args...)
 	os.Exit(1)
@@ -155,11 +147,16 @@ func failf(message string, args ...interface{}) {
 
 func main() {
 	var configs Config
-	if err := stepconf.Parse(&configs); err != nil {
+	envRepo := env.NewRepository()
+	parser := stepconf.NewInputParser(envRepo)
+	if err := parser.Parse(&configs); err != nil {
 		failf("Issue with input: %s", err)
 	}
 	stepconf.Print(configs)
 	fmt.Println()
+
+	cmdFactory := v2command.NewFactory(envRepo)
+	exporter := export.NewExporter(cmdFactory)
 
 	gradlewPath, err := resolveGradlewPath(configs.BuildRootDirectory, configs.GradlewPath)
 	if err != nil {
@@ -180,13 +177,6 @@ func main() {
 	log.Infof("Running gradle task...")
 	if err := runGradleTask(gradlewPath, configs.GradleTasks, configs.GradleOptions, buildRootAbs, configs.DeployDir); err != nil {
 		failf("Gradle task failed: %s", err)
-	}
-
-	// Collecting caches
-	fmt.Println()
-	log.Infof("Collecting cache:")
-	if warning := cache.Collect(buildRootAbs, utilscache.Level(configs.CacheLevel)); warning != nil {
-		log.Warnf("%s", warning)
 	}
 
 	// Move apk and aab files
@@ -247,7 +237,7 @@ func main() {
 		"BITRISE_AAB_PATH": copiedAabFiles} {
 		if len(appFiles) != 0 {
 			lastCopiedFile := appFiles[len(appFiles)-1]
-			if err := exportEnvironmentWithEnvman(appEnv, lastCopiedFile); err != nil {
+			if err := exporter.ExportOutput(appEnv, lastCopiedFile); err != nil {
 				failf("Failed to export environment (%s): %s", appEnv, err)
 			}
 			log.Donef("The app path is now available in the Environment Variable: $%s (value: %s)", appEnv, lastCopiedFile)
@@ -258,7 +248,7 @@ func main() {
 		"BITRISE_AAB_PATH_LIST": copiedAabFiles} {
 		if len(appFiles) != 0 {
 			appList := strings.Join(appFiles, "|")
-			if err := exportEnvironmentWithEnvman(appListEnv, appList); err != nil {
+			if err := exporter.ExportOutput(appListEnv, appList); err != nil {
 				failf("Failed to export environment (%s): %s", appListEnv, err)
 			}
 			log.Donef("The app paths list is now available in the Environment Variable: $%s (value: %s)", appListEnv, appList)
@@ -309,7 +299,7 @@ func main() {
 		lastCopiedTestApkFile = deployPth
 	}
 	if lastCopiedTestApkFile != "" {
-		if err := exportEnvironmentWithEnvman("BITRISE_TEST_APK_PATH", lastCopiedTestApkFile); err != nil {
+		if err := exporter.ExportOutput("BITRISE_TEST_APK_PATH", lastCopiedTestApkFile); err != nil {
 			failf("Failed to export environment (BITRISE_TEST_APK_PATH): %s", err)
 		}
 		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_TEST_APK_PATH (value: %s)", lastCopiedTestApkFile)
@@ -362,7 +352,7 @@ func main() {
 	}
 
 	if lastCopiedMappingFile != "" {
-		if err := exportEnvironmentWithEnvman("BITRISE_MAPPING_PATH", lastCopiedMappingFile); err != nil {
+		if err := exporter.ExportOutput("BITRISE_MAPPING_PATH", lastCopiedMappingFile); err != nil {
 			failf("Failed to export environment (BITRISE_MAPPING_PATH): %s", err)
 		}
 		log.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)

@@ -47,9 +47,9 @@ Remember, the path must be relative to the root of the repository.
 
 ### Related Steps
 
-* [Generate Gradle Wrapper](https://www.bitrise.io/integrations/steps/generate-gradle-wrapper)
 * [Gradle Unit Test](https://www.bitrise.io/integrations/steps/gradle-unit-test)
 * [Android Build](https://www.bitrise.io/integrations/steps/android-build)
+* Gradle cache [save](https://github.com/bitrise-steplib/bitrise-step-save-gradle-cache) and [restore](https://github.com/bitrise-steplib/bitrise-step-restore-gradle-cache) Steps
 </details>
 
 ## 🧩 Get started
@@ -57,6 +57,32 @@ Remember, the path must be relative to the root of the repository.
 Add this step directly to your workflow in the [Bitrise Workflow Editor](https://docs.bitrise.io/en/bitrise-ci/workflows-and-pipelines/steps/adding-steps-to-a-workflow.html).
 
 You can also run this step directly with [Bitrise CLI](https://github.com/bitrise-io/bitrise).
+
+### Examples
+
+This configuration builds all variant's `aab`:
+
+```yaml
+- gradle-runner@2:
+    inputs:
+    - gradlew_path: "./gradlew"
+    - gradle_task: bundleRelease
+```
+You can also set up file path filters to avoid exporting unwanted archives or mapping files:
+
+```yaml
+- gradle-runner@2:
+    inputs:
+    - gradlew_path: "./gradlew"
+    - gradle_task: bundleRelease
+    - app_file_include_filter: "*release.aab"
+    - app_file_exclude_filter: "*/temporary/*"
+    - test_apk_file_include_filter: "*Test*.apk"
+    - test_apk_file_exclude_filter: "*/immediate/*"
+    - mapping_file_include_filter: "*/mapping.txt"
+    - mapping_file_exclude_filter: "*/tmp/*"
+```
+
 
 ## ⚙️ Configuration
 
@@ -74,7 +100,6 @@ You can also run this step directly with [Bitrise CLI](https://github.com/bitris
 | `test_apk_file_exclude_filter` | One filter per line. The Step will NOT copy the generated apk files that match this filters into the Bitrise deploy directory. You can use this filter to avoid moving unalinged and/or unsigned apk files. If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied. Example: Do not copy the test APK file if its filename contains `unaligned`: ``` *unaligned*.apk ```  |  |  |
 | `mapping_file_include_filter` | The Step will copy the generated mapping files that match this filter into the Bitrise deploy directory. If you specify an empty filter, no mapping files will be copied. Example:  Copy every mapping.txt file: ``` *mapping.txt ```  |  | `*/mapping.txt` |
 | `mapping_file_exclude_filter` | The Step will **not** copy the generated mapping files that match this filter into the Bitrise deploy directory. You can use this input to avoid moving a beta mapping file, for example. If you specify an empty filter, every mapping file (selected by `mapping_file_include_filter`) will be copied. Example:  Do not copy any mapping.txt file that is in a `beta` directoy: ``` */beta/mapping.txt ```  |  | `*/tmp/*` |
-| `cache_level` | `all` - will cache build-cache and dependencies `only_deps` - will cache dependencies only `none` - won't cache any of the above | required | `only_deps` |
 | `gradle_options` | Flags added to the end of the Gradle call. You can use multiple options, separated by a space. Example: `--stacktrace --debug` If `--debug` or `-d` options are set then only the last 20 lines of the raw gradle output will be visible in the build log. The full raw output will be exported to the `$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH` variable and will be added as a build artifact. |  | `--stacktrace` |
 </details>
 

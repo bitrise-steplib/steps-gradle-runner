@@ -21,7 +21,6 @@ workflows:
     - COLLECT_METRICS: "no"
     after_run:
     - _common
-    - _check_cache
     - _check_output_apk
     - _check_log_output
 
@@ -92,7 +91,6 @@ workflows:
     - COLLECT_METRICS: "no"
     after_run:
     - _common
-    - _check_cache
     - _check_output_aab
 
   test_gradlew_path:
@@ -107,7 +105,6 @@ workflows:
     - COLLECT_METRICS: "no"
     after_run:
     - _common
-    - _check_cache
     - _check_output_apk
 
   test_multiple_tasks:
@@ -121,7 +118,6 @@ workflows:
     - COLLECT_METRICS: "no"
     after_run:
     - _common
-    - _check_cache
     - _check_output_apk
 
   test_subdir:
@@ -137,7 +133,6 @@ workflows:
     - COLLECT_METRICS: "no"
     after_run:
     - _common
-    - _check_cache
     - _check_output_apk
 
   test-no-gradlew-error:
@@ -151,7 +146,6 @@ workflows:
     - COLLECT_METRICS: "no"
     after_run:
     - _common
-    - _check_cache
     - _check_output_apk
 
   # Ouptuts an *.aar
@@ -178,7 +172,6 @@ workflows:
     - COLLECT_METRICS: "no"
     after_run:
     - _common
-    - _check_cache
     - _check_output_apk
 
   test_gradle_kts:
@@ -192,7 +185,6 @@ workflows:
     - COLLECT_METRICS: "no"
     after_run:
     - _common
-    - _check_cache
     - _check_output_apk
 
   test_metrics:
@@ -207,7 +199,6 @@ workflows:
     - COLLECT_METRICS: "yes"
     after_run:
     - _common
-    - _check_cache
     - _check_output_apk
 
   _common:
@@ -253,8 +244,6 @@ workflows:
             echo "[output] BITRISE_AAB_PATH: ${BITRISE_AAB_PATH}"
             echo "[output] BITRISE_AAB_PATH_LIST: ${BITRISE_AAB_PATH_LIST}"
             echo "[output] BITRISE_MAPPING_PATH: ${BITRISE_MAPPING_PATH}"
-            echo "[output] BITRISE_CACHE_INCLUDE_PATHS: ${BITRISE_CACHE_INCLUDE_PATHS}"
-            echo "[output] BITRISE_CACHE_EXCLUDE_PATHS: ${BITRISE_CACHE_EXCLUDE_PATHS}"
 
             set -x
             ls -alh "$BITRISE_DEPLOY_DIR"
@@ -306,19 +295,3 @@ workflows:
             echo "Log file found at ${BITRISE_GRADLE_RAW_RESULT_TEXT_PATH}"
 
             envman add --key BITRISE_GRADLE_RAW_RESULT_TEXT_PATH --value ""
-
-  _check_cache:
-    steps:
-    - script:
-        title: Check if cache env vars are set
-        is_always_run: true
-        inputs:
-        - content: |-
-            if [ -z "${BITRISE_CACHE_INCLUDE_PATHS}" ]; then
-              echo "Include paths (BITRISE_CACHE_INCLUDE_PATHS) are not set"
-              exit 1
-            fi
-            if [ -z "${BITRISE_CACHE_EXCLUDE_PATHS}" ]; then
-              echo "Exclude paths (BITRISE_CACHE_EXCLUDE_PATHS) are not set"
-              exit 1
-            fi
