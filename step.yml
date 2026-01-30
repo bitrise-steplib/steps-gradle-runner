@@ -42,9 +42,9 @@ description: |-
 
   ### Related Steps
 
-  * [Generate Gradle Wrapper](https://www.bitrise.io/integrations/steps/generate-gradle-wrapper)
   * [Gradle Unit Test](https://www.bitrise.io/integrations/steps/gradle-unit-test)
   * [Android Build](https://www.bitrise.io/integrations/steps/android-build)
+  * Gradle cache [save](https://github.com/bitrise-steplib/bitrise-step-save-gradle-cache) and [restore](https://github.com/bitrise-steplib/bitrise-step-restore-gradle-cache) Steps
 
 website: https://github.com/bitrise-io/steps-gradle-runner
 source_code_url: https://github.com/bitrise-io/steps-gradle-runner
@@ -191,19 +191,6 @@ inputs:
       ```
       */beta/mapping.txt
       ```
-- cache_level: only_deps
-  opts:
-    category: Debug
-    title: Set the level of cache
-    description: |-
-      `all` - will cache build-cache and dependencies
-      `only_deps` - will cache dependencies only
-      `none` - won't cache any of the above
-    is_required: true
-    value_options:
-    - all
-    - only_deps
-    - none
 - gradle_options: --stacktrace
   opts:
     category: Debug
