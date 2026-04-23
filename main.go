@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bitrise-io/go-steputils/commandhelper"
+	"github.com/bitrise-io/go-steputils/v2/commandhelper"
 	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/command"
@@ -15,8 +15,9 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
-	"github.com/bitrise-io/go-utils/v2/env"
 	v2command "github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/env"
+	v2log "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -68,7 +69,13 @@ func runGradleTask(gradleTool, tasks, options, workDir, destDir string) error {
 
 	if shouldSaveOutputToLogFile(optionSlice) { // Do not write to stdout as debug log may contain sensitive information
 		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
-		return commandhelper.RunAndExportOutput(*cmd, rawOutputLogPath, bitriseGradleResultsTextEnvKey, 20)
+
+		envRepo := env.NewRepository()
+		factory := v2command.NewFactory(envRepo)
+		v2cmd := factory.Create(cmdSlice[0], cmdSlice[1:], &v2command.Opts{Dir: workDir})
+		exporter := export.NewExporter(factory, export.NewFileManager())
+
+		return commandhelper.RunAndExportOutput(v2cmd, exporter, v2log.NewLogger(), rawOutputLogPath, bitriseGradleResultsTextEnvKey, 20)
 	}
 
 	cmd.SetStdout(os.Stdout)
@@ -156,7 +163,7 @@ func main() {
 	fmt.Println()
 
 	cmdFactory := v2command.NewFactory(envRepo)
-	exporter := export.NewExporter(cmdFactory)
+	exporter := export.NewExporter(cmdFactory, export.NewFileManager())
 
 	gradlewPath, err := resolveGradlewPath(configs.BuildRootDirectory, configs.GradlewPath)
 	if err != nil {
