@@ -1,3 +1,9 @@
+# github.com/bitrise-io/bitrise-build-cache-cli/v2 v2.4.1
+## explicit; go 1.24.0
+github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/config/gradle/mirrors
+github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/stringmerge
+github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/utils
+github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/gradle/mirrors
 # github.com/bitrise-io/go-steputils v1.0.5
 ## explicit; go 1.15
 github.com/bitrise-io/go-steputils/commandhelper
@@ -18,13 +24,14 @@ github.com/bitrise-io/go-utils/pathutil
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.26
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.27
 ## explicit; go 1.17
 github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
+github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/log/colorstring
 github.com/bitrise-io/go-utils/v2/pathutil
-# github.com/davecgh/go-spew v1.1.1
+# github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
 # github.com/hashicorp/go-cleanhttp v0.5.2
@@ -36,15 +43,18 @@ github.com/hashicorp/go-retryablehttp
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 ## explicit
 github.com/kballard/go-shellquote
-# github.com/pmezard/go-difflib v1.0.0
+# github.com/kr/text v0.2.0
+## explicit
+# github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
 github.com/pmezard/go-difflib/difflib
 # github.com/ryanuber/go-glob v1.0.0
 ## explicit
 github.com/ryanuber/go-glob
-# github.com/stretchr/testify v1.9.0
+# github.com/stretchr/testify v1.10.0
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
