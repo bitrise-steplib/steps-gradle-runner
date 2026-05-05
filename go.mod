@@ -5,11 +5,11 @@ go 1.24.0
 toolchain go1.24.10
 
 require (
-	github.com/bitrise-io/bitrise-build-cache-cli/v2 v2.5.0
+	github.com/bitrise-io/bitrise-build-cache-cli/v2 v2.6.0
 	github.com/bitrise-io/go-steputils v1.0.5
-	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.42
+	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.50
 	github.com/bitrise-io/go-utils v1.0.13
-	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.27
+	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.34
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/stretchr/testify v1.10.0

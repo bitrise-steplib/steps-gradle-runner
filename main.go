@@ -19,6 +19,7 @@ import (
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/v2/env"
 	v2command "github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -158,7 +159,7 @@ func main() {
 	fmt.Println()
 
 	cmdFactory := v2command.NewFactory(envRepo)
-	exporter := export.NewExporter(cmdFactory)
+	exporter := export.NewExporter(cmdFactory, fileutil.NewFileManager())
 
 	gradlewPath, err := resolveGradlewPath(configs.BuildRootDirectory, configs.GradlewPath)
 	if err != nil {
