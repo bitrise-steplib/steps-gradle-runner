@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/gradle/mirrors"
+	"github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/reactnative/wrap"
 	"github.com/bitrise-io/go-steputils/commandhelper"
 	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
@@ -66,7 +67,14 @@ func runGradleTask(gradleTool, tasks, options, workDir, destDir string) error {
 	log.Donef("$ %s", command.PrintableCommandArgs(false, cmdSlice))
 	fmt.Println()
 
-	cmd := command.New(cmdSlice[0], cmdSlice[1:]...)
+	gradleArgs := cmdSlice[1:]
+	det := wrap.Detect(context.Background(), wrap.DetectParams{})
+	if det.ReactNativeEnabled {
+		log.Infof("Bitrise Build Cache: React Native cache active — wrapping gradle with %s", det.CLIPath)
+	}
+	name, wrappedArgs := wrap.Wrap(det, gradleTool, gradleArgs)
+
+	cmd := command.New(name, wrappedArgs...)
 	cmd.SetDir(workDir)
 
 	if shouldSaveOutputToLogFile(optionSlice) { // Do not write to stdout as debug log may contain sensitive information
