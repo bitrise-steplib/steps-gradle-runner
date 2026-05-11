@@ -242,13 +242,19 @@ workflows:
         inputs:
         - content: |-
             #!/usr/bin/env bash
-            set -uo pipefail
+            # No `pipefail`: `yes | sdkmanager` dies from SIGPIPE (141) once
+            # sdkmanager closes its stdin, which pipefail would otherwise
+            # propagate as a pipeline failure even when sdkmanager itself
+            # exited 0.
+            set -u
+            sdkmanager="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
             for attempt in 1 2 3; do
-              if yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" \
-                  "platforms;android-27"; then
+              status=0
+              yes | "$sdkmanager" "platforms;android-27" || status=$?
+              if [ "$status" -eq 0 ]; then
                 exit 0
               fi
-              echo "sdkmanager attempt $attempt failed, retrying..." >&2
+              echo "sdkmanager attempt $attempt exited $status, retrying..." >&2
               sleep $((attempt * 5))
             done
             exit 1
