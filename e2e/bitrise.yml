@@ -231,6 +231,27 @@ workflows:
     - install-missing-android-tools@3:
         inputs:
         - gradlew_path: $CLONE_INTO_DIR/$GRADLEW_PATH
+    # Belt-and-braces: pre-install the legacy SDK platforms the e2e fixtures
+    # pin. install-missing-android-tools' static parser doesn't always pick
+    # up `compileSdkVersion 27` from every sample (e.g. sample-apps-android-
+    # abi-split), and gradle's own mid-build sdkmanager auto-install has
+    # been failing on the download step intermittently. Installing the
+    # platforms explicitly with retry keeps the e2e off that hot path.
+    - script:
+        title: Pre-install legacy Android SDK platforms
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -uo pipefail
+            for attempt in 1 2 3; do
+              if yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" \
+                  "platforms;android-27"; then
+                exit 0
+              fi
+              echo "sdkmanager attempt $attempt failed, retrying..." >&2
+              sleep $((attempt * 5))
+            done
+            exit 1
     - path::./:
         title: Self-test
         inputs:
