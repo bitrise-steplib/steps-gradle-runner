@@ -2,7 +2,6 @@
 ## explicit; go 1.24.0
 github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/config/ccache
 github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/config/common
-github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/config/gradle/mirrors
 github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/config/multiplatform
 github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/config/reactnative
 github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/config/xcelerate
@@ -10,7 +9,6 @@ github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/consts
 github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/envexport
 github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/stringmerge
 github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/utils
-github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/gradle/mirrors
 github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/reactnative/wrap
 github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/status
 # github.com/bitrise-io/go-steputils v1.0.5

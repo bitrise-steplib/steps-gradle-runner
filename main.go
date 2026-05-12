@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/gradle/mirrors"
 	"github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/reactnative/wrap"
 	"github.com/bitrise-io/go-steputils/commandhelper"
 	"github.com/bitrise-io/go-steputils/v2/export"
@@ -181,10 +180,6 @@ func main() {
 
 	if err := os.Chmod(gradlewPath, 0770); err != nil {
 		failf("Failed to add executable permission on gradlew file (%s): %s", gradlewPath, err)
-	}
-
-	if err := mirrors.NewActivator(mirrors.ActivatorParams{}).Activate(context.Background()); err != nil {
-		log.Warnf("Activate Gradle mirrors: %s", err)
 	}
 
 	gradleStarted := time.Now()
