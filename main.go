@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/reactnative/wrap"
+	"github.com/bitrise-io/go-android/v2/gradle"
+	"github.com/bitrise-io/go-android/v2/gradle/mappinglist"
 	"github.com/bitrise-io/go-steputils/commandhelper"
 	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
@@ -17,8 +19,8 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
-	"github.com/bitrise-io/go-utils/v2/env"
 	v2command "github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/kballard/go-shellquote"
 )
@@ -113,6 +115,70 @@ func filterEmpty(in []string) (out []string) {
 	return
 }
 
+// copiedApp is an app artifact after it has been copied to the deploy dir,
+// together with the build variant it belongs to.
+type copiedApp struct {
+	deployPath string
+	variant    gradle.ArtifactVariant
+	hasVariant bool
+}
+
+func deployPaths(apps []copiedApp) []string {
+	paths := make([]string, len(apps))
+	for i, a := range apps {
+		paths[i] = a.deployPath
+	}
+	return paths
+}
+
+// alignedMappingList builds a mapping-file list that is index-aligned with one
+// of the app lists so that mapping[i] is the mapping for app[i]. It mirrors the
+// AAB list when at least one AAB variant has a mapping (matching
+// google-play-deploy's AAB-over-APK preference), otherwise the APK list. Each
+// entry holds the mapping path for that app's variant, or an empty string when
+// the variant produced no mapping (so positions never shift). It returns
+// ok=false when neither app list has a variant that matched a mapping file.
+//
+// The list mirrors exactly one app list, so a consumer must pair it with that
+// same list (e.g. BITRISE_AAB_PATH_LIST when AABs were built): the APK and AAB
+// lists can differ in length and order (e.g. ABI/density-split APKs).
+func alignedMappingList(aabs, apks []copiedApp, mappingByVariant map[gradle.ArtifactVariant]string) ([]string, bool) {
+	if len(mappingByVariant) == 0 {
+		return nil, false
+	}
+	// Prefer the AAB list, but fall back to the APK list when no AAB variant
+	// matched a mapping (e.g. AABs whose variant could not be resolved while the
+	// APKs' could).
+	if list, matched := buildMappingList(aabs, mappingByVariant); matched > 0 {
+		return list, true
+	}
+	if list, matched := buildMappingList(apks, mappingByVariant); matched > 0 {
+		return list, true
+	}
+	return nil, false
+}
+
+// buildMappingList returns a slice aligned with apps where each entry is the
+// mapping path for that app's variant (empty when none), plus the number of
+// entries that matched a mapping.
+func buildMappingList(apps []copiedApp, mappingByVariant map[gradle.ArtifactVariant]string) ([]string, int) {
+	if len(apps) == 0 {
+		return nil, 0
+	}
+	list := make([]string, len(apps))
+	matched := 0
+	for i, app := range apps {
+		if !app.hasVariant {
+			continue
+		}
+		if mappingPath, ok := mappingByVariant[app.variant]; ok {
+			list[i] = mappingPath
+			matched++
+		}
+	}
+	return list, matched
+}
+
 func createDeployPth(deployDir, apkName string) (string, error) {
 	deployPth := filepath.Join(deployDir, apkName)
 
@@ -204,8 +270,8 @@ func main() {
 		log.Warnf("No file name matched app filters")
 	}
 
-	var copiedApkFiles []string
-	var copiedAabFiles []string
+	var copiedApkFiles []copiedApp
+	var copiedAabFiles []copiedApp
 	for _, appFile := range appFiles {
 		fi, err := os.Lstat(appFile)
 		if err != nil {
@@ -233,31 +299,36 @@ func main() {
 			failf("Failed to copy %s: %s", fileName, err)
 		}
 
+		// Remember the source variant so mapping files can be paired with this
+		// artifact later, even though the deploy path is flat.
+		variantKey, hasVariant := gradle.VariantFromPath(appFile)
+		copied := copiedApp{deployPath: deployPth, variant: variantKey, hasVariant: hasVariant}
+
 		switch strings.ToLower(ext) {
 		case ".apk":
-			copiedApkFiles = append(copiedApkFiles, deployPth)
+			copiedApkFiles = append(copiedApkFiles, copied)
 		case ".aab":
-			copiedAabFiles = append(copiedAabFiles, deployPth)
+			copiedAabFiles = append(copiedAabFiles, copied)
 		default:
 		}
 	}
 
-	for appEnv, appFiles := range map[string][]string{
+	for appEnv, appFiles := range map[string][]copiedApp{
 		"BITRISE_APK_PATH": copiedApkFiles,
 		"BITRISE_AAB_PATH": copiedAabFiles} {
 		if len(appFiles) != 0 {
-			lastCopiedFile := appFiles[len(appFiles)-1]
+			lastCopiedFile := appFiles[len(appFiles)-1].deployPath
 			if err := exporter.ExportOutput(appEnv, lastCopiedFile); err != nil {
 				failf("Failed to export environment (%s): %s", appEnv, err)
 			}
 			log.Donef("The app path is now available in the Environment Variable: $%s (value: %s)", appEnv, lastCopiedFile)
 		}
 	}
-	for appListEnv, appFiles := range map[string][]string{
+	for appListEnv, appFiles := range map[string][]copiedApp{
 		"BITRISE_APK_PATH_LIST": copiedApkFiles,
 		"BITRISE_AAB_PATH_LIST": copiedAabFiles} {
 		if len(appFiles) != 0 {
-			appList := strings.Join(appFiles, "|")
+			appList := strings.Join(deployPaths(appFiles), "|")
 			if err := exporter.ExportOutput(appListEnv, appList); err != nil {
 				failf("Failed to export environment (%s): %s", appListEnv, err)
 			}
@@ -331,6 +402,7 @@ func main() {
 	}
 
 	lastCopiedMappingFile := ""
+	mappingByVariant := map[gradle.ArtifactVariant]string{}
 	for _, mappingFile := range mappingFiles {
 		fi, err := os.Lstat(mappingFile)
 		if err != nil {
@@ -359,6 +431,14 @@ func main() {
 		}
 
 		lastCopiedMappingFile = deployPth
+
+		// Index by variant so the mapping list can be aligned with the app list.
+		// First match per variant wins (matches the deterministic walk order).
+		if variantKey, ok := gradle.VariantFromPath(mappingFile); ok {
+			if _, exists := mappingByVariant[variantKey]; !exists {
+				mappingByVariant[variantKey] = deployPth
+			}
+		}
 	}
 
 	if lastCopiedMappingFile != "" {
@@ -366,5 +446,16 @@ func main() {
 			failf("Failed to export environment (BITRISE_MAPPING_PATH): %s", err)
 		}
 		log.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
+	}
+
+	// Export a mapping list aligned index-by-index with the app list, so a
+	// downstream step (e.g. google-play-deploy) can pair each artifact with its
+	// mapping file by position.
+	if mappingList, ok := alignedMappingList(copiedAabFiles, copiedApkFiles, mappingByVariant); ok {
+		value := mappinglist.Encode(mappingList)
+		if err := exporter.ExportOutput("BITRISE_MAPPING_PATH_LIST", value); err != nil {
+			failf("Failed to export environment (BITRISE_MAPPING_PATH_LIST): %s", err)
+		}
+		log.Donef("The mapping paths list is now available in the Environment Variable: $BITRISE_MAPPING_PATH_LIST (value: %s)", value)
 	}
 }
