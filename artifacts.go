@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/ryanuber/go-glob"
 )
 
@@ -13,11 +13,11 @@ type filePatterns struct {
 	exclude []string
 }
 
-func findArtifacts(searchDir string, patterns filePatterns) ([]string, error) {
+func findArtifacts(logger log.Logger, searchDir string, patterns filePatterns) ([]string, error) {
 	var artifacts []string
 	return artifacts, filepath.Walk(searchDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			log.Warnf("failed to walk path: %s", err)
+			logger.Warnf("failed to walk path: %s", err)
 			return err
 		}
 
@@ -30,7 +30,7 @@ func findArtifacts(searchDir string, patterns filePatterns) ([]string, error) {
 		// That is, if we call `filepath.Walk` with an absolute path, the `path` will be absolute as well.
 		relPath, err := filepath.Rel(searchDir, path)
 		if err != nil {
-			log.Warnf("failed to get relative path for %s: %s", path, err)
+			logger.Warnf("failed to get relative path for %s: %s", path, err)
 			return nil
 		}
 

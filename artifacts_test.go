@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/bitrise-io/go-utils/v2/log"
 )
 
 func Test_findArtifacts(t *testing.T) {
@@ -184,13 +186,13 @@ func Test_findArtifacts(t *testing.T) {
 			},
 			filePaths: []string{
 				"build/outputs/apk/debug/app.apk",
-				"build/outputs/apk/release/app.apk", 
+				"build/outputs/apk/release/app.apk",
 				"app/build/outputs/bundle/release/app.aab",
 				"build/intermediates/apk/debug/temp.apk",
 				"build/tmp/cache/temp.apk",
 				"other/app.apk",
 			},
-			want: []string{"build/outputs/apk/debug/app.apk", "build/outputs/apk/release/app.apk", "app/build/outputs/bundle/release/app.aab"},
+			want:    []string{"build/outputs/apk/debug/app.apk", "build/outputs/apk/release/app.apk", "app/build/outputs/bundle/release/app.aab"},
 			wantErr: false,
 		},
 		{
@@ -226,7 +228,7 @@ func Test_findArtifacts(t *testing.T) {
 				"build/intermediates/apk/debug/temp.apk",
 				"app.aab",
 			},
-			want: []string{"app-release.apk", "app.aab"},
+			want:    []string{"app-release.apk", "app.aab"},
 			wantErr: false,
 		},
 		{
@@ -237,12 +239,12 @@ func Test_findArtifacts(t *testing.T) {
 			},
 			filePaths: []string{
 				"app-release.apk",
-				"app-androidTest.apk", 
+				"app-androidTest.apk",
 				"app-debugAndroidTest.apk",
 				"Test-runner.apk",
 				"app.aab",
 			},
-			want: []string{"app-androidTest.apk", "app-debugAndroidTest.apk", "Test-runner.apk"},
+			want:    []string{"app-androidTest.apk", "app-debugAndroidTest.apk", "Test-runner.apk"},
 			wantErr: false,
 		},
 		{
@@ -258,21 +260,21 @@ func Test_findArtifacts(t *testing.T) {
 				"other.txt",
 				"app.apk",
 			},
-			want: []string{"app/build/outputs/mapping/release/mapping.txt", "build/outputs/mapping/debug/mapping.txt"},
+			want:    []string{"app/build/outputs/mapping/release/mapping.txt", "build/outputs/mapping/debug/mapping.txt"},
 			wantErr: false,
 		},
 		{
-			name: "Default mapping file exclude pattern from step.yml", 
+			name: "Default mapping file exclude pattern from step.yml",
 			patterns: filePatterns{
 				include: []string{"*/mapping.txt"},
 				exclude: []string{"*/tmp/*"},
 			},
 			filePaths: []string{
-				"app/build/outputs/mapping/release/mapping.txt", 
+				"app/build/outputs/mapping/release/mapping.txt",
 				"build/tmp/mapping/mapping.txt",
 				"some/tmp/cache/mapping.txt",
 			},
-			want: []string{"app/build/outputs/mapping/release/mapping.txt"},
+			want:    []string{"app/build/outputs/mapping/release/mapping.txt"},
 			wantErr: false,
 		},
 		{
@@ -283,7 +285,7 @@ func Test_findArtifacts(t *testing.T) {
 			},
 			filePaths: []string{
 				"app/build/outputs/apk/debug/app-debug.apk",
-				"app/build/outputs/apk/release/app-release.apk", 
+				"app/build/outputs/apk/release/app-release.apk",
 				"app/build/outputs/apk/release/app-release-unaligned.apk",
 				"app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
 				"app/build/outputs/bundle/release/app-release.aab",
@@ -317,7 +319,7 @@ func Test_findArtifacts(t *testing.T) {
 			}
 			currentTestDir := setupFiles(tt.filePaths)
 
-			got, err := findArtifacts(currentTestDir, tt.patterns)
+			got, err := findArtifacts(log.NewLogger(), currentTestDir, tt.patterns)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("findArtifacts() error = %v, wantErr %v", err, tt.wantErr)
 				return
