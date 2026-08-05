@@ -6,7 +6,7 @@ toolchain go1.24.10
 
 require (
 	github.com/bitrise-io/bitrise-build-cache-cli/v2 v2.6.0
-	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.16.0.20260805142037-07bd8c674a5e
+	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.16.0.20260805151519-e8199943c8f6
 	github.com/bitrise-io/go-steputils v1.0.6
 	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.50
 	github.com/bitrise-io/go-utils v1.0.15

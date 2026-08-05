@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -395,7 +397,9 @@ func main() {
 
 // exportArtifactMap writes the variant-keyed artifact map next to the exported
 // files in the deploy dir and exports its path. A build with no exported
-// APK/AAB/mapping files writes no map.
+// APK/AAB/mapping files writes no map. When an earlier step already wrote a
+// map (several build steps in one workflow), the runs are merged into one
+// document instead of the last one overwriting the rest.
 func exportArtifactMap(exporter export.Exporter, deployDir string, apks, aabs, mappings []artifactmap.File) {
 	artifactMap, warnings := artifactmap.Build(apks, aabs, mappings)
 	for _, warning := range warnings {
@@ -406,10 +410,17 @@ func exportArtifactMap(exporter export.Exporter, deployDir string, apks, aabs, m
 		return
 	}
 
-	// Unlike the copied artifacts, the map is regenerated authoritative
-	// metadata: overwrite any previous map at the fixed name instead of
-	// writing a stale-duplicating renamed copy next to it.
 	mapPth := filepath.Join(deployDir, artifactmap.DefaultFileName)
+	if existing, err := artifactmap.Read(mapPth); err == nil {
+		merged, mergeWarnings := artifactmap.Merge(existing, artifactMap)
+		for _, warning := range mergeWarnings {
+			log.Warnf("%s", warning)
+		}
+		log.Printf("Merged this build's artifacts into the artifact map written by an earlier step")
+		artifactMap = merged
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		log.Warnf("Existing artifact map at %s is unreadable (%s), replacing it", mapPth, err)
+	}
 
 	if err := artifactmap.Write(mapPth, artifactMap); err != nil {
 		failf("Failed to write the artifact map: %s", err)
@@ -418,4 +429,11 @@ func exportArtifactMap(exporter export.Exporter, deployDir string, apks, aabs, m
 		failf("Failed to export environment (%s): %s", artifactmap.EnvKey, err)
 	}
 	log.Donef("The artifact map is now available in the Environment Variable: $%s (value: %s)", artifactmap.EnvKey, mapPth)
+
+	// Print the document so pairing can be debugged from the build log alone,
+	// without downloading the artifact.
+	if doc, err := artifactmap.Marshal(artifactMap); err == nil {
+		log.Printf("Artifact map contents:")
+		fmt.Println(strings.TrimSuffix(string(doc), "\n"))
+	}
 }

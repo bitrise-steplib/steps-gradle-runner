@@ -178,6 +178,53 @@ workflows:
     # multiple APKs per variant is the artifact map's flagship scenario
     - _check_output_artifact_map
 
+  test_repeated_runs:
+    description: Two runs of the step in one workflow merge into a single artifact map
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+    - TEST_APP_BRANCH: master
+    - CLONE_INTO_DIR: .
+    - GRADLE_TASK: assembleDebug
+    - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: ""
+    - COLLECT_METRICS: "no"
+    after_run:
+    - _common
+    - _second_run_release
+    - _check_output_artifact_map
+    - _check_merged_artifact_map
+
+  _second_run_release:
+    steps:
+    - path::./:
+        title: Self-test second run (release)
+        inputs:
+        - build_root_directory: $BUILD_ROOT_DIRECTORY
+        - gradle_task: assembleRelease
+        - gradlew_path: $GRADLEW_PATH
+        - gradle_options: $GRADLE_OPTIONS
+        - mapping_file_include_filter: $MAPPING_FILE_INCLUDE_FILTER
+        - collect_metrics: $COLLECT_METRICS
+
+  _check_merged_artifact_map:
+    steps:
+    - script:
+        title: Check that both runs' variants are in the artifact map
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            count=$(jq '.variants | length' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH")
+            if [ "$count" -lt 2 ]; then
+              echo "expected the merged artifact map to contain both runs' variants, got $count:"
+              cat "$BITRISE_ANDROID_ARTIFACT_MAP_PATH"
+              exit 1
+            fi
+            jq -e '.variants | has("debug") and has("release")' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH" > /dev/null \
+              || { echo "expected debug and release variants in the merged map"; exit 1; }
+            echo "merged artifact map contains $count variants"
+
   test_gradle_kts:
     envs:
     - TEST_APP_URL: https://github.com/bitrise-samples/android-gradle-kotlin-dsl.git
