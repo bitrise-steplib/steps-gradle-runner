@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/reactnative/wrap"
+	"github.com/bitrise-io/go-android/v2/gradle/artifactmap"
 	"github.com/bitrise-io/go-steputils/commandhelper"
 	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
@@ -113,6 +114,16 @@ func filterEmpty(in []string) (out []string) {
 	return
 }
 
+// deployPaths returns the deploy-dir paths of the copied files, preserving
+// copy order.
+func deployPaths(files []artifactmap.File) []string {
+	paths := make([]string, len(files))
+	for i, file := range files {
+		paths[i] = file.DeployPath
+	}
+	return paths
+}
+
 func createDeployPth(deployDir, apkName string) (string, error) {
 	deployPth := filepath.Join(deployDir, apkName)
 
@@ -204,8 +215,8 @@ func main() {
 		log.Warnf("No file name matched app filters")
 	}
 
-	var copiedApkFiles []string
-	var copiedAabFiles []string
+	var copiedApkFiles []artifactmap.File
+	var copiedAabFiles []artifactmap.File
 	for _, appFile := range appFiles {
 		fi, err := os.Lstat(appFile)
 		if err != nil {
@@ -233,31 +244,35 @@ func main() {
 			failf("Failed to copy %s: %s", fileName, err)
 		}
 
+		// The source path is kept alongside the deploy path: the deploy dir is
+		// flat, only the Gradle output path still encodes the build variant,
+		// which the artifact map needs for pairing.
+		copied := artifactmap.File{DeployPath: deployPth, SourcePath: appFile}
 		switch strings.ToLower(ext) {
 		case ".apk":
-			copiedApkFiles = append(copiedApkFiles, deployPth)
+			copiedApkFiles = append(copiedApkFiles, copied)
 		case ".aab":
-			copiedAabFiles = append(copiedAabFiles, deployPth)
+			copiedAabFiles = append(copiedAabFiles, copied)
 		default:
 		}
 	}
 
-	for appEnv, appFiles := range map[string][]string{
+	for appEnv, appFiles := range map[string][]artifactmap.File{
 		"BITRISE_APK_PATH": copiedApkFiles,
 		"BITRISE_AAB_PATH": copiedAabFiles} {
 		if len(appFiles) != 0 {
-			lastCopiedFile := appFiles[len(appFiles)-1]
+			lastCopiedFile := appFiles[len(appFiles)-1].DeployPath
 			if err := exporter.ExportOutput(appEnv, lastCopiedFile); err != nil {
 				failf("Failed to export environment (%s): %s", appEnv, err)
 			}
 			log.Donef("The app path is now available in the Environment Variable: $%s (value: %s)", appEnv, lastCopiedFile)
 		}
 	}
-	for appListEnv, appFiles := range map[string][]string{
+	for appListEnv, appFiles := range map[string][]artifactmap.File{
 		"BITRISE_APK_PATH_LIST": copiedApkFiles,
 		"BITRISE_AAB_PATH_LIST": copiedAabFiles} {
 		if len(appFiles) != 0 {
-			appList := strings.Join(appFiles, "|")
+			appList := strings.Join(deployPaths(appFiles), "|")
 			if err := exporter.ExportOutput(appListEnv, appList); err != nil {
 				failf("Failed to export environment (%s): %s", appListEnv, err)
 			}
@@ -330,7 +345,7 @@ func main() {
 		log.Printf("No mapping file matched the filters")
 	}
 
-	lastCopiedMappingFile := ""
+	var copiedMappingFiles []artifactmap.File
 	for _, mappingFile := range mappingFiles {
 		fi, err := os.Lstat(mappingFile)
 		if err != nil {
@@ -358,13 +373,49 @@ func main() {
 			failf("Failed to copy %s: %s", fileName, err)
 		}
 
-		lastCopiedMappingFile = deployPth
+		copiedMappingFiles = append(copiedMappingFiles, artifactmap.File{DeployPath: deployPth, SourcePath: mappingFile})
 	}
 
-	if lastCopiedMappingFile != "" {
+	if len(copiedMappingFiles) != 0 {
+		lastCopiedMappingFile := copiedMappingFiles[len(copiedMappingFiles)-1].DeployPath
 		if err := exporter.ExportOutput("BITRISE_MAPPING_PATH", lastCopiedMappingFile); err != nil {
 			failf("Failed to export environment (BITRISE_MAPPING_PATH): %s", err)
 		}
 		log.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
 	}
+
+	// Export the variant-keyed artifact map: unlike the flat outputs above, it
+	// records which APK/AAB and which mapping file belong to the same build
+	// variant, so a later step (e.g. Google Play Deploy) can pair them by
+	// identity instead of export order.
+	fmt.Println()
+	log.Infof("Export artifact map...")
+	exportArtifactMap(exporter, configs.DeployDir, copiedApkFiles, copiedAabFiles, copiedMappingFiles)
+}
+
+// exportArtifactMap writes the variant-keyed artifact map next to the exported
+// files in the deploy dir and exports its path. A build with no exported
+// APK/AAB/mapping files writes no map.
+func exportArtifactMap(exporter export.Exporter, deployDir string, apks, aabs, mappings []artifactmap.File) {
+	artifactMap, warnings := artifactmap.Build(apks, aabs, mappings)
+	for _, warning := range warnings {
+		log.Warnf("%s", warning)
+	}
+	if artifactMap.IsEmpty() {
+		log.Printf("No artifacts were exported, skipping the artifact map")
+		return
+	}
+
+	// Unlike the copied artifacts, the map is regenerated authoritative
+	// metadata: overwrite any previous map at the fixed name instead of
+	// writing a stale-duplicating renamed copy next to it.
+	mapPth := filepath.Join(deployDir, artifactmap.DefaultFileName)
+
+	if err := artifactmap.Write(mapPth, artifactMap); err != nil {
+		failf("Failed to write the artifact map: %s", err)
+	}
+	if err := exporter.ExportOutput(artifactmap.EnvKey, mapPth); err != nil {
+		failf("Failed to export environment (%s): %s", artifactmap.EnvKey, err)
+	}
+	log.Donef("The artifact map is now available in the Environment Variable: $%s (value: %s)", artifactmap.EnvKey, mapPth)
 }

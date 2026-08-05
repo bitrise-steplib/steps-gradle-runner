@@ -210,6 +210,9 @@ outputs:
       after filtering based on the filter inputs.
       If the build generates more than one APK file which fulfills the
       filter inputs this output will contain the last one's path.
+
+      When building multiple variants, prefer `$BITRISE_ANDROID_ARTIFACT_MAP_PATH`:
+      it tells you which APK belongs to which variant instead of only the last one.
 - BITRISE_AAB_PATH:
   opts:
     title: Path of the generated AAB
@@ -219,6 +222,9 @@ outputs:
       after filtering based on the filter inputs.
       If the build generates more than one AAB file which fulfills the
       filter inputs this output will contain the last one's path.
+
+      When building multiple variants, prefer `$BITRISE_ANDROID_ARTIFACT_MAP_PATH`:
+      it tells you which AAB belongs to which variant instead of only the last one.
 - BITRISE_TEST_APK_PATH:
   opts:
     title: Path of the generated test APK file
@@ -236,6 +242,9 @@ outputs:
       This output will include the paths of the generated APK files,
       after filtering based on the filter inputs.
       The paths are separated with `|` character, eg: `app-armeabi-v7a-debug.apk|app-mips-debug.apk|app-x86-debug.apk`
+
+      When building multiple variants, prefer `$BITRISE_ANDROID_ARTIFACT_MAP_PATH`:
+      it groups the APKs by variant and pairs each variant with its mapping file.
 - BITRISE_AAB_PATH_LIST:
   opts:
     title: List of the generated AAB file paths
@@ -244,10 +253,55 @@ outputs:
       This output will include the paths of the generated AAB files,
       after filtering based on the filter inputs.
       The paths are separated with `|` character, eg: `app.aab|app2.aab`
+
+      When building multiple variants, prefer `$BITRISE_ANDROID_ARTIFACT_MAP_PATH`:
+      it groups the AABs by variant and pairs each variant with its mapping file.
 - BITRISE_MAPPING_PATH:
   opts:
-    title: Path of the generated mapping.txt
-    summary: Path of the generated (and copied) mapping.txt.
+    title: Path of the generated mapping.txt (deprecated)
+    summary: 'Deprecated: with multiple variants this is ambiguous, use `BITRISE_ANDROID_ARTIFACT_MAP_PATH` instead. Path of the last generated (and copied) mapping.txt.'
     description: |-
-      This output will include the path of the generated mapping.txt.
-      If more than one mapping.txt exist in project this output will contain the last one's path.
+      **Deprecated**: when the build produces more than one mapping file this output is
+      ambiguous — it only contains the *last* copied one, with no way to tell which
+      APK/AAB it belongs to. Use `$BITRISE_ANDROID_ARTIFACT_MAP_PATH` instead, which
+      pairs every variant's app files with that variant's mapping file.
+      The output keeps working for backwards compatibility.
+- BITRISE_ANDROID_ARTIFACT_MAP_PATH:
+  opts:
+    title: Path of the variant-keyed artifact map (JSON)
+    summary: Path of a JSON file that groups the exported APK/AAB and mapping files by build variant.
+    description: |-
+      Path of a JSON file, written next to the exported artifacts in the deploy directory,
+      that records which exported APK/AAB files and which R8/ProGuard mapping file belong
+      to the same build variant. Use it when a single build produces multiple variants and
+      a later step (for example Google Play deploy) needs the matching mapping file for
+      each app artifact.
+
+      File references inside the document are file names relative to the JSON file's own
+      directory. Example:
+
+      ```
+      {
+        "version": 1,
+        "variants": {
+          "demoRelease": {
+            "module": "app",
+            "mapping": "mapping.txt",
+            "aab": ["app-demo-release.aab"],
+            "apk": ["app-demo-release.apk"]
+          },
+          "paidRelease": {
+            "module": "app",
+            "mapping": "mapping20260805121530.txt",
+            "aab": [],
+            "apk": ["app-paid-release.apk"]
+          }
+        },
+        "unmatched": { "apk": [], "aab": [], "mapping": [] }
+      }
+      ```
+
+      `unmatched` lists exported files whose variant could not be derived from their
+      build output path (for example artifacts written to non-standard locations).
+      When two modules produce the same variant name, the keys are disambiguated as
+      `module/variant`.
