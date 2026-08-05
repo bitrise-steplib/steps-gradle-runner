@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/reactnative/wrap"
+	"github.com/bitrise-io/bitrise-build-cache-cli/v3/pkg/reactnative/wrap"
 	"github.com/bitrise-io/go-steputils/commandhelper"
 	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
