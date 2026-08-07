@@ -95,7 +95,7 @@ func TestResolveGradlewPath(t *testing.T) {
 
 			require.NoError(t, err)
 			require.True(t, filepath.IsAbs(result), "result should be absolute path: %s", result)
-			
+
 			if tt.expectedPath != "" {
 				expectedAbs := filepath.Join(workDir, tt.expectedPath)
 				expectedResolved, err := filepath.EvalSymlinks(expectedAbs)

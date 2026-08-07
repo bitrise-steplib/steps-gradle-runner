@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,17 +11,14 @@ import (
 	"time"
 
 	"github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/reactnative/wrap"
-	"github.com/bitrise-io/go-steputils/commandhelper"
 	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
-	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/errorutil"
-	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-io/go-utils/retry"
+	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
-	v2command "github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
+	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log/colorstring"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/kballard/go-shellquote"
 )
 
@@ -47,7 +46,12 @@ type Config struct {
 	DeployDir string `env:"BITRISE_DEPLOY_DIR"`
 }
 
-func runGradleTask(gradleTool, tasks, options, workDir, destDir string) error {
+func runGradleTask(
+	logger log.Logger,
+	cmdFactory command.Factory,
+	exporter export.Exporter,
+	gradleTool, tasks, options, workDir, destDir string,
+) error {
 	optionSlice, err := shellquote.Split(options)
 	if err != nil {
 		return err
@@ -62,29 +66,45 @@ func runGradleTask(gradleTool, tasks, options, workDir, destDir string) error {
 	cmdSlice = append(cmdSlice, taskSlice...)
 	cmdSlice = append(cmdSlice, optionSlice...)
 
-	fmt.Println()
-	log.Donef("$ %s", command.PrintableCommandArgs(false, cmdSlice))
-	fmt.Println()
-
 	gradleArgs := cmdSlice[1:]
-	det := wrap.Detect(context.Background(), wrap.DetectParams{})
+	det := wrap.Detect(context.Background(), wrap.DetectParams{Logger: logger})
 	if det.ReactNativeEnabled {
-		log.Infof("Bitrise Build Cache: React Native cache active — wrapping gradle with %s", det.CLIPath)
+		logger.Infof("Bitrise Build Cache: React Native cache active — wrapping gradle with %s", det.CLIPath)
 	}
 	name, wrappedArgs := wrap.Wrap(det, gradleTool, gradleArgs)
 
-	cmd := command.New(name, wrappedArgs...)
-	cmd.SetDir(workDir)
+	if shouldSaveOutputToLogFile(optionSlice) {
+		// Do not write to stdout as debug log may contain sensitive information.
+		var outBuffer bytes.Buffer
+		cmd := cmdFactory.Create(name, wrappedArgs, &command.Opts{
+			Stdout: &outBuffer,
+			Stderr: &outBuffer,
+			Dir:    workDir,
+		})
 
-	if shouldSaveOutputToLogFile(optionSlice) { // Do not write to stdout as debug log may contain sensitive information
+		fmt.Println()
+		logger.Donef("$ %s", cmd.PrintableCommandArgs())
+		fmt.Println()
+
 		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
-		return commandhelper.RunAndExportOutput(*cmd, rawOutputLogPath, bitriseGradleResultsTextEnvKey, 20)
+		cmdErr := cmd.Run()
+
+		return runAndExportOutput(logger, exporter, outBuffer.String(), rawOutputLogPath, bitriseGradleResultsTextEnvKey, 20, cmdErr)
 	}
 
-	cmd.SetStdout(os.Stdout)
-	cmd.SetStderr(os.Stderr)
+	cmd := cmdFactory.Create(name, wrappedArgs, &command.Opts{
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+		Dir:    workDir,
+	})
+
+	fmt.Println()
+	logger.Donef("$ %s", cmd.PrintableCommandArgs())
+	fmt.Println()
+
 	if err := cmd.Run(); err != nil {
-		if errorutil.IsExitStatusError(err) {
+		var exitErr *command.ExitStatusError
+		if errors.As(err, &exitErr) {
 			return err
 		}
 
@@ -92,6 +112,41 @@ func runGradleTask(gradleTool, tasks, options, workDir, destDir string) error {
 	}
 
 	return nil
+}
+
+// runAndExportOutput mirrors the v1 commandhelper.RunAndExportOutput behavior:
+// write the captured output to a file, export the path via envman, log the last
+// N lines (colored by cmdErr), and return the command error.
+func runAndExportOutput(
+	logger log.Logger,
+	exporter export.Exporter,
+	rawOutput, destinationPath, envKey string,
+	lines int,
+	cmdErr error,
+) error {
+	lastLines, exportErr := exporter.ExportStringToFileOutputAndReturnLastNLines(envKey, rawOutput, destinationPath, lines)
+	if exportErr != nil {
+		logger.Warnf("Failed to export %s, error: %s", envKey, exportErr)
+	}
+
+	if lines > 0 && len(lastLines) > 0 {
+		banner := "You can find the last couple of lines of output below.:"
+		if cmdErr != nil {
+			logger.Errorf(banner)
+		} else {
+			logger.Infof(banner)
+		}
+
+		logger.Printf(lastLines)
+
+		if cmdErr != nil {
+			logger.Warnf("If you can't find the reason of the error in the log, please check the %s.", destinationPath)
+		}
+	}
+
+	logger.Infof(colorstring.Magenta(fmt.Sprintf(`The log file is stored in %s, and its full path is available in the $%s environment variable.`, destinationPath, envKey)))
+
+	return cmdErr
 }
 
 func shouldSaveOutputToLogFile(options []string) bool {
@@ -113,10 +168,10 @@ func filterEmpty(in []string) (out []string) {
 	return
 }
 
-func createDeployPth(deployDir, apkName string) (string, error) {
+func createDeployPth(pathChecker pathutil.PathChecker, deployDir, apkName string) (string, error) {
 	deployPth := filepath.Join(deployDir, apkName)
 
-	if exist, err := pathutil.IsPathExists(deployPth); err != nil {
+	if exist, err := pathChecker.IsPathExists(deployPth); err != nil {
 		return "", err
 	} else if exist {
 		return "", fmt.Errorf("file already exists at: %s", deployPth)
@@ -125,83 +180,95 @@ func createDeployPth(deployDir, apkName string) (string, error) {
 	return deployPth, nil
 }
 
-func findDeployPth(deployDir, baseName, ext string) (string, error) {
+func findDeployPth(logger log.Logger, pathChecker pathutil.PathChecker, deployDir, baseName, ext string) (string, error) {
 	deployPth := ""
 	retryApkName := baseName + ext
 
-	err := retry.Times(10).Wait(1 * time.Second).Try(func(attempt uint) error {
+	var lastErr error
+	for attempt := 0; attempt < 10; attempt++ {
 		requestedPath := filepath.Join(deployDir, retryApkName)
 		if attempt > 0 {
-			log.Warnf("Trying %s instead", requestedPath)
+			logger.Warnf("Trying %s instead", requestedPath)
 		}
 
-		pth, pathErr := createDeployPth(deployDir, retryApkName)
+		pth, pathErr := createDeployPth(pathChecker, deployDir, retryApkName)
 		if pathErr != nil {
-			log.Warnf("Couldn't open %s for writing: %s", requestedPath, pathErr.Error())
+			logger.Warnf("Couldn't open %s for writing: %s", requestedPath, pathErr.Error())
 		}
 
 		t := time.Now()
 		retryApkName = baseName + t.Format("20060102150405") + ext
 		deployPth = pth
+		lastErr = pathErr
 
-		return pathErr
-	})
+		if pathErr == nil {
+			return deployPth, nil
+		}
 
-	return deployPth, err
+		if attempt < 9 {
+			time.Sleep(1 * time.Second)
+		}
+	}
+
+	return deployPth, lastErr
 }
 
-func failf(message string, args ...interface{}) {
-	log.Errorf(message, args...)
+func failf(logger log.Logger, message string, args ...interface{}) {
+	logger.Errorf(message, args...)
 	os.Exit(1)
 }
 
 func main() {
+	logger := log.NewLogger()
+
 	var configs Config
 	envRepo := env.NewRepository()
 	parser := stepconf.NewInputParser(envRepo)
 	if err := parser.Parse(&configs); err != nil {
-		failf("Issue with input: %s", err)
+		failf(logger, "Issue with input: %s", err)
 	}
 	stepconf.Print(configs)
 	fmt.Println()
 
-	cmdFactory := v2command.NewFactory(envRepo)
-	exporter := export.NewExporter(cmdFactory, fileutil.NewFileManager())
+	cmdFactory := command.NewFactory(envRepo)
+	fm := fileutil.NewFileManager()
+	exporter := export.NewExporter(cmdFactory, fm)
+	pathChecker := pathutil.NewPathChecker()
 
 	gradlewPath, err := resolveGradlewPath(configs.BuildRootDirectory, configs.GradlewPath)
 	if err != nil {
-		failf("Failed to resolve gradlew path: %s", err)
+		failf(logger, "Failed to resolve gradlew path: %s", err)
 	}
 
 	buildRootAbs, err := filepath.Abs(configs.BuildRootDirectory)
 	if err != nil {
-		failf("Can't get absolute path for build_root_directory (%s): %s", configs.BuildRootDirectory, err)
+		failf(logger, "Can't get absolute path for build_root_directory (%s): %s", configs.BuildRootDirectory, err)
 	}
 
 	if err := os.Chmod(gradlewPath, 0770); err != nil {
-		failf("Failed to add executable permission on gradlew file (%s): %s", gradlewPath, err)
+		failf(logger, "Failed to add executable permission on gradlew file (%s): %s", gradlewPath, err)
 	}
 
 	gradleStarted := time.Now()
 
-	log.Infof("Running gradle task...")
-	if err := runGradleTask(gradlewPath, configs.GradleTasks, configs.GradleOptions, buildRootAbs, configs.DeployDir); err != nil {
-		failf("Gradle task failed: %s", err)
+	logger.Infof("Running gradle task...")
+	if err := runGradleTask(logger, cmdFactory, exporter, gradlewPath, configs.GradleTasks, configs.GradleOptions, buildRootAbs, configs.DeployDir); err != nil {
+		failf(logger, "Gradle task failed: %s", err)
 	}
 
 	// Move apk and aab files
 	fmt.Println()
-	log.Infof("Move APK and AAB files...")
-	appFiles, err := findArtifacts(buildRootAbs,
+	logger.Infof("Move APK and AAB files...")
+	appFiles, err := findArtifacts(logger, buildRootAbs,
 		filePatterns{
 			include: filterEmpty(strings.Split(configs.AppFileIncludeFilter, "\n")),
 			exclude: filterEmpty(strings.Split(configs.AppFileExcludeFilter, "\n")),
 		})
 	if err != nil {
-		failf("Failed to find APK or AAB files: %s", err)
+		failf(logger, "Failed to find APK or AAB files: %s", err)
 	}
 	if len(appFiles) == 0 {
-		log.Warnf("No file name matched app filters")
+		logger.Warnf("No file name matched app filters")
 	}
 
 	var copiedApkFiles []string
@@ -209,11 +276,11 @@ func main() {
 	for _, appFile := range appFiles {
 		fi, err := os.Lstat(appFile)
 		if err != nil {
-			failf("Failed to get file info: %s", err)
+			failf(logger, "Failed to get file info: %s", err)
 		}
 
 		if fi.ModTime().Before(gradleStarted) {
-			log.Warnf("skipping: %s, modified before the gradle task has started", appFile)
+			logger.Warnf("skipping: %s, modified before the gradle task has started", appFile)
 			continue
 		}
 
@@ -222,15 +289,15 @@ func main() {
 		baseName = strings.TrimSuffix(baseName, ext)
 		fileName := baseName + ext
 
-		log.Printf("Copying %s --> %s", appFile, filepath.Join(configs.DeployDir, fileName))
+		logger.Printf("Copying %s --> %s", appFile, filepath.Join(configs.DeployDir, fileName))
 
-		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
+		deployPth, err := findDeployPth(logger, pathChecker, configs.DeployDir, baseName, ext)
 		if err != nil {
-			failf("Failed to create deploy path for %s: %s", fileName, err)
+			failf(logger, "Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		if err := command.CopyFile(appFile, deployPth); err != nil {
-			failf("Failed to copy %s: %s", fileName, err)
+		if err := fm.CopyFile(appFile, deployPth, &fileutil.CopyOptions{Overwrite: true}); err != nil {
+			failf(logger, "Failed to copy %s: %s", fileName, err)
 		}
 
 		switch strings.ToLower(ext) {
@@ -248,9 +315,9 @@ func main() {
 		if len(appFiles) != 0 {
 			lastCopiedFile := appFiles[len(appFiles)-1]
 			if err := exporter.ExportOutput(appEnv, lastCopiedFile); err != nil {
-				failf("Failed to export environment (%s): %s", appEnv, err)
+				failf(logger, "Failed to export environment (%s): %s", appEnv, err)
 			}
-			log.Donef("The app path is now available in the Environment Variable: $%s (value: %s)", appEnv, lastCopiedFile)
+			logger.Donef("The app path is now available in the Environment Variable: $%s (value: %s)", appEnv, lastCopiedFile)
 		}
 	}
 	for appListEnv, appFiles := range map[string][]string{
@@ -259,34 +326,34 @@ func main() {
 		if len(appFiles) != 0 {
 			appList := strings.Join(appFiles, "|")
 			if err := exporter.ExportOutput(appListEnv, appList); err != nil {
-				failf("Failed to export environment (%s): %s", appListEnv, err)
+				failf(logger, "Failed to export environment (%s): %s", appListEnv, err)
 			}
-			log.Donef("The app paths list is now available in the Environment Variable: $%s (value: %s)", appListEnv, appList)
+			logger.Donef("The app paths list is now available in the Environment Variable: $%s (value: %s)", appListEnv, appList)
 		}
 	}
 
-	testApkFiles, err := findArtifacts(buildRootAbs,
+	testApkFiles, err := findArtifacts(logger, buildRootAbs,
 		filePatterns{
 			include: filterEmpty(strings.Split(configs.TestApkFileIncludeFilter, "\n")),
 			exclude: filterEmpty(strings.Split(configs.TestApkFileExcludeFilter, "\n")),
 		})
 	if err != nil {
-		failf("Failed to find test apk files: %s", err)
+		failf(logger, "Failed to find test apk files: %s", err)
 	}
 
 	if len(testApkFiles) == 0 {
-		log.Warnf("No file name matched test apk filters")
+		logger.Warnf("No file name matched test apk filters")
 	}
 
 	lastCopiedTestApkFile := ""
 	for _, apkFile := range testApkFiles {
 		fi, err := os.Lstat(apkFile)
 		if err != nil {
-			failf("Failed to get file info: %s", err)
+			failf(logger, "Failed to get file info: %s", err)
 		}
 
 		if fi.ModTime().Before(gradleStarted) {
-			log.Warnf("skipping: %s, modified before the gradle task has started", apkFile)
+			logger.Warnf("skipping: %s, modified before the gradle task has started", apkFile)
 			continue
 		}
 
@@ -295,50 +362,50 @@ func main() {
 		baseName = strings.TrimSuffix(baseName, ext)
 		fileName := baseName + ext
 
-		log.Printf("Copying %s --> %s", apkFile, filepath.Join(configs.DeployDir, fileName))
+		logger.Printf("Copying %s --> %s", apkFile, filepath.Join(configs.DeployDir, fileName))
 
-		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
+		deployPth, err := findDeployPth(logger, pathChecker, configs.DeployDir, baseName, ext)
 		if err != nil {
-			failf("Failed to create deploy path for %s: %s", fileName, err)
+			failf(logger, "Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		if err := command.CopyFile(apkFile, deployPth); err != nil {
-			failf("Failed to copy %s: %s", fileName, err)
+		if err := fm.CopyFile(apkFile, deployPth, &fileutil.CopyOptions{Overwrite: true}); err != nil {
+			failf(logger, "Failed to copy %s: %s", fileName, err)
 		}
 
 		lastCopiedTestApkFile = deployPth
 	}
 	if lastCopiedTestApkFile != "" {
 		if err := exporter.ExportOutput("BITRISE_TEST_APK_PATH", lastCopiedTestApkFile); err != nil {
-			failf("Failed to export environment (BITRISE_TEST_APK_PATH): %s", err)
+			failf(logger, "Failed to export environment (BITRISE_TEST_APK_PATH): %s", err)
 		}
-		log.Donef("The apk path is now available in the Environment Variable: $BITRISE_TEST_APK_PATH (value: %s)", lastCopiedTestApkFile)
+		logger.Donef("The apk path is now available in the Environment Variable: $BITRISE_TEST_APK_PATH (value: %s)", lastCopiedTestApkFile)
 	}
 
 	// Move mapping files
-	log.Infof("Move mapping files...")
-	mappingFiles, err := findArtifacts(buildRootAbs,
+	logger.Infof("Move mapping files...")
+	mappingFiles, err := findArtifacts(logger, buildRootAbs,
 		filePatterns{
 			include: filterEmpty(strings.Split(configs.MappingFileIncludeFilter, "\n")),
 			exclude: filterEmpty(strings.Split(configs.MappingFileExcludeFilter, "\n")),
 		})
 	if err != nil {
-		failf("Failed to find mapping files: %s", err)
+		failf(logger, "Failed to find mapping files: %s", err)
 	}
 
 	if len(mappingFiles) == 0 {
-		log.Printf("No mapping file matched the filters")
+		logger.Printf("No mapping file matched the filters")
 	}
 
 	lastCopiedMappingFile := ""
 	for _, mappingFile := range mappingFiles {
 		fi, err := os.Lstat(mappingFile)
 		if err != nil {
-			failf("Failed to get file info: %s", err)
+			failf(logger, "Failed to get file info: %s", err)
 		}
 
 		if fi.ModTime().Before(gradleStarted) {
-			log.Warnf("skipping: %s, modified before the gradle task has started", mappingFile)
+			logger.Warnf("skipping: %s, modified before the gradle task has started", mappingFile)
 			continue
 		}
 
@@ -347,15 +414,15 @@ func main() {
 		baseName = strings.TrimSuffix(baseName, ext)
 		fileName := baseName + ext
 
-		log.Printf("Copying %s --> %s", mappingFile, filepath.Join(configs.DeployDir, fileName))
+		logger.Printf("Copying %s --> %s", mappingFile, filepath.Join(configs.DeployDir, fileName))
 
-		deployPth, err := findDeployPth(configs.DeployDir, baseName, ext)
+		deployPth, err := findDeployPth(logger, pathChecker, configs.DeployDir, baseName, ext)
 		if err != nil {
-			failf("Failed to create deploy path for %s: %s", fileName, err)
+			failf(logger, "Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		if err := command.CopyFile(mappingFile, deployPth); err != nil {
-			failf("Failed to copy %s: %s", fileName, err)
+		if err := fm.CopyFile(mappingFile, deployPth, &fileutil.CopyOptions{Overwrite: true}); err != nil {
+			failf(logger, "Failed to copy %s: %s", fileName, err)
 		}
 
 		lastCopiedMappingFile = deployPth
@@ -363,8 +430,8 @@ func main() {
 
 	if lastCopiedMappingFile != "" {
 		if err := exporter.ExportOutput("BITRISE_MAPPING_PATH", lastCopiedMappingFile); err != nil {
-			failf("Failed to export environment (BITRISE_MAPPING_PATH): %s", err)
+			failf(logger, "Failed to export environment (BITRISE_MAPPING_PATH): %s", err)
 		}
-		log.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
+		logger.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
 	}
 }
