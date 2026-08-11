@@ -215,14 +215,14 @@ workflows:
         - content: |-
             #!/bin/bash
             set -e
-            count=$(jq '.variants | length' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH")
+            count=$(jq '[.modules[][]] | length' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH")
             if [ "$count" -lt 2 ]; then
               echo "expected the merged artifact map to contain both runs' variants, got $count:"
               cat "$BITRISE_ANDROID_ARTIFACT_MAP_PATH"
               exit 1
             fi
-            jq -e '.variants | has("debug") and has("release")' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH" > /dev/null \
-              || { echo "expected debug and release variants in the merged map"; exit 1; }
+            jq -e '.modules.app | has("debug") and has("release")' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH" > /dev/null \
+              || { echo "expected app module's debug and release variants in the merged map"; exit 1; }
             echo "merged artifact map contains $count variants"
 
   test_gradle_kts:
@@ -361,7 +361,7 @@ workflows:
 
             jq -e '.version == 1' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH" > /dev/null \
               || { echo "artifact map schema version is not 1"; exit 1; }
-            jq -e '.variants | length > 0' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH" > /dev/null \
+            jq -e '[.modules[][]] | length > 0' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH" > /dev/null \
               || { echo "artifact map has no variants"; exit 1; }
 
             # Every file the map references — variant entries AND unmatched —
@@ -375,7 +375,7 @@ workflows:
                 exit 1
               fi
               echo "artifact map entry exists: $name"
-            done < <(jq -r '(.variants[] | (.mapping // empty), .apk[], .aab[]), (.unmatched | .apk[], .aab[], .mapping[])' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH")
+            done < <(jq -r '(.modules[][] | (.mapping // empty), .apk[], .aab[]), (.unmatched | .apk[], .aab[], .mapping[])' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH")
 
   _check_output_aab:
     steps:

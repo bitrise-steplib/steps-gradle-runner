@@ -46,21 +46,21 @@ func TestArtifactMapPairing(t *testing.T) {
 	if len(warnings) != 0 {
 		t.Fatalf("unexpected warnings: %v", warnings)
 	}
-	want := map[string]artifactmap.Entry{
-		"demoRelease": {
-			Module:  "app",
-			Mapping: "mapping.txt",
-			AAB:     []string{"app-demo-release.aab"},
-			APK:     []string{"app-demo-release.apk"},
-		},
-		"paidRelease": {
-			Module:  "app",
-			Mapping: "mapping20260805121530.txt",
-			AAB:     []string{},
-			APK:     []string{"app-paid-release.apk"},
+	want := map[string]map[string]artifactmap.Entry{
+		"app": {
+			"demoRelease": {
+				Mapping: "mapping.txt",
+				AAB:     []string{"app-demo-release.aab"},
+				APK:     []string{"app-demo-release.apk"},
+			},
+			"paidRelease": {
+				Mapping: "mapping20260805121530.txt",
+				AAB:     []string{},
+				APK:     []string{"app-paid-release.apk"},
+			},
 		},
 	}
-	if !reflect.DeepEqual(m.Variants, want) {
-		t.Fatalf("Variants = %+v, want %+v", m.Variants, want)
+	if !reflect.DeepEqual(m.Modules, want) {
+		t.Fatalf("Modules = %+v, want %+v", m.Modules, want)
 	}
 }
