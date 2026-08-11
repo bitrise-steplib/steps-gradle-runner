@@ -178,6 +178,98 @@ workflows:
     # multiple APKs per variant is the artifact map's flagship scenario
     - _check_output_artifact_map
 
+  test_original_issue:
+    description: |-
+      Reproduces the SSW-3065 customer report: a single-variant build where three
+      files match a widened mapping filter — the Compose mapping, the R8 task's
+      intermediates workdir copy, and the official outputs/ copy. The legacy
+      BITRISE_MAPPING_PATH lands on a collision-renamed file; the artifact map must
+      pair the variant with the official outputs/ copy and keep the Compose mapping
+      visible under unmatched.
+    steps:
+    - set-java-version:
+        inputs:
+        - set_java_version: "17"
+    - script:
+        title: recreate _tmp directory
+        inputs:
+        - content: rm -rf "$ORIG_BITRISE_SOURCE_DIR/_tmp" && mkdir "$ORIG_BITRISE_SOURCE_DIR/_tmp"
+    - change-workdir:
+        title: Switch working dir to _tmp dir
+        run_if: "true"
+        inputs:
+        - path: $ORIG_BITRISE_SOURCE_DIR/_tmp
+    # cloned only for its Gradle wrapper — the build files are replaced below
+    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
+        inputs:
+        - repository_url: https://github.com/bitrise-io/bitrise-android-sample.git
+        - clone_into_dir: .
+        - branch: main
+    - script:
+        title: Replace the project with the SSW-3065 fixture layout generator
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -ex
+            # a plain (non-Android) Gradle project: no SDK or AGP needed, the
+            # task just recreates the customer's build-output tree
+            cat > settings.gradle <<'EOF'
+            rootProject.name = 'repro-original-issue'
+            EOF
+            cat > build.gradle <<'EOF'
+            tasks.register("reproOriginalIssue") {
+              doLast {
+                def base = new File(projectDir, "app/build")
+                [
+                  "intermediates/compose_mapping/productionRelease/compose-mapping.txt",
+                  "intermediates/mapping/productionRelease/minifyProductionReleaseWithR8/mapping.txt",
+                  "outputs/mapping/productionRelease/mapping.txt",
+                  "outputs/apk/production/release/app-production-release.apk",
+                ].each { p ->
+                  def f = new File(base, p)
+                  f.parentFile.mkdirs()
+                  f.text = "fixture-source: " + p
+                }
+              }
+            }
+            EOF
+    - path::./:
+        title: Self-test (customer-like widened mapping filter)
+        inputs:
+        - build_root_directory: .
+        - gradle_task: reproOriginalIssue
+        - gradlew_path: ./gradlew
+        - mapping_file_include_filter: "*mapping.txt"
+    - script:
+        title: Check the original issue is repro'd and the map resolves it
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            echo "BITRISE_MAPPING_PATH: $BITRISE_MAPPING_PATH"
+            map="$BITRISE_ANDROID_ARTIFACT_MAP_PATH"
+            map_dir=$(dirname "$map")
+
+            # the historical collision happened: a renamed mapping<timestamp>.txt exists
+            ls "$map_dir" | grep -qE '^mapping[0-9]+\.txt$' \
+              || { echo "expected a collision-renamed mapping<timestamp>.txt in the deploy dir"; ls -la "$map_dir"; exit 1; }
+
+            jq -e '.modules.app.productionRelease.apk == ["app-production-release.apk"]' "$map" > /dev/null \
+              || { echo "expected the variant's APK paired in the map"; cat "$map"; exit 1; }
+            jq -e '.unmatched.mapping == ["compose-mapping.txt"]' "$map" > /dev/null \
+              || { echo "expected compose-mapping.txt under unmatched"; cat "$map"; exit 1; }
+
+            mapping_name=$(jq -r '.modules.app.productionRelease.mapping' "$map")
+            if [ -z "$mapping_name" ] || [ "$mapping_name" = "null" ]; then
+              echo "expected a mapping paired for productionRelease"; cat "$map"; exit 1
+            fi
+            # content proof: the OFFICIAL outputs/ copy won, not the intermediates
+            # workdir copy, regardless of copy order and collision renames
+            grep -q "fixture-source: outputs/mapping/productionRelease" "$map_dir/$mapping_name" \
+              || { echo "the paired mapping ($mapping_name) is not the official outputs/ copy:"; cat "$map_dir/$mapping_name"; exit 1; }
+            echo "OK: productionRelease paired with the official outputs/ mapping ($mapping_name)"
+
   test_repeated_runs:
     description: Two runs of the step in one workflow merge into a single artifact map
     envs:
