@@ -270,6 +270,69 @@ workflows:
               || { echo "the paired mapping ($mapping_name) is not the official outputs/ copy:"; cat "$map_dir/$mapping_name"; exit 1; }
             echo "OK: productionRelease paired with the official outputs/ mapping ($mapping_name)"
 
+  test_compose_r8:
+    description: |-
+      Real Compose + R8 build (SSW-3065): R8 writes mapping.txt next to its
+      configuration/seeds/usage.txt reports, and a widened mapping filter drags all
+      of them into the deploy dir. The artifact map must pair the variant with the
+      real mapping.txt — the report files lose on rank, not by accident.
+    steps:
+    - set-java-version:
+        inputs:
+        - set_java_version: "17"
+    - script:
+        title: recreate _tmp directory
+        inputs:
+        - content: rm -rf "$ORIG_BITRISE_SOURCE_DIR/_tmp" && mkdir "$ORIG_BITRISE_SOURCE_DIR/_tmp"
+    - change-workdir:
+        title: Switch working dir to _tmp dir
+        run_if: "true"
+        inputs:
+        - path: $ORIG_BITRISE_SOURCE_DIR/_tmp
+    # TODO: point at bitrise-io/samples-android-todo-kotlin-and-compose once
+    # https://github.com/bitrise-io/samples-android-todo-kotlin-and-compose/pull/5 merges
+    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
+        inputs:
+        - repository_url: https://github.com/lpusok/samples-android-todo-kotlin-and-compose.git
+        - clone_into_dir: .
+        - branch: SSW-3065-compose-r8
+    - install-missing-android-tools@3:
+        inputs:
+        - gradlew_path: ./gradlew
+    - path::./:
+        title: Self-test (widened mapping filter drags in the R8 report files)
+        inputs:
+        - build_root_directory: .
+        - gradle_task: assembleRelease
+        - gradlew_path: ./gradlew
+        - mapping_file_include_filter: |-
+            *mapping.txt
+            */outputs/mapping/*/*.txt
+    - script:
+        title: Check the map pairs the real R8 mapping, not a report file
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            map="$BITRISE_ANDROID_ARTIFACT_MAP_PATH"
+            map_dir=$(dirname "$map")
+
+            # the widened filter really dragged the R8 report files in
+            [ -f "$map_dir/usage.txt" ] && [ -f "$map_dir/seeds.txt" ] \
+              || { echo "expected the R8 report files in the deploy dir"; ls -la "$map_dir"; exit 1; }
+
+            jq -e '.modules.app.release.apk == ["app-release-unsigned.apk"]' "$map" > /dev/null \
+              || { echo "expected the release APK paired in the map"; cat "$map"; exit 1; }
+            mapping_name=$(jq -r '.modules.app.release.mapping' "$map")
+            if [ "$mapping_name" != "mapping.txt" ]; then
+              echo "expected mapping.txt paired for app/release, got '$mapping_name'"; cat "$map"; exit 1
+            fi
+            # content proof: it is R8's real mapping file
+            head -1 "$map_dir/$mapping_name" | grep -q "compiler: R8" \
+              || { echo "paired mapping does not look like an R8 mapping:"; head -3 "$map_dir/$mapping_name"; exit 1; }
+            echo "OK: app/release paired with R8's mapping.txt; report files dropped by rank"
+
   test_repeated_runs:
     description: Two runs of the step in one workflow merge into a single artifact map
     envs:
