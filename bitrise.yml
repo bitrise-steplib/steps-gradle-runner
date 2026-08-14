@@ -10,7 +10,7 @@ workflows:
 
   check:
     steps:
-    - git::https://github.com/bitrise-steplib/steps-check.git: {}
+    - git::https://github.com/bitrise-steplib/steps-check.git:
 
   e2e:
     steps:
