@@ -14,25 +14,14 @@ github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/status
 # github.com/bitrise-io/go-android/v2 v2.0.0-alpha.16.0.20260811092717-c278eadef180
 ## explicit; go 1.22
 github.com/bitrise-io/go-android/v2/gradle/artifactmap
-# github.com/bitrise-io/go-steputils v1.0.6
-## explicit; go 1.15
-github.com/bitrise-io/go-steputils/commandhelper
-github.com/bitrise-io/go-steputils/output
-github.com/bitrise-io/go-steputils/tools
 # github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.50
 ## explicit; go 1.21
 github.com/bitrise-io/go-steputils/v2/export
 github.com/bitrise-io/go-steputils/v2/stepconf
 # github.com/bitrise-io/go-utils v1.0.15
 ## explicit; go 1.13
-github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
-github.com/bitrise-io/go-utils/errorutil
-github.com/bitrise-io/go-utils/fileutil
-github.com/bitrise-io/go-utils/log
 github.com/bitrise-io/go-utils/pathutil
-github.com/bitrise-io/go-utils/retry
-github.com/bitrise-io/go-utils/stringutil
 github.com/bitrise-io/go-utils/ziputil
 # github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.34
 ## explicit; go 1.21
