@@ -259,7 +259,7 @@ outputs:
 - BITRISE_MAPPING_PATH:
   opts:
     title: Path of the generated mapping.txt (deprecated)
-    summary: 'Deprecated: with multiple variants this is ambiguous, use `BITRISE_ANDROID_ARTIFACT_MAP_PATH` instead. Path of the last generated (and copied) mapping.txt.'
+    summary: "Deprecated: with multiple variants this is ambiguous, use `BITRISE_ANDROID_ARTIFACT_MAP_PATH` instead. Path of the last generated (and copied) mapping.txt."
     description: |-
       **Deprecated**: when the build produces more than one mapping file this output is
       ambiguous — it only contains the *last* copied one, with no way to tell which
