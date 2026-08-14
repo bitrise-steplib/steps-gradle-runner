@@ -379,9 +379,11 @@ workflows:
         title: Self-test (two minified flavors, customer-like widened filter)
         inputs:
         - build_root_directory: .
+        # R8 over the full app OOMs with the project's default -Xmx6g on the
+        # CI machine; gradle_options raises the daemon heap for this build only
         - gradle_task: assembleInternalRelease assemblePlayRelease
         - gradlew_path: ./gradlew
-        - gradle_options: "-PuseProprietaryFont=false"
+        - gradle_options: -PuseProprietaryFont=false "-Dorg.gradle.jvmargs=-Xmx10g -XX:+UseParallelGC"
         - mapping_file_include_filter: "*mapping.txt"
     - script:
         title: Check per-flavor pairing on the full customer layout
