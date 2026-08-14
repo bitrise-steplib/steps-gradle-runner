@@ -383,7 +383,7 @@ workflows:
         # CI machine; gradle_options raises the daemon heap for this build only
         - gradle_task: assembleInternalRelease assemblePlayRelease
         - gradlew_path: ./gradlew
-        - gradle_options: -PuseProprietaryFont=false "-Dorg.gradle.jvmargs=-Xmx10g -XX:+UseParallelGC"
+        - gradle_options: -PuseProprietaryFont=false "-Pkotlin.daemon.jvmargs=-Xmx2g" --max-workers=3 "-Dorg.gradle.jvmargs=-Xmx8g -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC"
         - mapping_file_include_filter: "*mapping.txt"
     - script:
         title: Check per-flavor pairing on the full customer layout
@@ -414,7 +414,8 @@ workflows:
             jq -e '.unmatched.mapping | length == 2 and all(startswith("compose-mapping"))' "$map" > /dev/null \
               || { echo "expected both Compose mappings under unmatched"; exit 1; }
             echo "OK: both flavors paired with their own official outputs/ mapping; Compose mappings in unmatched"
-    - save-gradle-cache@1: {}
+    - save-gradle-cache@1:
+        is_always_run: true
 
   test_repeated_runs:
     description: Two runs of the step in one workflow merge into a single artifact map
