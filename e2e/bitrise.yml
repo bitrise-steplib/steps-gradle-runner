@@ -270,6 +270,12 @@ workflows:
               || { echo "the paired mapping ($mapping_name) is not the official outputs/ copy:"; cat "$map_dir/$mapping_name"; exit 1; }
             echo "OK: productionRelease paired with the official outputs/ mapping ($mapping_name)"
 
+            # The fixture APK is a plain text file: the worker's final artifact
+            # upload cannot parse it, and later workflows' map sweeps must not
+            # reference deleted files — drop the fixture variant with its fake APK.
+            rm "$map_dir/app-production-release.apk"
+            jq 'del(.modules.app.productionRelease)' "$map" > "$map.tmp" && mv "$map.tmp" "$map"
+
   test_compose_r8:
     description: |-
       Real Compose + R8 build (SSW-3065): R8 writes mapping.txt next to its
@@ -322,12 +328,15 @@ workflows:
             [ -f "$map_dir/usage.txt" ] && [ -f "$map_dir/seeds.txt" ] \
               || { echo "expected the R8 report files in the deploy dir"; ls -la "$map_dir"; exit 1; }
 
-            jq -e '.modules.app.release.apk == ["app-release-unsigned.apk"]' "$map" > /dev/null \
-              || { echo "expected the release APK paired in the map"; cat "$map"; exit 1; }
-            mapping_name=$(jq -r '.modules.app.release.mapping' "$map")
-            if [ "$mapping_name" != "mapping.txt" ]; then
-              echo "expected mapping.txt paired for app/release, got '$mapping_name'"; cat "$map"; exit 1
-            fi
+            # earlier e2e workflows share this deploy dir, so collision renames may
+            # have timestamped this run's file names — assert prefixes, not exact names
+            jq -e '.modules.app.release.apk | (length > 0) and (map(startswith("app-release-unsigned")) | all)' "$map" > /dev/null \
+              || { echo "expected this run's release APKs paired in the map"; cat "$map"; exit 1; }
+            mapping_name=$(jq -r '.modules.app.release.mapping // ""' "$map")
+            case "$mapping_name" in
+              mapping*.txt) ;;
+              *) echo "expected a mapping*.txt paired for app/release, got '$mapping_name'"; cat "$map"; exit 1 ;;
+            esac
             # content proof: it is R8's real mapping file
             head -1 "$map_dir/$mapping_name" | grep -q "compiler: R8" \
               || { echo "paired mapping does not look like an R8 mapping:"; head -3 "$map_dir/$mapping_name"; exit 1; }
