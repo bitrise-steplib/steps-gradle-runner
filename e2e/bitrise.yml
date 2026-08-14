@@ -353,38 +353,64 @@ workflows:
       warm runs fast.
     steps:
     - set-java-version:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         inputs:
         - set_java_version: "21"
     - script:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         title: recreate _tmp directory
         inputs:
         - content: rm -rf "$ORIG_BITRISE_SOURCE_DIR/_tmp" && mkdir "$ORIG_BITRISE_SOURCE_DIR/_tmp"
     - change-workdir:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         title: Switch working dir to _tmp dir
-        run_if: "true"
         inputs:
         - path: $ORIG_BITRISE_SOURCE_DIR/_tmp
     # TODO: point at bitrise-io/DuckDuckGo-Android once the fixture patch can
     # live there (no push access yet); the fixture branch only enables R8 on
     # release and dontwarn's leaked compile-only lint classes
     - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         inputs:
         - repository_url: https://github.com/lpusok/DuckDuckGo-Android.git
         - clone_into_dir: .
         - branch: SSW-3065-minified-fixture
     - script:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         title: Init git submodules (native bloom filter sources)
         inputs:
         - content: git submodule update --init --recursive --depth 1
     - restore-gradle-cache@2:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
     - activate-build-cache-for-gradle@3:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         # remote build cache is an add-on; a build without it must still pass
         is_skippable: true
     - install-missing-android-tools@3:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         inputs:
         - gradlew_path: ./gradlew
         - ndk_version: 28.2.13676358
     - script:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         title: Size Gradle JVM heap to the machine
         inputs:
         - content: |-
@@ -403,6 +429,9 @@ workflows:
             envman add --key KOTLIN_DAEMON_HEAP --value "$((total_gb / 4))g"
             envman add --key GRADLE_MAX_WORKERS --value "$((total_gb / 5))"
     - path::./:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         title: Self-test (two minified flavors, customer-like widened filter)
         inputs:
         - build_root_directory: .
@@ -411,6 +440,9 @@ workflows:
         - gradle_options: -PuseProprietaryFont=false "-Pkotlin.daemon.jvmargs=-Xmx$KOTLIN_DAEMON_HEAP" --max-workers=$GRADLE_MAX_WORKERS "-Dorg.gradle.jvmargs=-Xmx$GRADLE_DAEMON_HEAP -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC"
         - mapping_file_include_filter: "*mapping.txt"
     - script:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         title: Check per-flavor pairing on the full customer layout
         is_always_run: true
         inputs:
@@ -440,6 +472,9 @@ workflows:
               || { echo "expected both Compose mappings under unmatched"; exit 1; }
             echo "OK: both flavors paired with their own official outputs/ mapping; Compose mappings in unmatched"
     - save-gradle-cache@1:
+        # heavy real-world build: run on a single stack only
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         is_always_run: true
 
   test_repeated_runs:
