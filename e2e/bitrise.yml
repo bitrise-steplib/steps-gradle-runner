@@ -372,15 +372,14 @@ workflows:
         title: Switch working dir to _tmp dir
         inputs:
         - path: $ORIG_BITRISE_SOURCE_DIR/_tmp
-    # TODO: point at bitrise-io/DuckDuckGo-Android once the fixture patch can
-    # live there (no push access yet); the fixture branch only enables R8 on
-    # release and dontwarn's leaked compile-only lint classes
+    # the fixture branch only enables R8 on release, uses a Bitrise-owned
+    # application id and dontwarn's leaked compile-only lint classes
     - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
         # heavy real-world build: run on a single stack only
         run_if: |-
           {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         inputs:
-        - repository_url: https://github.com/lpusok/DuckDuckGo-Android.git
+        - repository_url: https://github.com/bitrise-io/DuckDuckGo-Android.git
         - clone_into_dir: .
         - branch: SSW-3065-minified-fixture
     - script:
