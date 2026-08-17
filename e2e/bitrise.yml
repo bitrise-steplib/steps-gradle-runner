@@ -478,6 +478,17 @@ workflows:
         run_if: |-
           {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
         is_always_run: true
+    - script:
+        title: Remove the build-cache gradle init script
+        # activate-build-cache-for-gradle installs a global init script that
+        # injects the analytics plugin into every LATER gradle invocation on
+        # this worker too — and the old-Gradle kts sample of test_gradle_kts
+        # crashes on that plugin. Scope the activation to this workflow.
+        is_always_run: true
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
+        inputs:
+        - content: rm -fv ~/.gradle/init.d/bitrise-build-cache*
 
   test_repeated_runs:
     description: Two runs of the step in one workflow merge into a single artifact map
