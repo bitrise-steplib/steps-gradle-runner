@@ -24,7 +24,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 )
 
 // Version is the schema version this package reads and writes.
@@ -93,32 +92,26 @@ func Label(module, variant string) string {
 	return module + "/" + variant
 }
 
-// mappingRank orders competing mapping files of one variant: a file literally
-// named mapping.txt (the shrinker's real output) outranks sibling report
-// files (usage.txt, seeds.txt, ...) matched by a widened filter, and within
-// equals, the official build/outputs/ copy outranks the intermediates/
-// task-workdir copy AGP writes first. Ties keep the later file.
-func mappingRank(f File) int {
-	rank := 0
-	if filepath.Base(f.SourcePath) == "mapping.txt" {
-		rank += 2
-	}
-	if strings.Contains(filepath.ToSlash(f.SourcePath), "/outputs/") {
-		rank++
-	}
-	return rank
+// canonicalMapping reports whether the file is the shrinker's real output — a
+// file literally named mapping.txt. Sibling report files (usage.txt,
+// seeds.txt, ...) matched by a widened filter must never displace it. Only
+// build/outputs/ files compete at all: VariantFromPath leaves every other
+// location (intermediates/ task-workdir copies included) unmatched.
+func canonicalMapping(f File) bool {
+	return filepath.Base(f.SourcePath) == "mapping.txt"
 }
 
 // Build assembles a Map from the files a step exported. Modules and variants
-// are derived from each file's SourcePath; unrecognisable paths land under
-// Unmatched. When several mapping files resolve to the same variant, the
-// highest-ranked one wins (see mappingRank); every dropped file is reported
-// in warnings.
+// are derived from each file's SourcePath; only official build/outputs/ paths
+// are recognised — everything else lands under Unmatched. When several
+// mapping files resolve to the same variant, the canonical mapping.txt wins
+// over report files (see canonicalMapping); every dropped file is reported in
+// warnings.
 func Build(apks, aabs, mappings []File) (Map, []string) {
 	type group struct {
-		variant     ArtifactVariant
-		entry       Entry
-		mappingRank int
+		variant          ArtifactVariant
+		entry            Entry
+		mappingCanonical bool
 	}
 	groups := map[ArtifactVariant]*group{}
 	var warnings []string
@@ -158,14 +151,13 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 			continue
 		}
 		name := filepath.Base(f.DeployPath)
-		rank := mappingRank(f)
+		canonical := canonicalMapping(f)
 		label := Label(g.variant.Module, g.variant.Variant)
 		switch {
-		case g.entry.Mapping == "" || g.entry.Mapping == name:
-			// first mapping for the variant (or a re-listing of the same file)
-		case rank < g.mappingRank:
-			// never displace a higher-ranked mapping (the real mapping.txt,
-			// or the official outputs/ copy) with a lower-ranked one
+		case g.entry.Mapping == "":
+			// first mapping for the variant
+		case g.mappingCanonical && !canonical:
+			// a report file never displaces the real mapping.txt
 			warnings = append(warnings, fmt.Sprintf(
 				"variant %s matched several mapping files: keeping %s, dropping %s",
 				label, g.entry.Mapping, name))
@@ -176,7 +168,7 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 				label, name, g.entry.Mapping))
 		}
 		g.entry.Mapping = name
-		g.mappingRank = rank
+		g.mappingCanonical = canonical
 	}
 
 	modules := map[string]map[string]Entry{}
@@ -241,21 +233,22 @@ func Merge(base, overlay Map) (Map, []string) {
 
 // mergeEntries combines one variant's base and overlay entries field-wise:
 // what the overlay produced wins, what it didn't produce survives from the
-// base. Replacing a differing earlier value is reported.
+// base. Replacing an earlier value is reported (also when a re-listed value
+// happens to be identical — the noise is not worth an equality check).
 func mergeEntries(base, overlay Entry, label string) (Entry, []string) {
 	var warnings []string
 	merged := overlay
 
 	if len(overlay.APK) == 0 {
 		merged.APK = base.APK
-	} else if len(base.APK) != 0 && !stringSlicesEqual(base.APK, overlay.APK) {
+	} else if len(base.APK) != 0 {
 		warnings = append(warnings, fmt.Sprintf(
 			"variant %s: a later step rebuilt its APKs, the artifact map now references the newer files", label))
 	}
 
 	if len(overlay.AAB) == 0 {
 		merged.AAB = base.AAB
-	} else if len(base.AAB) != 0 && !stringSlicesEqual(base.AAB, overlay.AAB) {
+	} else if len(base.AAB) != 0 {
 		warnings = append(warnings, fmt.Sprintf(
 			"variant %s: a later step rebuilt its AABs, the artifact map now references the newer files", label))
 	}
@@ -269,18 +262,6 @@ func mergeEntries(base, overlay Entry, label string) (Entry, []string) {
 	}
 
 	return merged, warnings
-}
-
-func stringSlicesEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
 }
 
 func unionSorted(a, b []string) []string {

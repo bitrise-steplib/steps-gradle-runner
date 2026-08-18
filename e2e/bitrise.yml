@@ -257,8 +257,12 @@ workflows:
 
             jq -e '.modules.app.productionRelease.apk == ["app-production-release.apk"]' "$map" > /dev/null \
               || { echo "expected the variant's APK paired in the map"; cat "$map"; exit 1; }
-            jq -e '.unmatched.mapping == ["compose-mapping.txt"]' "$map" > /dev/null \
+            # the compose mapping AND the intermediates workdir copy stay visible
+            # under unmatched — only official outputs/ files pair with variants
+            jq -e '.unmatched.mapping | index("compose-mapping.txt") != null' "$map" > /dev/null \
               || { echo "expected compose-mapping.txt under unmatched"; cat "$map"; exit 1; }
+            jq -e '[.unmatched.mapping[] | select(startswith("mapping"))] | length >= 1' "$map" > /dev/null \
+              || { echo "expected the intermediates mapping copy under unmatched"; cat "$map"; exit 1; }
 
             mapping_name=$(jq -r '.modules.app.productionRelease.mapping' "$map")
             if [ -z "$mapping_name" ] || [ "$mapping_name" = "null" ]; then
@@ -467,9 +471,10 @@ workflows:
               || { echo "expected the internal flavor's APK paired"; exit 1; }
             jq -e '.modules.app.playRelease.apk | length == 1 and (.[0] | test("play-release"))' "$map" > /dev/null \
               || { echo "expected the play flavor's APK paired"; exit 1; }
-            # >= 2: unmatched is unioned across the worker's earlier e2e workflows
-            # (test_original_issue leaves its fixture compose-mapping.txt there)
-            jq -e '.unmatched.mapping | (length >= 2) and all(startswith("compose-mapping"))' "$map" > /dev/null \
+            # unmatched is unioned across the worker's earlier e2e workflows and
+            # also holds the flavors' intermediates copies; both of THIS build's
+            # Compose mappings must be among them
+            jq -e '[.unmatched.mapping[] | select(startswith("compose-mapping"))] | length >= 2' "$map" > /dev/null \
               || { echo "expected both Compose mappings under unmatched"; exit 1; }
             echo "OK: both flavors paired with their own official outputs/ mapping; Compose mappings in unmatched"
     - save-gradle-cache@1:

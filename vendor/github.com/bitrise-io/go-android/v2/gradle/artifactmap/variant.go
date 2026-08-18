@@ -16,24 +16,30 @@ type ArtifactVariant struct {
 }
 
 // VariantFromPath reports the build variant encoded in a Gradle build-output
-// path, reconciling the layouts the Android Gradle Plugin uses: the split
-// flavor/buildType shape (outputs/apk/demo/release/, ProGuard-era
-// outputs/mapping/demo/release/), the merged shape
-// (outputs/{bundle,mapping}/demoRelease/), and a trailing shrinker-task
-// subdirectory (intermediates/mapping/demoRelease/minifyDemoReleaseWithR8/).
-// Split segments merge into the same name, so an app artifact and its mapping
-// resolve to equal ArtifactVariants.
+// path, reconciling the two layouts the Android Gradle Plugin uses under
+// build/outputs/: the split flavor/buildType shape (outputs/apk/demo/release/,
+// ProGuard-era outputs/mapping/demo/release/) and the merged shape
+// (outputs/{bundle,mapping}/demoRelease/). Split segments merge into the same
+// name, so an app artifact and its mapping resolve to equal ArtifactVariants.
 //
-// It anchors on the "outputs"/"intermediates" directory followed by the
-// artifact kind, scanning right-to-left so the marker closest to the file
-// wins — a checkout directory named "outputs", or a flavor named
-// "apk"/"bundle"/"mapping", cannot hijack parsing. ok is false when the path
-// is not a recognised output or mapping path.
+// Only official build/outputs/ paths are recognised: files from anywhere else
+// (intermediates/ task workdirs, Compose mappings, custom copy destinations)
+// report ok as false and land in the map's unmatched lists instead of being
+// paired. It anchors on the "outputs" directory followed by the artifact
+// kind, scanning right-to-left so the marker closest to the file wins — a
+// checkout directory named "outputs", or a flavor named
+// "apk"/"bundle"/"mapping", cannot hijack parsing.
 func VariantFromPath(path string) (variant ArtifactVariant, ok bool) {
 	segments := strings.Split(filepath.ToSlash(path), "/")
 
 	for i := len(segments) - 2; i >= 0; i-- {
-		if segments[i] != "outputs" && segments[i] != "intermediates" {
+		if segments[i] != "outputs" {
+			continue
+		}
+		switch segments[i+1] {
+		case "apk", "bundle", "mapping":
+		default:
+			// some other outputs child (e.g. logs): keep scanning
 			continue
 		}
 
@@ -46,17 +52,7 @@ func VariantFromPath(path string) (variant ArtifactVariant, ok bool) {
 		}
 
 		module := moduleFromSegments(segments[:i])
-		switch segments[i+1] {
-		case "apk", "bundle":
-			return ArtifactVariant{Module: module, Variant: mergeVariantSegments(variantSegments)}, true
-		case "mapping":
-			// drop a trailing shrinker-task dir ("minifyDemoReleaseWithR8")
-			if len(variantSegments) > 1 && strings.HasPrefix(variantSegments[len(variantSegments)-1], "minify") {
-				variantSegments = variantSegments[:len(variantSegments)-1]
-			}
-			return ArtifactVariant{Module: module, Variant: mergeVariantSegments(variantSegments)}, true
-		}
-		// some other outputs child (e.g. logs): keep scanning
+		return ArtifactVariant{Module: module, Variant: mergeVariantSegments(variantSegments)}, true
 	}
 
 	return ArtifactVariant{}, false

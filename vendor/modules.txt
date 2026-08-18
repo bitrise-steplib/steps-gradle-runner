@@ -11,7 +11,7 @@ github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/stringmerge
 github.com/bitrise-io/bitrise-build-cache-cli/v2/internal/utils
 github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/reactnative/wrap
 github.com/bitrise-io/bitrise-build-cache-cli/v2/pkg/status
-# github.com/bitrise-io/go-android/v2 v2.0.0-alpha.16.0.20260811092717-c278eadef180
+# github.com/bitrise-io/go-android/v2 v2.0.0-alpha.17.0.20260818092141-9cfb5cb3ba53
 ## explicit; go 1.22
 github.com/bitrise-io/go-android/v2/gradle/artifactmap
 # github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.50
