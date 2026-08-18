@@ -285,13 +285,13 @@ workflows:
 
   test_multi_module_aar:
     description: |-
-      Nested multi-module library layout (go-android#67/#78): two nested modules
-      share the basename "data" and produce same-named AARs, and two nested "app"
-      modules produce same-named APKs. Every same-named artifact must reach the
-      deploy dir (collision-renamed, none silently lost), the artifact map must
-      key the two app modules distinctly (module identity is the path before
-      /build/, not its basename), and AARs must stay out of the map — it is an
-      APK/AAB/mapping contract.
+      Real nested multi-module library build (the go-android#67 layout): two
+      nested modules share the basename "data", so assembleDebug produces two
+      same-named AARs plus a third. Every AAR must reach the deploy dir
+      (collision-renamed, none silently lost), all must be accounted for in the
+      artifact map (AGP's flat outputs/aar/ layout has no variant directory, so
+      they land under unmatched), and sources must record which nested module
+      each one came from.
     steps:
     - set-java-version:
         inputs:
@@ -305,52 +305,26 @@ workflows:
         run_if: "true"
         inputs:
         - path: $ORIG_BITRISE_SOURCE_DIR/_tmp
-    # cloned only for its Gradle wrapper — the build files are replaced below
     - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
         inputs:
         - repository_url: https://github.com/bitrise-io/bitrise-android-sample.git
         - clone_into_dir: .
-        - branch: main
-    - script:
-        title: Replace the project with the nested-module layout generator
+        - branch: SSW-3065-multi-module-aar
+    - install-missing-android-tools@3:
         inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-            # a plain (non-Android) Gradle project: no SDK or AGP needed, the
-            # task just recreates a nested multi-module output tree
-            cat > settings.gradle <<'EOF'
-            rootProject.name = 'multi-module-aar'
-            EOF
-            cat > build.gradle <<'EOF'
-            tasks.register("buildNestedModules") {
-              doLast {
-                [
-                  "feature/feature-name-1/data/build/outputs/aar/data-debug.aar",
-                  "feature/feature-name-1/presentation/build/outputs/aar/presentation-debug.aar",
-                  "feature/feature-name-2/data/build/outputs/aar/data-debug.aar",
-                  "feature/feature-name-1/app/build/outputs/apk/debug/app-debug.apk",
-                  "feature/feature-name-2/app/build/outputs/apk/debug/app-debug.apk",
-                ].each { p ->
-                  def f = new File(projectDir, p)
-                  f.parentFile.mkdirs()
-                  f.text = "fixture-source: " + p
-                }
-              }
-            }
-            EOF
+        - gradlew_path: ./gradlew
     - path::./:
         title: Self-test (AARs matched by a widened app filter)
         inputs:
         - build_root_directory: .
-        - gradle_task: buildNestedModules
+        - gradle_task: assembleDebug
         - gradlew_path: ./gradlew
         - app_file_include_filter: |
             *.apk
             *.aab
             *.aar
     - script:
-        title: Check nested-module artifacts and module keys
+        title: Check nested-module AARs in the deploy dir and the map
         is_always_run: true
         inputs:
         - content: |-
@@ -365,24 +339,19 @@ workflows:
               || { echo "expected both same-named data AARs in the deploy dir"; ls "$map_dir"; exit 1; }
             [ -f "$map_dir/presentation-debug.aar" ] \
               || { echo "expected presentation-debug.aar in the deploy dir"; ls "$map_dir"; exit 1; }
+
+            # the flat outputs/aar/ layout has no variant directory: all three are
+            # accounted for under unmatched
+            jq -e '.unmatched.aar | length == 3' "$map" > /dev/null \
+              || { echo "expected all three AARs under unmatched"; cat "$map"; exit 1; }
+
+            # sources tell the two same-named AARs apart by nested module
             for module in feature-name-1 feature-name-2; do
-              grep -q "fixture-source: feature/$module/data" "$map_dir"/data-debug*.aar \
-                || { echo "the $module data AAR was lost in the collision"; exit 1; }
+              jq -e --arg m "$module" \
+                '[.sources | to_entries[] | select(.key | startswith("data-debug")) | .value | select(contains("/" + $m + "/data/"))] | length == 1' "$map" > /dev/null \
+                || { echo "expected a data AAR sourced from $module"; cat "$map"; exit 1; }
             done
-
-            # same-basename app modules must stay distinct in the map: keys grow
-            # parent directories on collision
-            jq -e '.modules | has("feature-name-1/app") and has("feature-name-2/app")' "$map" > /dev/null \
-              || { echo "expected distinct module keys for the two app modules"; cat "$map"; exit 1; }
-            jq -e '.modules["feature-name-1/app"].debug.apk | length == 1' "$map" > /dev/null \
-              || { echo "expected feature-name-1/app debug APK paired"; cat "$map"; exit 1; }
-            jq -e '.modules["feature-name-2/app"].debug.apk | length == 1' "$map" > /dev/null \
-              || { echo "expected feature-name-2/app debug APK paired"; cat "$map"; exit 1; }
-
-            # AARs are not part of the APK/AAB/mapping contract
-            jq -e '[.. | strings | select(endswith(".aar"))] | length == 0' "$map" > /dev/null \
-              || { echo "expected no AAR references in the map"; cat "$map"; exit 1; }
-            echo "OK: nested modules distinct, all AARs exported, map stays APK/AAB/mapping-only"
+            echo "OK: all nested-module AARs exported and accounted for, provenance recorded"
 
   test_compose_r8:
     description: |-

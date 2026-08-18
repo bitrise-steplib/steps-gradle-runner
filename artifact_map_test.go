@@ -41,7 +41,7 @@ func TestArtifactMapPairing(t *testing.T) {
 		{DeployPath: filepath.Join(deployDir, "mapping20260805121530.txt"), SourcePath: "/bitrise/src/app/build/outputs/mapping/paidRelease/mapping.txt"},
 	}
 
-	m, warnings := artifactmap.Build(apks, aabs, mappings)
+	m, warnings := artifactmap.Build(apks, aabs, nil, mappings)
 
 	if len(warnings) != 0 {
 		t.Fatalf("unexpected warnings: %v", warnings)
@@ -52,11 +52,13 @@ func TestArtifactMapPairing(t *testing.T) {
 				Mapping: "mapping.txt",
 				AAB:     []string{"app-demo-release.aab"},
 				APK:     []string{"app-demo-release.apk"},
+				AAR:     []string{},
 			},
 			"paidRelease": {
 				Mapping: "mapping20260805121530.txt",
 				AAB:     []string{},
 				APK:     []string{"app-paid-release.apk"},
+				AAR:     []string{},
 			},
 		},
 	}

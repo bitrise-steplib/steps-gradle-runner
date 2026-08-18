@@ -77,12 +77,18 @@ type Entry struct {
 	AAB []string `json:"aab"`
 	// APK lists the variant's APKs (several with ABI/density splits).
 	APK []string `json:"apk"`
+	// AAR lists the variant's library archives. AGP's standard layout
+	// (outputs/aar/<name>-<variant>.aar) has no variant directory, so AARs
+	// usually land under Unmatched instead; this pairs the layouts that do
+	// encode one.
+	AAR []string `json:"aar"`
 }
 
 // Unmatched lists exported files that could not be attributed to a variant.
 type Unmatched struct {
 	APK     []string `json:"apk"`
 	AAB     []string `json:"aab"`
+	AAR     []string `json:"aar"`
 	Mapping []string `json:"mapping"`
 }
 
@@ -124,7 +130,7 @@ func fromIntermediates(f File) bool {
 // mapping; other exports stay visible under Unmatched — except files from
 // build/intermediates/ (task-workdir duplicates of the outputs), which are
 // left out of the document entirely.
-func Build(apks, aabs, mappings []File) (Map, []string) {
+func Build(apks, aabs, aars, mappings []File) (Map, []string) {
 	type group struct {
 		variant ArtifactVariant
 		entry   Entry
@@ -139,14 +145,14 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 		}
 		g, ok := groups[variant]
 		if !ok {
-			g = &group{variant: variant, entry: Entry{AAB: []string{}, APK: []string{}}}
+			g = &group{variant: variant, entry: Entry{AAB: []string{}, APK: []string{}, AAR: []string{}}}
 			groups[variant] = g
 		}
 		return g, true
 	}
 
 	sources := map[string]string{}
-	unmatched := Unmatched{APK: []string{}, AAB: []string{}, Mapping: []string{}}
+	unmatched := Unmatched{APK: []string{}, AAB: []string{}, AAR: []string{}, Mapping: []string{}}
 	for _, f := range apks {
 		if fromIntermediates(f) {
 			continue
@@ -167,6 +173,17 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 			g.entry.AAB = append(g.entry.AAB, filepath.Base(f.DeployPath))
 		} else {
 			unmatched.AAB = append(unmatched.AAB, filepath.Base(f.DeployPath))
+		}
+	}
+	for _, f := range aars {
+		if fromIntermediates(f) {
+			continue
+		}
+		sources[filepath.Base(f.DeployPath)] = f.SourcePath
+		if g, ok := grab(f); ok {
+			g.entry.AAR = append(g.entry.AAR, filepath.Base(f.DeployPath))
+		} else {
+			unmatched.AAR = append(unmatched.AAR, filepath.Base(f.DeployPath))
 		}
 	}
 	for _, f := range mappings {
@@ -207,10 +224,12 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 		// filesystem-walk order is not a contract; sort for determinism
 		sort.Strings(g.entry.APK)
 		sort.Strings(g.entry.AAB)
+		sort.Strings(g.entry.AAR)
 		setEntry(modules, keyForPath[variant.ModulePath], variant.Variant, g.entry)
 	}
 	sort.Strings(unmatched.APK)
 	sort.Strings(unmatched.AAB)
+	sort.Strings(unmatched.AAR)
 	sort.Strings(unmatched.Mapping)
 
 	m := Map{Version: Version, Modules: modules, Unmatched: unmatched, Sources: sources}
@@ -232,12 +251,18 @@ func (m Map) referencedNames() map[string]bool {
 			for _, name := range entry.AAB {
 				names[name] = true
 			}
+			for _, name := range entry.AAR {
+				names[name] = true
+			}
 		}
 	}
 	for _, name := range m.Unmatched.APK {
 		names[name] = true
 	}
 	for _, name := range m.Unmatched.AAB {
+		names[name] = true
+	}
+	for _, name := range m.Unmatched.AAR {
 		names[name] = true
 	}
 	for _, name := range m.Unmatched.Mapping {
@@ -327,6 +352,7 @@ func Merge(base, overlay Map) (Map, []string) {
 	unmatched := Unmatched{
 		APK:     unionSorted(base.Unmatched.APK, overlay.Unmatched.APK),
 		AAB:     unionSorted(base.Unmatched.AAB, overlay.Unmatched.AAB),
+		AAR:     unionSorted(base.Unmatched.AAR, overlay.Unmatched.AAR),
 		Mapping: unionSorted(base.Unmatched.Mapping, overlay.Unmatched.Mapping),
 	}
 
@@ -363,6 +389,13 @@ func mergeEntries(base, overlay Entry, label string) (Entry, []string) {
 	} else if len(base.AAB) != 0 {
 		warnings = append(warnings, fmt.Sprintf(
 			"variant %s: a later step rebuilt its AABs, the artifact map now references the newer files", label))
+	}
+
+	if len(overlay.AAR) == 0 {
+		merged.AAR = base.AAR
+	} else if len(base.AAR) != 0 {
+		warnings = append(warnings, fmt.Sprintf(
+			"variant %s: a later step rebuilt its AARs, the artifact map now references the newer files", label))
 	}
 
 	if overlay.Mapping == "" {
@@ -420,11 +453,13 @@ func (m *Map) ReplaceFile(oldName, newName string) bool {
 		for variant, entry := range variants {
 			entry.APK = replaceIn(entry.APK)
 			entry.AAB = replaceIn(entry.AAB)
+			entry.AAR = replaceIn(entry.AAR)
 			m.Modules[module][variant] = entry
 		}
 	}
 	m.Unmatched.APK = replaceIn(m.Unmatched.APK)
 	m.Unmatched.AAB = replaceIn(m.Unmatched.AAB)
+	m.Unmatched.AAR = replaceIn(m.Unmatched.AAR)
 	if replaced {
 		if source, ok := m.Sources[oldName]; ok {
 			delete(m.Sources, oldName)
@@ -442,7 +477,7 @@ func (m Map) IsEmpty() bool {
 			return false
 		}
 	}
-	return len(m.Unmatched.APK) == 0 && len(m.Unmatched.AAB) == 0 && len(m.Unmatched.Mapping) == 0
+	return len(m.Unmatched.APK) == 0 && len(m.Unmatched.AAB) == 0 && len(m.Unmatched.AAR) == 0 && len(m.Unmatched.Mapping) == 0
 }
 
 // SortedModules returns the module keys in lexical order, for deterministic

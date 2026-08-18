@@ -136,10 +136,6 @@ func runAndExportOutput(
 	lastLines, exportErr := exporter.ExportStringToFileOutputAndReturnLastNLines(envKey, rawOutput, destinationPath, lines)
 	if exportErr != nil {
 		logger.Warnf("Failed to export %s, error: %s", envKey, exportErr)
-	} else if err := os.Chmod(destinationPath, 0644); err != nil {
-		// the v2 exporter writes 0600; the log is a build artifact that
-		// downstream steps running as another user must be able to read
-		logger.Warnf("Failed to make %s world-readable: %s", destinationPath, err)
 	}
 
 	if lines > 0 && len(lastLines) > 0 {
@@ -298,6 +294,7 @@ func main() {
 
 	var copiedApkFiles []artifactmap.File
 	var copiedAabFiles []artifactmap.File
+	var copiedAarFiles []artifactmap.File
 	for _, appFile := range appFiles {
 		fi, err := os.Lstat(appFile)
 		if err != nil {
@@ -334,6 +331,8 @@ func main() {
 			copiedApkFiles = append(copiedApkFiles, copied)
 		case ".aab":
 			copiedAabFiles = append(copiedAabFiles, copied)
+		case ".aar":
+			copiedAarFiles = append(copiedAarFiles, copied)
 		default:
 		}
 	}
@@ -471,7 +470,7 @@ func main() {
 	// identity instead of export order.
 	fmt.Println()
 	logger.Infof("Export artifact map...")
-	exportArtifactMap(logger, exporter, configs.DeployDir, copiedApkFiles, copiedAabFiles, copiedMappingFiles)
+	exportArtifactMap(logger, exporter, configs.DeployDir, copiedApkFiles, copiedAabFiles, copiedAarFiles, copiedMappingFiles)
 }
 
 // exportArtifactMap writes the variant-keyed artifact map next to the exported
@@ -479,8 +478,8 @@ func main() {
 // APK/AAB/mapping files writes no map. When an earlier step already wrote a
 // map (several build steps in one workflow), the runs are merged into one
 // document instead of the last one overwriting the rest.
-func exportArtifactMap(logger log.Logger, exporter export.Exporter, deployDir string, apks, aabs, mappings []artifactmap.File) {
-	artifactMap, warnings := artifactmap.Build(apks, aabs, mappings)
+func exportArtifactMap(logger log.Logger, exporter export.Exporter, deployDir string, apks, aabs, aars, mappings []artifactmap.File) {
+	artifactMap, warnings := artifactmap.Build(apks, aabs, aars, mappings)
 	for _, warning := range warnings {
 		logger.Warnf("%s", warning)
 	}

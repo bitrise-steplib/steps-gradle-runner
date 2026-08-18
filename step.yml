@@ -289,16 +289,21 @@ outputs:
             "demoRelease": {
               "mapping": "mapping.txt",
               "aab": ["app-demo-release.aab"],
-              "apk": ["app-demo-release.apk"]
+              "apk": ["app-demo-release.apk"],
+              "aar": []
             },
             "paidRelease": {
               "mapping": "mapping20260805121530.txt",
               "aab": [],
-              "apk": ["app-paid-release.apk"]
+              "apk": ["app-paid-release.apk"],
+              "aar": []
             }
           }
         },
-        "unmatched": { "apk": [], "aab": [], "mapping": [] }
+        "unmatched": { "apk": [], "aab": [], "aar": [], "mapping": [] },
+        "sources": {
+          "mapping.txt": "/bitrise/src/app/build/outputs/mapping/demoRelease/mapping.txt"
+        }
       }
       ```
 

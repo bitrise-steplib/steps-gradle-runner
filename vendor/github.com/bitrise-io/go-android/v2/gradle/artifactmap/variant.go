@@ -38,7 +38,7 @@ func VariantFromPath(path string) (variant ArtifactVariant, ok bool) {
 			continue
 		}
 		switch segments[i+1] {
-		case "apk", "bundle", "mapping",
+		case "apk", "bundle", "mapping", "aar",
 			// universal/from-bundle APK locations, AGP 8 / AGP 4-7 / bundletool
 			"universal_apk", "apk_from_bundle", "extracted_apks":
 		default:
