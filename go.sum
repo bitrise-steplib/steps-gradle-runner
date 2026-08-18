@@ -1,7 +1,7 @@
 github.com/bitrise-io/bitrise-build-cache-cli/v2 v2.6.0 h1:ggnskS2+gsKtANgZ5dmbqUDW0UgL9UmOoDF0+g60Ru4=
 github.com/bitrise-io/bitrise-build-cache-cli/v2 v2.6.0/go.mod h1:cBNHOK0ly1CsICg89/bG2hjC1qQ6OcWUwAii4ofbTJQ=
-github.com/bitrise-io/go-android/v2 v2.0.0-alpha.17.0.20260818113528-725a88472878 h1:YOfCeW/CNj9Ip6u7rwdG2Jtd9Nk8149gktlVZIF8qb4=
-github.com/bitrise-io/go-android/v2 v2.0.0-alpha.17.0.20260818113528-725a88472878/go.mod h1:+Cm0XgGA/50c4Xlsm8MBHgLYFVFj46sHW6G2/dwDBQI=
+github.com/bitrise-io/go-android/v2 v2.0.0-alpha.17.0.20260818154422-e96b6ddecd1a h1:h3zey44sK0Bb/bCpCoJb8aoqyUm0CRF8drIejz+PPDw=
+github.com/bitrise-io/go-android/v2 v2.0.0-alpha.17.0.20260818154422-e96b6ddecd1a/go.mod h1:+Cm0XgGA/50c4Xlsm8MBHgLYFVFj46sHW6G2/dwDBQI=
 github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.50 h1:cwg+2mXp7kAL6t4Vg6Nx7IAAQKClyLglHcp+B92GOzw=
 github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.50/go.mod h1:hK2zMovlJg7+FLdJDQx2GV/2dB/WqErBGLKPPF42oOo=
 github.com/bitrise-io/go-utils v1.0.15 h1:KRQjNiPrkxBRM6G5fQy05v0p0r8wycWfKVb+Ko+Vtg0=

@@ -243,6 +243,15 @@ func Build(apks, aabs, aars, mappings []File) (Map, []string) {
 
 	modules := map[string]map[string]Entry{}
 	for variant, g := range groups {
+		// A mapping with no app artifact usually means the APK/AAB resolved to
+		// a different variant name — e.g. unexpected nesting under outputs/
+		// turned "demoRelease" into a phantom "demoReleaseExtra" key — leaving
+		// the pair unpairable with no unmatched entry to show for it.
+		if g.entry.Mapping != "" && len(g.entry.APK) == 0 && len(g.entry.AAB) == 0 {
+			warnings = append(warnings, fmt.Sprintf(
+				"variant %s has a mapping but no app artifact: if an APK/AAB was exported for it, its output path may use unexpected nesting",
+				Label(variant.Module, variant.Variant)))
+		}
 		// filesystem-walk order is not a contract; sort for determinism
 		sort.Strings(g.entry.APK)
 		sort.Strings(g.entry.AAB)
