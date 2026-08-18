@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -107,6 +108,12 @@ func runGradleTask(
 	if err := cmd.Run(); err != nil {
 		var exitErr *command.ExitStatusError
 		if errors.As(err, &exitErr) {
+			// name the signal on abnormal termination (e.g. an OOM-killed
+			// daemon) — the wrapper's bare "exit status -1" hides it
+			var execErr *exec.ExitError
+			if errors.As(err, &execErr) && execErr.ExitCode() == -1 {
+				return fmt.Errorf("gradle terminated abnormally (%s): %w", execErr.ProcessState.String(), err)
+			}
 			return err
 		}
 
@@ -129,6 +136,10 @@ func runAndExportOutput(
 	lastLines, exportErr := exporter.ExportStringToFileOutputAndReturnLastNLines(envKey, rawOutput, destinationPath, lines)
 	if exportErr != nil {
 		logger.Warnf("Failed to export %s, error: %s", envKey, exportErr)
+	} else if err := os.Chmod(destinationPath, 0644); err != nil {
+		// the v2 exporter writes 0600; the log is a build artifact that
+		// downstream steps running as another user must be able to read
+		logger.Warnf("Failed to make %s world-readable: %s", destinationPath, err)
 	}
 
 	if lines > 0 && len(lastLines) > 0 {
@@ -197,7 +208,9 @@ func findDeployPth(logger log.Logger, pathChecker pathutil.PathChecker, deployDi
 	retryApkName := baseName + ext
 
 	var lastErr error
-	for attempt := 0; attempt < 10; attempt++ {
+	// 11 executions: the v1 implementation used retry.Times(10), which runs
+	// the first attempt plus 10 retries
+	for attempt := 0; attempt <= 10; attempt++ {
 		requestedPath := filepath.Join(deployDir, retryApkName)
 		if attempt > 0 {
 			logger.Warnf("Trying %s instead", requestedPath)
@@ -217,12 +230,27 @@ func findDeployPth(logger log.Logger, pathChecker pathutil.PathChecker, deployDi
 			return deployPth, nil
 		}
 
-		if attempt < 9 {
+		if attempt < 10 {
 			time.Sleep(1 * time.Second)
 		}
 	}
 
 	return deployPth, lastErr
+}
+
+// copyFile copies src to dst byte-wise, preserving permission bits only: the
+// v2 fileutil.CopyFile also clones ownership, which fails a non-root step on
+// artifacts a containerised build task wrote as another user.
+func copyFile(src, dst string) error {
+	info, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(dst, data, info.Mode().Perm())
 }
 
 func failf(logger log.Logger, message string, args ...interface{}) {
@@ -308,7 +336,7 @@ func main() {
 			failf(logger, "Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		if err := fm.CopyFile(appFile, deployPth, &fileutil.CopyOptions{Overwrite: true}); err != nil {
+		if err := copyFile(appFile, deployPth); err != nil {
 			failf(logger, "Failed to copy %s: %s", fileName, err)
 		}
 
@@ -385,7 +413,7 @@ func main() {
 			failf(logger, "Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		if err := fm.CopyFile(apkFile, deployPth, &fileutil.CopyOptions{Overwrite: true}); err != nil {
+		if err := copyFile(apkFile, deployPth); err != nil {
 			failf(logger, "Failed to copy %s: %s", fileName, err)
 		}
 
@@ -437,7 +465,7 @@ func main() {
 			failf(logger, "Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		if err := fm.CopyFile(mappingFile, deployPth, &fileutil.CopyOptions{Overwrite: true}); err != nil {
+		if err := copyFile(mappingFile, deployPth); err != nil {
 			failf(logger, "Failed to copy %s: %s", fileName, err)
 		}
 

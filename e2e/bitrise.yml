@@ -268,6 +268,9 @@ workflows:
             if [ -z "$mapping_name" ] || [ "$mapping_name" = "null" ]; then
               echo "expected a mapping paired for productionRelease"; cat "$map"; exit 1
             fi
+            # provenance: the map records where the paired file was copied from
+            jq -e --arg m "$mapping_name" '.sources[$m] | endswith("/outputs/mapping/productionRelease/mapping.txt")' "$map" > /dev/null \
+              || { echo "expected the paired mapping's source path recorded"; cat "$map"; exit 1; }
             # content proof: the OFFICIAL outputs/ copy won, not the intermediates
             # workdir copy, regardless of copy order and collision renames
             grep -q "fixture-source: outputs/mapping/productionRelease" "$map_dir/$mapping_name" \
@@ -680,8 +683,11 @@ workflows:
               || { echo "artifact map has no variants"; exit 1; }
 
             # Every file the map references — variant entries AND unmatched —
-            # must exist next to the map file. read -r keeps file names with
-            # spaces intact.
+            # must exist next to the map file. jq runs first so its failure
+            # fails the check (a process substitution's exit code would be
+            # swallowed), with // [] guards against absent list fields.
+            refs=$(jq -r '(.modules[][] | (.mapping // empty), (.apk // [])[], (.aab // [])[]), (.unmatched | (.apk // [])[], (.aab // [])[], (.mapping // [])[])' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH") \
+              || { echo "failed to list the artifact map's file references"; exit 1; }
             map_dir=$(dirname "$BITRISE_ANDROID_ARTIFACT_MAP_PATH")
             while IFS= read -r name; do
               [ -z "$name" ] && continue
@@ -690,7 +696,7 @@ workflows:
                 exit 1
               fi
               echo "artifact map entry exists: $name"
-            done < <(jq -r '(.modules[][] | (.mapping // empty), .apk[], .aab[]), (.unmatched | .apk[], .aab[], .mapping[])' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH")
+            done <<< "$refs"
 
   _check_output_aab:
     steps:

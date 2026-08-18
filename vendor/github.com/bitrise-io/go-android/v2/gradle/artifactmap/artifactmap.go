@@ -60,6 +60,12 @@ type Map struct {
 	// from Gradle's build/intermediates/ tree are left out of the document
 	// entirely (see Build).
 	Unmatched Unmatched `json:"unmatched"`
+	// Sources records, for every file name the document references, the
+	// build-output path it was copied from — collision-renamed deploy names
+	// explain themselves without the build log. A debugging aid only:
+	// best-effort across merges (an older step re-writes the document without
+	// it), so consumers must not rely on it.
+	Sources map[string]string `json:"sources,omitempty"`
 }
 
 // Entry groups one variant's exported files, as names relative to the map
@@ -139,11 +145,13 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 		return g, true
 	}
 
+	sources := map[string]string{}
 	unmatched := Unmatched{APK: []string{}, AAB: []string{}, Mapping: []string{}}
 	for _, f := range apks {
 		if fromIntermediates(f) {
 			continue
 		}
+		sources[filepath.Base(f.DeployPath)] = f.SourcePath
 		if g, ok := grab(f); ok {
 			g.entry.APK = append(g.entry.APK, filepath.Base(f.DeployPath))
 		} else {
@@ -154,6 +162,7 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 		if fromIntermediates(f) {
 			continue
 		}
+		sources[filepath.Base(f.DeployPath)] = f.SourcePath
 		if g, ok := grab(f); ok {
 			g.entry.AAB = append(g.entry.AAB, filepath.Base(f.DeployPath))
 		} else {
@@ -165,6 +174,7 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 			continue
 		}
 		name := filepath.Base(f.DeployPath)
+		sources[name] = f.SourcePath
 		if !canonicalMapping(f) {
 			unmatched.Mapping = append(unmatched.Mapping, name)
 			continue
@@ -203,7 +213,51 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 	sort.Strings(unmatched.AAB)
 	sort.Strings(unmatched.Mapping)
 
-	return Map{Version: Version, Modules: modules, Unmatched: unmatched}, warnings
+	m := Map{Version: Version, Modules: modules, Unmatched: unmatched, Sources: sources}
+	m.pruneSources()
+	return m, warnings
+}
+
+// referencedNames returns every file name the document references.
+func (m Map) referencedNames() map[string]bool {
+	names := map[string]bool{}
+	for _, variants := range m.Modules {
+		for _, entry := range variants {
+			if entry.Mapping != "" {
+				names[entry.Mapping] = true
+			}
+			for _, name := range entry.APK {
+				names[name] = true
+			}
+			for _, name := range entry.AAB {
+				names[name] = true
+			}
+		}
+	}
+	for _, name := range m.Unmatched.APK {
+		names[name] = true
+	}
+	for _, name := range m.Unmatched.AAB {
+		names[name] = true
+	}
+	for _, name := range m.Unmatched.Mapping {
+		names[name] = true
+	}
+	return names
+}
+
+// pruneSources drops source records of file names the document no longer
+// references (a replaced duplicate mapping, an entry a Merge overwrote).
+func (m *Map) pruneSources() {
+	names := m.referencedNames()
+	for name := range m.Sources {
+		if !names[name] {
+			delete(m.Sources, name)
+		}
+	}
+	if len(m.Sources) == 0 {
+		m.Sources = nil
+	}
 }
 
 // moduleKeys returns a document key for each distinct module path: the
@@ -276,7 +330,17 @@ func Merge(base, overlay Map) (Map, []string) {
 		Mapping: unionSorted(base.Unmatched.Mapping, overlay.Unmatched.Mapping),
 	}
 
-	return Map{Version: Version, Modules: modules, Unmatched: unmatched}, warnings
+	sources := map[string]string{}
+	for name, source := range base.Sources {
+		sources[name] = source
+	}
+	for name, source := range overlay.Sources {
+		sources[name] = source
+	}
+
+	merged := Map{Version: Version, Modules: modules, Unmatched: unmatched, Sources: sources}
+	merged.pruneSources()
+	return merged, warnings
 }
 
 // mergeEntries combines one variant's entries field-wise: what the overlay
@@ -330,30 +394,43 @@ func unionSorted(a, b []string) []string {
 // ReplaceFile renames a file reference wherever it appears and reports whether
 // anything was replaced. A step that renames an artifact in the deploy dir
 // (signing) uses it to keep the map current. Mapping references are left
-// alone: artifact transforms don't touch them.
+// alone: artifact transforms don't touch them. Changed lists are reallocated,
+// never mutated in place — a merged map's slices may still be shared with the
+// document it was merged from.
 func (m *Map) ReplaceFile(oldName, newName string) bool {
 	replaced := false
-	replaceIn := func(list []string) {
+	replaceIn := func(list []string) []string {
 		changed := false
+		out := make([]string, len(list))
 		for i, name := range list {
+			out[i] = name
 			if name == oldName {
-				list[i] = newName
+				out[i] = newName
 				changed = true
 			}
 		}
-		if changed {
-			sort.Strings(list)
-			replaced = true
+		if !changed {
+			return list
+		}
+		sort.Strings(out)
+		replaced = true
+		return out
+	}
+	for module, variants := range m.Modules {
+		for variant, entry := range variants {
+			entry.APK = replaceIn(entry.APK)
+			entry.AAB = replaceIn(entry.AAB)
+			m.Modules[module][variant] = entry
 		}
 	}
-	for _, variants := range m.Modules {
-		for _, entry := range variants {
-			replaceIn(entry.APK)
-			replaceIn(entry.AAB)
+	m.Unmatched.APK = replaceIn(m.Unmatched.APK)
+	m.Unmatched.AAB = replaceIn(m.Unmatched.AAB)
+	if replaced {
+		if source, ok := m.Sources[oldName]; ok {
+			delete(m.Sources, oldName)
+			m.Sources[newName] = source
 		}
 	}
-	replaceIn(m.Unmatched.APK)
-	replaceIn(m.Unmatched.AAB)
 	return replaced
 }
 
