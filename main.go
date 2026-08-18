@@ -238,21 +238,6 @@ func findDeployPth(logger log.Logger, pathChecker pathutil.PathChecker, deployDi
 	return deployPth, lastErr
 }
 
-// copyFile copies src to dst byte-wise, preserving permission bits only: the
-// v2 fileutil.CopyFile also clones ownership, which fails a non-root step on
-// artifacts a containerised build task wrote as another user.
-func copyFile(src, dst string) error {
-	info, err := os.Stat(src)
-	if err != nil {
-		return err
-	}
-	data, err := os.ReadFile(src)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(dst, data, info.Mode().Perm())
-}
-
 func failf(logger log.Logger, message string, args ...interface{}) {
 	logger.Errorf(message, args...)
 	os.Exit(1)
@@ -336,7 +321,7 @@ func main() {
 			failf(logger, "Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		if err := copyFile(appFile, deployPth); err != nil {
+		if err := fm.CopyFile(appFile, deployPth, nil); err != nil {
 			failf(logger, "Failed to copy %s: %s", fileName, err)
 		}
 
@@ -413,7 +398,7 @@ func main() {
 			failf(logger, "Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		if err := copyFile(apkFile, deployPth); err != nil {
+		if err := fm.CopyFile(apkFile, deployPth, nil); err != nil {
 			failf(logger, "Failed to copy %s: %s", fileName, err)
 		}
 
@@ -465,7 +450,7 @@ func main() {
 			failf(logger, "Failed to create deploy path for %s: %s", fileName, err)
 		}
 
-		if err := copyFile(mappingFile, deployPth); err != nil {
+		if err := fm.CopyFile(mappingFile, deployPth, nil); err != nil {
 			failf(logger, "Failed to copy %s: %s", fileName, err)
 		}
 
