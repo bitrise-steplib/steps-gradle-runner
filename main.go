@@ -139,14 +139,14 @@ func runAndExportOutput(
 			logger.Infof(banner)
 		}
 
-		logger.Printf(lastLines)
+		logger.Printf("%s", lastLines)
 
 		if cmdErr != nil {
 			logger.Warnf("If you can't find the reason of the error in the log, please check the %s.", destinationPath)
 		}
 	}
 
-	logger.Infof(colorstring.Magenta(fmt.Sprintf(`The log file is stored in %s, and its full path is available in the $%s environment variable.`, destinationPath, envKey)))
+	logger.Infof("%s", colorstring.Magenta(fmt.Sprintf(`The log file is stored in %s, and its full path is available in the $%s environment variable.`, destinationPath, envKey)))
 
 	return cmdErr
 }
@@ -484,15 +484,23 @@ func exportArtifactMap(logger log.Logger, exporter export.Exporter, deployDir st
 		}
 		logger.Printf("Merged this build's artifacts into the artifact map written by an earlier step")
 		artifactMap = merged
+	} else if errors.Is(err, artifactmap.ErrNewerVersion) {
+		// a newer step's document must not be destroyed by an older one
+		logger.Warnf("Not touching the existing artifact map, this build's artifacts are not added to it: %s", err)
+		return
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		logger.Warnf("Existing artifact map at %s is unreadable (%s), replacing it", mapPth, err)
 	}
 
+	// the map is an auxiliary output: a failure here must not fail a build
+	// whose artifacts were already exported
 	if err := artifactmap.Write(mapPth, artifactMap); err != nil {
-		failf(logger, "Failed to write the artifact map: %s", err)
+		logger.Warnf("Failed to write the artifact map: %s", err)
+		return
 	}
 	if err := exporter.ExportOutput(artifactmap.EnvKey, mapPth); err != nil {
-		failf(logger, "Failed to export environment (%s): %s", artifactmap.EnvKey, err)
+		logger.Warnf("Failed to export environment (%s): %s", artifactmap.EnvKey, err)
+		return
 	}
 	logger.Donef("The artifact map is now available in the Environment Variable: $%s (value: %s)", artifactmap.EnvKey, mapPth)
 

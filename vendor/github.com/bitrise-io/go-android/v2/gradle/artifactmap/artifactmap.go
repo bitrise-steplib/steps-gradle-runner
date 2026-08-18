@@ -15,11 +15,16 @@
 // Producers and consumers are version-pinned independently in user workflows.
 // Additive fields keep the version number (unknown JSON fields are ignored);
 // the version bumps only on breaking layout changes, and Read rejects
-// documents newer than it understands.
+// documents newer than it understands (ErrNewerVersion — a merging producer
+// must then leave the file untouched). Merge and Write re-encode the document
+// with this package's schema, so additive fields an older step doesn't know
+// are dropped from the merged document: additive fields must stay optional
+// for consumers.
 package artifactmap
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -177,18 +182,59 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 		g.entry.Mapping = name
 	}
 
+	var modulePaths []string
+	seenPath := map[string]bool{}
+	for variant := range groups {
+		if !seenPath[variant.ModulePath] {
+			seenPath[variant.ModulePath] = true
+			modulePaths = append(modulePaths, variant.ModulePath)
+		}
+	}
+	keyForPath := moduleKeys(modulePaths)
+
 	modules := map[string]map[string]Entry{}
 	for variant, g := range groups {
 		// filesystem-walk order is not a contract; sort for determinism
 		sort.Strings(g.entry.APK)
 		sort.Strings(g.entry.AAB)
-		setEntry(modules, variant.Module, variant.Variant, g.entry)
+		setEntry(modules, keyForPath[variant.ModulePath], variant.Variant, g.entry)
 	}
 	sort.Strings(unmatched.APK)
 	sort.Strings(unmatched.AAB)
 	sort.Strings(unmatched.Mapping)
 
 	return Map{Version: Version, Modules: modules, Unmatched: unmatched}, warnings
+}
+
+// moduleKeys returns a document key for each distinct module path: the
+// directory basename, extended with parent directories until unique among the
+// given paths ("app"; "brandA/app" vs "brandB/app" on a basename collision),
+// so unrelated modules never merge under one key.
+func moduleKeys(paths []string) map[string]string {
+	suffix := func(path string, depth int) string {
+		segments := strings.Split(path, "/")
+		if depth > len(segments) {
+			depth = len(segments)
+		}
+		return strings.Join(segments[len(segments)-depth:], "/")
+	}
+
+	keys := map[string]string{}
+	for depth := 1; len(keys) < len(paths); depth++ {
+		counts := map[string]int{}
+		for _, path := range paths {
+			counts[suffix(path, depth)]++
+		}
+		for _, path := range paths {
+			if _, done := keys[path]; done {
+				continue
+			}
+			if s := suffix(path, depth); counts[s] == 1 || s == path {
+				keys[path] = s
+			}
+		}
+	}
+	return keys
 }
 
 func setEntry(modules map[string]map[string]Entry, module, variant string, entry Entry) {
@@ -376,9 +422,14 @@ func Write(path string, m Map) error {
 	return nil
 }
 
+// ErrNewerVersion marks a document written by a newer producer than this
+// package understands. A step merging on write must leave such a file
+// untouched instead of replacing it.
+var ErrNewerVersion = errors.New("artifact map schema version is newer than this package understands")
+
 // Read loads and validates a map written by Write. It rejects documents with a
-// newer schema version than this package understands, and documents that are
-// not artifact maps at all (missing version).
+// newer schema version than this package understands (ErrNewerVersion), and
+// documents that are not artifact maps at all (missing version).
 func Read(path string) (Map, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -392,7 +443,7 @@ func Read(path string) (Map, error) {
 		return Map{}, fmt.Errorf("parse artifact map %s: missing schema version, not an artifact map", path)
 	}
 	if m.Version > Version {
-		return Map{}, fmt.Errorf("artifact map %s has schema version %d, this consumer understands up to %d", path, m.Version, Version)
+		return Map{}, fmt.Errorf("artifact map %s has schema version %d, this step understands up to %d: %w", path, m.Version, Version, ErrNewerVersion)
 	}
 	return m, nil
 }

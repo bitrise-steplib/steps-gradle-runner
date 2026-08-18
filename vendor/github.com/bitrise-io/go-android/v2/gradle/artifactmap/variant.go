@@ -5,12 +5,17 @@ import (
 	"strings"
 )
 
-// ArtifactVariant identifies the build variant an artifact belongs to: the
-// module plus the merged Gradle variant name ("demoRelease"). Values are not a
-// stable contract — an artifact and its mapping just need to compare equal;
-// the module keeps same-named variants of different modules apart.
+// ArtifactVariant identifies the build variant an artifact belongs to. Values
+// are not a stable contract — an artifact and its mapping just need to compare
+// equal; the module keeps same-named variants of different modules apart.
 type ArtifactVariant struct {
-	Module  string
+	// Module is the module directory's basename ("app") — the human name used
+	// in labels and, when unambiguous, as the document key.
+	Module string
+	// ModulePath is the full directory path before "build", the module's real
+	// identity: distinct modules can share a basename (brandA/app, brandB/app).
+	ModulePath string
+	// Variant is the merged Gradle variant name ("demoRelease").
 	Variant string
 }
 
@@ -33,7 +38,9 @@ func VariantFromPath(path string) (variant ArtifactVariant, ok bool) {
 			continue
 		}
 		switch segments[i+1] {
-		case "apk", "bundle", "mapping":
+		case "apk", "bundle", "mapping",
+			// universal/from-bundle APK locations, AGP 8 / AGP 4-7 / bundletool
+			"universal_apk", "apk_from_bundle", "extracted_apks":
 		default:
 			// some other outputs child (e.g. logs): keep scanning
 			continue
@@ -47,22 +54,23 @@ func VariantFromPath(path string) (variant ArtifactVariant, ok bool) {
 			continue
 		}
 
-		module := moduleFromSegments(segments[:i])
-		return ArtifactVariant{Module: module, Variant: mergeVariantSegments(variantSegments)}, true
+		module, modulePath := moduleFromSegments(segments[:i])
+		return ArtifactVariant{Module: module, ModulePath: modulePath, Variant: mergeVariantSegments(variantSegments)}, true
 	}
 
 	return ArtifactVariant{}, false
 }
 
-// moduleFromSegments returns the module directory (the segment right before
-// "build"), or "" when the path has no "build" segment.
-func moduleFromSegments(segments []string) string {
+// moduleFromSegments returns the module directory's basename and full path
+// (everything before "build"), or empty strings when the path has no "build"
+// segment.
+func moduleFromSegments(segments []string) (module, modulePath string) {
 	for i := len(segments) - 1; i >= 1; i-- {
 		if segments[i] == "build" {
-			return segments[i-1]
+			return segments[i-1], strings.Join(segments[:i], "/")
 		}
 	}
-	return ""
+	return "", ""
 }
 
 // mergeVariantSegments joins variant directory segments into the merged Gradle
