@@ -7,14 +7,14 @@ toolchain go1.24.10
 require (
 	github.com/bitrise-io/bitrise-build-cache-cli/v2 v2.6.0
 	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.50
-	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.36.0.20260818110355-8426063ca00b
+	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.37
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/stretchr/testify v1.10.0
 )
 
 require (
-	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.17.0.20260818111413-e5a94341c2ad
+	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.17.0.20260818113528-725a88472878
 	github.com/bitrise-io/go-utils v1.0.15 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect

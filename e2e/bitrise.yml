@@ -340,10 +340,12 @@ workflows:
             [ -f "$map_dir/presentation-debug.aar" ] \
               || { echo "expected presentation-debug.aar in the deploy dir"; ls "$map_dir"; exit 1; }
 
-            # the flat outputs/aar/ layout has no variant directory: all three are
-            # accounted for under unmatched
-            jq -e '.unmatched.aar | length == 3' "$map" > /dev/null \
-              || { echo "expected all three AARs under unmatched"; cat "$map"; exit 1; }
+            # AARs attach to their modules; same-basename modules get
+            # disambiguated keys, exactly like the modules tree
+            jq -e '.module_aars | has("feature-name-1/data") and has("feature-name-2/data") and has("presentation")' "$map" > /dev/null \
+              || { echo "expected per-module AAR keys"; cat "$map"; exit 1; }
+            jq -e '[.module_aars[] | length] | all(. == 1)' "$map" > /dev/null \
+              || { echo "expected exactly one AAR per module"; cat "$map"; exit 1; }
 
             # sources tell the two same-named AARs apart by nested module
             for module in feature-name-1 feature-name-2; do
@@ -756,7 +758,7 @@ workflows:
             # must exist next to the map file. jq runs first so its failure
             # fails the check (a process substitution's exit code would be
             # swallowed), with // [] guards against absent list fields.
-            refs=$(jq -r '(.modules[][] | (.mapping // empty), (.apk // [])[], (.aab // [])[]), (.unmatched | (.apk // [])[], (.aab // [])[], (.mapping // [])[])' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH") \
+            refs=$(jq -r '(.modules[][] | (.mapping // empty), (.apk // [])[], (.aab // [])[]), (.module_aars // {} | .[][]), (.unmatched | (.apk // [])[], (.aab // [])[], (.mapping // [])[])' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH") \
               || { echo "failed to list the artifact map's file references"; exit 1; }
             map_dir=$(dirname "$BITRISE_ANDROID_ARTIFACT_MAP_PATH")
             while IFS= read -r name; do
