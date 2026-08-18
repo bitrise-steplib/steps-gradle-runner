@@ -257,12 +257,12 @@ workflows:
 
             jq -e '.modules.app.productionRelease.apk == ["app-production-release.apk"]' "$map" > /dev/null \
               || { echo "expected the variant's APK paired in the map"; cat "$map"; exit 1; }
-            # the compose mapping AND the intermediates workdir copy stay visible
-            # under unmatched — only official outputs/ files pair with variants
-            jq -e '.unmatched.mapping | index("compose-mapping.txt") != null' "$map" > /dev/null \
-              || { echo "expected compose-mapping.txt under unmatched"; cat "$map"; exit 1; }
-            jq -e '[.unmatched.mapping[] | select(startswith("mapping"))] | length >= 1' "$map" > /dev/null \
-              || { echo "expected the intermediates mapping copy under unmatched"; cat "$map"; exit 1; }
+            # intermediates files (the workdir copy AND the Compose mapping) are
+            # copied to the deploy dir but left out of the map entirely
+            [ -f "$map_dir/compose-mapping.txt" ] \
+              || { echo "expected compose-mapping.txt copied to the deploy dir"; ls "$map_dir"; exit 1; }
+            jq -e '[.unmatched.mapping[] | select(startswith("compose-mapping"))] | length == 0' "$map" > /dev/null \
+              || { echo "expected intermediates files to be ignored by the map"; cat "$map"; exit 1; }
 
             mapping_name=$(jq -r '.modules.app.productionRelease.mapping' "$map")
             if [ -z "$mapping_name" ] || [ "$mapping_name" = "null" ]; then
@@ -471,12 +471,11 @@ workflows:
               || { echo "expected the internal flavor's APK paired"; exit 1; }
             jq -e '.modules.app.playRelease.apk | length == 1 and (.[0] | test("play-release"))' "$map" > /dev/null \
               || { echo "expected the play flavor's APK paired"; exit 1; }
-            # unmatched is unioned across the worker's earlier e2e workflows and
-            # also holds the flavors' intermediates copies; both of THIS build's
-            # Compose mappings must be among them
-            jq -e '[.unmatched.mapping[] | select(startswith("compose-mapping"))] | length >= 2' "$map" > /dev/null \
-              || { echo "expected both Compose mappings under unmatched"; exit 1; }
-            echo "OK: both flavors paired with their own official outputs/ mapping; Compose mappings in unmatched"
+            # Compose mappings and intermediates workdir copies live under
+            # build/intermediates/ and are left out of the map entirely
+            jq -e '[.unmatched.mapping[] | select(startswith("compose-mapping"))] | length == 0' "$map" > /dev/null \
+              || { echo "expected Compose mappings to be ignored by the map"; exit 1; }
+            echo "OK: both flavors paired with their own official outputs/ mapping; intermediates ignored"
     - save-gradle-cache@1:
         # heavy real-world build: run on a single stack only
         run_if: |-
@@ -650,7 +649,7 @@ workflows:
             set -x
             ls -alh "$BITRISE_DEPLOY_DIR"
 
-  # NOTE: this helper asserts `.variants` is non-empty, so only attach it to
+  # NOTE: this helper asserts `.modules` is non-empty, so only attach it to
   # workflows whose build produces variant-attributable artifacts (the standard
   # build/outputs/{apk,bundle,mapping} layout). A map with only `unmatched`
   # entries is contract-conformant but would fail this check.

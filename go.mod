@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.17.0.20260818092141-9cfb5cb3ba53
+	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.17.0.20260818100600-42cb444e1b20
 	github.com/bitrise-io/go-utils v1.0.15 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect

@@ -24,16 +24,16 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 // Version is the schema version this package reads and writes.
 const Version = 1
 
 // DefaultFileName is the conventional name of the map file inside the deploy
-// directory. A producer finding an existing map at this name Merges its own
-// entries into it (several build steps in one workflow accumulate a single
-// document); an unreadable existing file is replaced. Consumers should use
-// the exported path rather than assuming the name.
+// directory. A producer finding an existing map at this name Merges into it;
+// an unreadable existing file is replaced. Consumers should use the exported
+// path rather than assuming the name.
 const DefaultFileName = "android-artifact-map.json"
 
 // EnvKey is the environment variable producers export the map file's path in
@@ -50,9 +50,10 @@ type Map struct {
 	// module key is "" when it could not be derived from the build-output
 	// path. Consumers pair artifacts by file identity, not by key.
 	Modules map[string]map[string]Entry `json:"modules"`
-	// Unmatched lists exported files whose module/variant could not be
-	// derived from their build-output path, so no export goes silently
-	// unaccounted for.
+	// Unmatched lists exported files the map cannot attribute: unrecognised
+	// locations, and report files a widened mapping filter dragged in. Files
+	// from Gradle's build/intermediates/ tree are left out of the document
+	// entirely (see Build).
 	Unmatched Unmatched `json:"unmatched"`
 }
 
@@ -93,25 +94,29 @@ func Label(module, variant string) string {
 }
 
 // canonicalMapping reports whether the file is the shrinker's real output — a
-// file literally named mapping.txt. Sibling report files (usage.txt,
-// seeds.txt, ...) matched by a widened filter must never displace it. Only
-// build/outputs/ files compete at all: VariantFromPath leaves every other
-// location (intermediates/ task-workdir copies included) unmatched.
+// file literally named mapping.txt. Nothing else (usage.txt, seeds.txt and
+// other report files matched by a widened filter) can be a variant's mapping.
 func canonicalMapping(f File) bool {
 	return filepath.Base(f.SourcePath) == "mapping.txt"
 }
 
+// fromIntermediates reports whether the file comes from Gradle's
+// build/intermediates/ tree — task-workdir duplicates of the official
+// outputs. Build leaves them out of the map entirely.
+func fromIntermediates(f File) bool {
+	return strings.Contains(filepath.ToSlash(f.SourcePath), "/intermediates/")
+}
+
 // Build assembles a Map from the files a step exported. Modules and variants
-// are derived from each file's SourcePath; only official build/outputs/ paths
-// are recognised — everything else lands under Unmatched. When several
-// mapping files resolve to the same variant, the canonical mapping.txt wins
-// over report files (see canonicalMapping); every dropped file is reported in
-// warnings.
+// are derived from each file's SourcePath. Only official build/outputs/ paths
+// pair, and only a file literally named mapping.txt can be a variant's
+// mapping; other exports stay visible under Unmatched — except files from
+// build/intermediates/ (task-workdir duplicates of the outputs), which are
+// left out of the document entirely.
 func Build(apks, aabs, mappings []File) (Map, []string) {
 	type group struct {
-		variant          ArtifactVariant
-		entry            Entry
-		mappingCanonical bool
+		variant ArtifactVariant
+		entry   Entry
 	}
 	groups := map[ArtifactVariant]*group{}
 	var warnings []string
@@ -131,6 +136,9 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 
 	unmatched := Unmatched{APK: []string{}, AAB: []string{}, Mapping: []string{}}
 	for _, f := range apks {
+		if fromIntermediates(f) {
+			continue
+		}
 		if g, ok := grab(f); ok {
 			g.entry.APK = append(g.entry.APK, filepath.Base(f.DeployPath))
 		} else {
@@ -138,6 +146,9 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 		}
 	}
 	for _, f := range aabs {
+		if fromIntermediates(f) {
+			continue
+		}
 		if g, ok := grab(f); ok {
 			g.entry.AAB = append(g.entry.AAB, filepath.Base(f.DeployPath))
 		} else {
@@ -145,36 +156,30 @@ func Build(apks, aabs, mappings []File) (Map, []string) {
 		}
 	}
 	for _, f := range mappings {
-		g, ok := grab(f)
-		if !ok {
-			unmatched.Mapping = append(unmatched.Mapping, filepath.Base(f.DeployPath))
+		if fromIntermediates(f) {
 			continue
 		}
 		name := filepath.Base(f.DeployPath)
-		canonical := canonicalMapping(f)
-		label := Label(g.variant.Module, g.variant.Variant)
-		switch {
-		case g.entry.Mapping == "":
-			// first mapping for the variant
-		case g.mappingCanonical && !canonical:
-			// a report file never displaces the real mapping.txt
-			warnings = append(warnings, fmt.Sprintf(
-				"variant %s matched several mapping files: keeping %s, dropping %s",
-				label, g.entry.Mapping, name))
+		if !canonicalMapping(f) {
+			unmatched.Mapping = append(unmatched.Mapping, name)
 			continue
-		default:
+		}
+		g, ok := grab(f)
+		if !ok {
+			unmatched.Mapping = append(unmatched.Mapping, name)
+			continue
+		}
+		if g.entry.Mapping != "" && g.entry.Mapping != name {
 			warnings = append(warnings, fmt.Sprintf(
 				"variant %s matched several mapping files: keeping %s, dropping %s",
-				label, name, g.entry.Mapping))
+				Label(g.variant.Module, g.variant.Variant), name, g.entry.Mapping))
 		}
 		g.entry.Mapping = name
-		g.mappingCanonical = canonical
 	}
 
 	modules := map[string]map[string]Entry{}
 	for variant, g := range groups {
-		// producers discover files in filesystem-walk order, which is not a
-		// meaningful contract; sort so the document is deterministic
+		// filesystem-walk order is not a contract; sort for determinism
 		sort.Strings(g.entry.APK)
 		sort.Strings(g.entry.AAB)
 		setEntry(modules, variant.Module, variant.Variant, g.entry)
@@ -193,13 +198,10 @@ func setEntry(modules map[string]map[string]Entry, module, variant string, entry
 	modules[module][variant] = entry
 }
 
-// Merge combines the map written by an earlier step run (base) with the map of
-// the current run (overlay), so several producer steps in one workflow
-// accumulate a single document instead of the last one overwriting the rest.
-// Entries are matched by module and variant and merged field-wise: a field the
-// overlay produced replaces the base's (a rebuild — reported in warnings when
-// the values differ), fields the overlay didn't produce keep the base's. An
-// apk-building run and an aab-building run of the same variant therefore
+// Merge combines an earlier step run's map (base) with the current run's
+// (overlay), so several producer steps in one workflow accumulate a single
+// document. Entries are matched by module and variant and merged field-wise
+// (see mergeEntries): an apk-building and an aab-building run of one variant
 // accumulate one complete entry. Unmatched lists are unioned and deduped.
 func Merge(base, overlay Map) (Map, []string) {
 	var warnings []string
@@ -231,10 +233,10 @@ func Merge(base, overlay Map) (Map, []string) {
 	return Map{Version: Version, Modules: modules, Unmatched: unmatched}, warnings
 }
 
-// mergeEntries combines one variant's base and overlay entries field-wise:
-// what the overlay produced wins, what it didn't produce survives from the
-// base. Replacing an earlier value is reported (also when a re-listed value
-// happens to be identical — the noise is not worth an equality check).
+// mergeEntries combines one variant's entries field-wise: what the overlay
+// produced wins, what it didn't produce survives from the base. Every
+// replacement is reported, even a re-listing of identical values — the noise
+// is not worth an equality check.
 func mergeEntries(base, overlay Entry, label string) (Entry, []string) {
 	var warnings []string
 	merged := overlay
@@ -279,11 +281,10 @@ func unionSorted(a, b []string) []string {
 	return union
 }
 
-// ReplaceFile renames a file reference wherever it appears — the variants'
-// APK/AAB lists and the unmatched lists — and reports whether anything was
-// replaced. A step that transforms an artifact in the deploy dir under a new
-// name (e.g. signing) uses it to keep the map pointing at the current file.
-// Mapping references are left alone: artifact transforms don't touch them.
+// ReplaceFile renames a file reference wherever it appears and reports whether
+// anything was replaced. A step that renames an artifact in the deploy dir
+// (signing) uses it to keep the map current. Mapping references are left
+// alone: artifact transforms don't touch them.
 func (m *Map) ReplaceFile(oldName, newName string) bool {
 	replaced := false
 	replaceIn := func(list []string) {
@@ -363,8 +364,7 @@ func Marshal(m Map) ([]byte, error) {
 	return append(data, '\n'), nil
 }
 
-// Write marshals the map and writes it to path. The document is indented so
-// the exported build artifact stays human-readable.
+// Write marshals the map and writes it to path.
 func Write(path string, m Map) error {
 	data, err := Marshal(m)
 	if err != nil {
