@@ -283,6 +283,107 @@ workflows:
             rm "$map_dir/app-production-release.apk"
             jq 'del(.modules.app.productionRelease)' "$map" > "$map.tmp" && mv "$map.tmp" "$map"
 
+  test_multi_module_aar:
+    description: |-
+      Nested multi-module library layout (go-android#67/#78): two nested modules
+      share the basename "data" and produce same-named AARs, and two nested "app"
+      modules produce same-named APKs. Every same-named artifact must reach the
+      deploy dir (collision-renamed, none silently lost), the artifact map must
+      key the two app modules distinctly (module identity is the path before
+      /build/, not its basename), and AARs must stay out of the map — it is an
+      APK/AAB/mapping contract.
+    steps:
+    - set-java-version:
+        inputs:
+        - set_java_version: "17"
+    - script:
+        title: recreate _tmp directory
+        inputs:
+        - content: rm -rf "$ORIG_BITRISE_SOURCE_DIR/_tmp" && mkdir "$ORIG_BITRISE_SOURCE_DIR/_tmp"
+    - change-workdir:
+        title: Switch working dir to _tmp dir
+        run_if: "true"
+        inputs:
+        - path: $ORIG_BITRISE_SOURCE_DIR/_tmp
+    # cloned only for its Gradle wrapper — the build files are replaced below
+    - git::https://github.com/bitrise-steplib/bitrise-step-simple-git-clone.git:
+        inputs:
+        - repository_url: https://github.com/bitrise-io/bitrise-android-sample.git
+        - clone_into_dir: .
+        - branch: main
+    - script:
+        title: Replace the project with the nested-module layout generator
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -ex
+            # a plain (non-Android) Gradle project: no SDK or AGP needed, the
+            # task just recreates a nested multi-module output tree
+            cat > settings.gradle <<'EOF'
+            rootProject.name = 'multi-module-aar'
+            EOF
+            cat > build.gradle <<'EOF'
+            tasks.register("buildNestedModules") {
+              doLast {
+                [
+                  "feature/feature-name-1/data/build/outputs/aar/data-debug.aar",
+                  "feature/feature-name-1/presentation/build/outputs/aar/presentation-debug.aar",
+                  "feature/feature-name-2/data/build/outputs/aar/data-debug.aar",
+                  "feature/feature-name-1/app/build/outputs/apk/debug/app-debug.apk",
+                  "feature/feature-name-2/app/build/outputs/apk/debug/app-debug.apk",
+                ].each { p ->
+                  def f = new File(projectDir, p)
+                  f.parentFile.mkdirs()
+                  f.text = "fixture-source: " + p
+                }
+              }
+            }
+            EOF
+    - path::./:
+        title: Self-test (AARs matched by a widened app filter)
+        inputs:
+        - build_root_directory: .
+        - gradle_task: buildNestedModules
+        - gradlew_path: ./gradlew
+        - app_file_include_filter: |
+            *.apk
+            *.aab
+            *.aar
+    - script:
+        title: Check nested-module artifacts and module keys
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            map="$BITRISE_ANDROID_ARTIFACT_MAP_PATH"
+            map_dir=$(dirname "$map")
+            echo "--- artifact map ---"; cat "$map"; echo "---"
+
+            # all three AARs arrived; the same-named data AARs are two distinct files
+            [ "$(ls "$map_dir" | grep -c '^data-debug.*\.aar$')" = "2" ] \
+              || { echo "expected both same-named data AARs in the deploy dir"; ls "$map_dir"; exit 1; }
+            [ -f "$map_dir/presentation-debug.aar" ] \
+              || { echo "expected presentation-debug.aar in the deploy dir"; ls "$map_dir"; exit 1; }
+            for module in feature-name-1 feature-name-2; do
+              grep -q "fixture-source: feature/$module/data" "$map_dir"/data-debug*.aar \
+                || { echo "the $module data AAR was lost in the collision"; exit 1; }
+            done
+
+            # same-basename app modules must stay distinct in the map: keys grow
+            # parent directories on collision
+            jq -e '.modules | has("feature-name-1/app") and has("feature-name-2/app")' "$map" > /dev/null \
+              || { echo "expected distinct module keys for the two app modules"; cat "$map"; exit 1; }
+            jq -e '.modules["feature-name-1/app"].debug.apk | length == 1' "$map" > /dev/null \
+              || { echo "expected feature-name-1/app debug APK paired"; cat "$map"; exit 1; }
+            jq -e '.modules["feature-name-2/app"].debug.apk | length == 1' "$map" > /dev/null \
+              || { echo "expected feature-name-2/app debug APK paired"; cat "$map"; exit 1; }
+
+            # AARs are not part of the APK/AAB/mapping contract
+            jq -e '[.. | strings | select(endswith(".aar"))] | length == 0' "$map" > /dev/null \
+              || { echo "expected no AAR references in the map"; cat "$map"; exit 1; }
+            echo "OK: nested modules distinct, all AARs exported, map stays APK/AAB/mapping-only"
+
   test_compose_r8:
     description: |-
       Real Compose + R8 build (SSW-3065): R8 writes mapping.txt next to its
