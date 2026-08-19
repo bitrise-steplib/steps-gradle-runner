@@ -248,6 +248,19 @@ func Test_findArtifacts(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Default test APK exclude pattern from step.yml",
+			patterns: filePatterns{
+				include: []string{"*Test*.apk"},
+				exclude: []string{"*/intermediates/*"},
+			},
+			filePaths: []string{
+				"app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+				"app/build/intermediates/apk/androidTest/debug/app-debug-androidTest.apk",
+			},
+			want:    []string{"app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"},
+			wantErr: false,
+		},
+		{
 			name: "Default mapping file include pattern from step.yml",
 			patterns: filePatterns{
 				include: []string{"*/mapping.txt"},

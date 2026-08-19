@@ -151,7 +151,7 @@ inputs:
       ```
       *Test*.apk
       ```
-- test_apk_file_exclude_filter: ""
+- test_apk_file_exclude_filter: "*/intermediates/*"
   opts:
     category: Export Config
     title: Test APK file exclude filter
@@ -159,6 +159,9 @@ inputs:
       One filter per line. The Step will NOT copy the generated apk files that match this filters into the Bitrise deploy directory.
       You can use this filter to avoid moving unalinged and/or unsigned apk files.
       If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied.
+
+      The default filter skips the working copies Gradle keeps under `build/intermediates/`, so only the test APKs published to `build/outputs/apk/androidTest/<variant>/` are exported. `app_file_exclude_filter` has skipped intermediates the same way since v2.0.1.
+
       Example:
       Do not copy the test APK file if its filename contains `unaligned`:
       ```
