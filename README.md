@@ -76,9 +76,12 @@ You can also set up file path filters to avoid exporting unwanted archives or ma
     - gradlew_path: "./gradlew"
     - gradle_task: bundleRelease
     - app_file_include_filter: "*release.aab"
-    - app_file_exclude_filter: "*/temporary/*"
+    - app_file_exclude_filter: |-
+        *unaligned.apk
+        *Test*.apk
+        */intermediates/*
+        */temporary/*
     - test_apk_file_include_filter: "*Test*.apk"
-    - test_apk_file_exclude_filter: "*/immediate/*"
     - mapping_file_include_filter: "*/mapping.txt"
     - mapping_file_exclude_filter: |-
         */tmp/*
@@ -87,7 +90,7 @@ You can also set up file path filters to avoid exporting unwanted archives or ma
         */beta/*
 ```
 
-A filter input replaces the Step's default filters instead of extending them, so repeat the defaults you want to keep — like `*/intermediates/*` above, which keeps the working copies of the mapping file out of the deploy directory.
+A filter input replaces the Step's defaults instead of extending them, so the example above repeats the default patterns and adds the project-specific `*/temporary/*` and `*/beta/*` to them. Dropping `*/intermediates/*` would bring back the working copies Gradle keeps next to the published archives and mapping files, under the same file names.
 
 
 ## ⚙️ Configuration
@@ -105,7 +108,7 @@ A filter input replaces the Step's default filters instead of extending them, so
 | `test_apk_file_include_filter` | The Step will copy the generated apk files that match this filter into the Bitrise deploy directory.  Example: Copy every APK if its filename contains Test, like (./app/build/outputs/apk/app-debug-androidTest-unaligned.apk):  ``` *Test*.apk ```  |  | `*Test*.apk` |
 | `test_apk_file_exclude_filter` | One filter per line. The Step will NOT copy the generated apk files that match this filters into the Bitrise deploy directory. You can use this filter to avoid moving unalinged and/or unsigned apk files. If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied.  The default filter skips the working copies Gradle keeps under `build/intermediates/`, so only the test APKs published to `build/outputs/apk/androidTest/<variant>/` are exported. `app_file_exclude_filter` has skipped intermediates the same way since v2.0.1.  Example: Do not copy the test APK file if its filename contains `unaligned`: ``` *unaligned*.apk ```  |  | `*/intermediates/*` |
 | `mapping_file_include_filter` | The Step will copy the generated mapping files that match this filter into the Bitrise deploy directory. If you specify an empty filter, no mapping files will be copied. Example:  Copy every mapping.txt file: ``` *mapping.txt ```  |  | `*/mapping.txt` |
-| `mapping_file_exclude_filter` | One filter per line. The Step will **not** copy the generated mapping files that match these filters into the Bitrise deploy directory. You can use this input to avoid moving a beta mapping file, for example. If you specify an empty filter, every mapping file (selected by `mapping_file_include_filter`) will be copied.  The default filters keep the mapping file Gradle publishes to `app/build/outputs/mapping/<variant>/mapping.txt` and skip the copies that are not meant to be exported:  `*/intermediates/*` skips the working copy the R8/ProGuard task leaves behind (for example `app/build/intermediates/mapping/productionRelease/minifyProductionReleaseWithR8/mapping.txt`). It has the same file name as the published one, so exporting both means one of them gets renamed (`mapping20260703072155.txt`) in the deploy directory, and `BITRISE_MAPPING_PATH` can end up pointing at either.  `*compose-mapping.txt` skips the Jetpack Compose mapping file, which is not an R8/ProGuard mapping.  Example:  Do not copy any mapping.txt file that is in a `beta` directoy: ``` */beta/mapping.txt ```  |  | `*/tmp/* */intermediates/* *compose-mapping.txt ` |
+| `mapping_file_exclude_filter` | One filter per line. The Step will **not** copy the generated mapping files that match these filters into the Bitrise deploy directory. You can use this input to avoid moving a beta mapping file, for example. If you specify an empty filter, every mapping file (selected by `mapping_file_include_filter`) will be copied.  The default filters keep the mapping file Gradle publishes to `app/build/outputs/mapping/<variant>/mapping.txt` and skip the copies that are not meant to be exported:  `*/intermediates/*` skips the working copy the R8/ProGuard task leaves behind (for example `app/build/intermediates/mapping/productionRelease/minifyProductionReleaseWithR8/mapping.txt`). It has the same file name as the published one, so exporting both means one of them gets renamed (`mapping20260703072155.txt`) in the deploy directory, and `BITRISE_MAPPING_PATH` can end up pointing at either.  `*compose-mapping.txt` skips the Jetpack Compose mapping file, which is not an R8/ProGuard mapping. It only matters if you widen the include filter to something like `*mapping.txt`, since the file name is not `mapping.txt`.  Example:  Do not copy any mapping.txt file that is in a `beta` directoy: ``` */beta/mapping.txt ```  |  | `*/tmp/* */intermediates/* *compose-mapping.txt ` |
 | `gradle_options` | Flags added to the end of the Gradle call. You can use multiple options, separated by a space. Example: `--stacktrace --debug` If `--debug` or `-d` options are set then only the last 20 lines of the raw gradle output will be visible in the build log. The full raw output will be exported to the `$BITRISE_GRADLE_RAW_RESULT_TEXT_PATH` variable and will be added as a build artifact. |  | `--stacktrace` |
 </details>
 
