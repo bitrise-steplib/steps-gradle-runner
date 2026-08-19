@@ -377,11 +377,14 @@ workflows:
             set -eo pipefail
 
             mapping_path="${BITRISE_MAPPING_PATH:-}"
+            mapping_list="${BITRISE_MAPPING_PATH_LIST:-}"
             # cleared up front: a later workflow must not see this workflow's own
             # deploy dir, not even when an assertion below fails
             envman add --key BITRISE_MAPPING_PATH --value ""
+            envman add --key BITRISE_MAPPING_PATH_LIST --value ""
 
             echo "[output] BITRISE_MAPPING_PATH: ${mapping_path}"
+            echo "[output] BITRISE_MAPPING_PATH_LIST: ${mapping_list}"
             ls -alh "$BITRISE_DEPLOY_DIR" || true
 
             if [ ! -f "$mapping_path" ]; then
@@ -430,7 +433,42 @@ workflows:
               exit 1
             fi
 
-            echo "OK: only the 2 published R8 mapping files were exported"
+            # BITRISE_MAPPING_PATH_LIST must hold every exported mapping, not just the
+            # last one. This is what lets a consumer pair each artifact with its own
+            # mapping by pg_map_id; the singular variable cannot express two flavors.
+            listed=$(printf '%s' "$mapping_list" | tr '|' '\n' | grep -c . || true)
+            if [ "$listed" -ne 2 ]; then
+              echo "Expected BITRISE_MAPPING_PATH_LIST to hold 2 paths, got ${listed}: '${mapping_list}'"
+              exit 1
+            fi
+
+            # Herestring, not a pipe: a piped `while read` runs in a subshell where
+            # `exit 1` would not fail this script.
+            listed_files=$(printf '%s' "$mapping_list" | tr '|' '\n' | grep . | sort)
+            while read -r file; do
+              if [ ! -f "$file" ]; then
+                echo "Listed mapping file does not exist: '${file}'"
+                exit 1
+              fi
+              head -1 "$file" | grep -q "compiler: R8" || {
+                echo "Listed file is not an R8 mapping: ${file}"
+                exit 1
+              }
+              grep -q "^# pg_map_id: " "$file" || {
+                echo "Listed mapping has no pg_map_id header, pairing would be impossible: ${file}"
+                exit 1
+              }
+            done <<< "$listed_files"
+
+            # The list is exactly the set found on disk.
+            if [ "$listed_files" != "$mappings" ]; then
+              echo "BITRISE_MAPPING_PATH_LIST does not match the exported mapping files"
+              echo "listed:   ${listed_files}"
+              echo "on disk:  ${mappings}"
+              exit 1
+            fi
+
+            echo "OK: only the 2 published R8 mapping files were exported, and both are in the list"
 
   _check_log_output:
     steps:

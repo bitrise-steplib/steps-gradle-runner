@@ -263,4 +263,20 @@ outputs:
     summary: Path of the generated (and copied) mapping.txt.
     description: |-
       This output will include the path of the generated mapping.txt.
+
       If more than one mapping.txt exist in project this output will contain the last one's path.
+      When the build produces more than one mapping file, use `BITRISE_MAPPING_PATH_LIST` instead: it
+      contains all of them.
+- BITRISE_MAPPING_PATH_LIST:
+  opts:
+    title: List of the generated mapping.txt file paths
+    summary: List of the generated (and copied) mapping.txt file paths - after filtering.
+    description: |-
+      This output will include the paths of the generated mapping files,
+      after filtering based on the filter inputs.
+      The paths are separated with `|` character, eg: `mapping.txt|mapping20260819173102.txt`
+
+      The order of the list carries no meaning, and the file names do not identify which build variant a
+      mapping belongs to. Consumers should pair a mapping with its artifact by reading the `# pg_map_id:`
+      header of the mapping file and matching it against the `pg-map-id` of the R8 marker embedded in the
+      artifact, rather than relying on order or on the file name.

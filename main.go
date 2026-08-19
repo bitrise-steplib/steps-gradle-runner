@@ -397,7 +397,7 @@ func main() {
 		logger.Printf("No mapping file matched the filters")
 	}
 
-	lastCopiedMappingFile := ""
+	var copiedMappingFiles []string
 	for _, mappingFile := range mappingFiles {
 		fi, err := os.Lstat(mappingFile)
 		if err != nil {
@@ -425,13 +425,20 @@ func main() {
 			failf(logger, "Failed to copy %s: %s", fileName, err)
 		}
 
-		lastCopiedMappingFile = deployPth
+		copiedMappingFiles = append(copiedMappingFiles, deployPth)
 	}
 
-	if lastCopiedMappingFile != "" {
+	if len(copiedMappingFiles) != 0 {
+		lastCopiedMappingFile := copiedMappingFiles[len(copiedMappingFiles)-1]
 		if err := exporter.ExportOutput("BITRISE_MAPPING_PATH", lastCopiedMappingFile); err != nil {
 			failf(logger, "Failed to export environment (BITRISE_MAPPING_PATH): %s", err)
 		}
 		logger.Donef("The mapping path is now available in the Environment Variable: $BITRISE_MAPPING_PATH (value: %s)", lastCopiedMappingFile)
+
+		mappingList := strings.Join(copiedMappingFiles, "|")
+		if err := exporter.ExportOutput("BITRISE_MAPPING_PATH_LIST", mappingList); err != nil {
+			failf(logger, "Failed to export environment (BITRISE_MAPPING_PATH_LIST): %s", err)
+		}
+		logger.Donef("The mapping paths list is now available in the Environment Variable: $BITRISE_MAPPING_PATH_LIST (value: %s)", mappingList)
 	}
 }
