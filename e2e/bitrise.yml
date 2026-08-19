@@ -241,8 +241,10 @@ workflows:
             esac
             rm -rf "$BITRISE_DEPLOY_DIR"
             mkdir -p "$BITRISE_DEPLOY_DIR"
+    - restore-gradle-cache@2:
     after_run:
     - _common
+    - _save_duckduckgo_gradle_cache
     - _check_duckduckgo_mappings
 
   _common:
@@ -359,6 +361,10 @@ workflows:
               exit 1
             fi
             echo "APK found at '${BITRISE_APK_PATH}'"
+
+  _save_duckduckgo_gradle_cache:
+    steps:
+    - save-gradle-cache@1:
 
   _check_duckduckgo_mappings:
     steps:
