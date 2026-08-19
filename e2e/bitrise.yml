@@ -317,14 +317,14 @@ workflows:
         title: Self-test (AARs matched by a widened app filter)
         inputs:
         - build_root_directory: .
-        - gradle_task: assembleDebug
+        - gradle_task: assemble
         - gradlew_path: ./gradlew
         - app_file_include_filter: |
             *.apk
             *.aab
             *.aar
     - script:
-        title: Check nested-module AARs in the deploy dir and the map
+        title: Check library variants, AAR-to-mapping pairing and module keys
         is_always_run: true
         inputs:
         - content: |-
@@ -334,26 +334,42 @@ workflows:
             map_dir=$(dirname "$map")
             echo "--- artifact map ---"; cat "$map"; echo "---"
 
-            # all three AARs arrived; the same-named data AARs are two distinct files
-            [ "$(ls "$map_dir" | grep -c '^data-debug.*\.aar$')" = "2" ] \
-              || { echo "expected both same-named data AARs in the deploy dir"; ls "$map_dir"; exit 1; }
-            [ -f "$map_dir/presentation-debug.aar" ] \
-              || { echo "expected presentation-debug.aar in the deploy dir"; ls "$map_dir"; exit 1; }
+            # AGP encodes a library's variant in the AAR file name, so each
+            # variant of the flavored module gets its own entry
+            jq -e '.modules["feature-name-1/data"] | has("freeRelease") and has("paidRelease") and has("freeDebug") and has("paidDebug")' "$map" > /dev/null \
+              || { echo "expected one entry per flavored library variant"; exit 1; }
+            jq -e '.modules["feature-name-1/data"].freeRelease.aar == ["data-free-release.aar"]' "$map" > /dev/null \
+              || { echo "expected freeRelease to carry its own AAR"; exit 1; }
 
-            # AARs attach to their modules; same-basename modules get
-            # disambiguated keys, exactly like the modules tree
-            jq -e '.module_aars | has("feature-name-1/data") and has("feature-name-2/data") and has("presentation")' "$map" > /dev/null \
-              || { echo "expected per-module AAR keys"; cat "$map"; exit 1; }
-            jq -e '[.module_aars[] | length] | all(. == 1)' "$map" > /dev/null \
-              || { echo "expected exactly one AAR per module"; cat "$map"; exit 1; }
-
-            # sources tell the two same-named AARs apart by nested module
-            for module in feature-name-1 feature-name-2; do
-              jq -e --arg m "$module" \
-                '[.sources | to_entries[] | select(.key | startswith("data-debug")) | .value | select(contains("/" + $m + "/data/"))] | length == 1' "$map" > /dev/null \
-                || { echo "expected a data AAR sourced from $module"; cat "$map"; exit 1; }
+            # the self-minifying library's mapping pairs with the archive of the
+            # SAME variant: check the referenced mapping's provenance, since the
+            # deploy-dir name may have been collision-renamed
+            for variant in freeRelease paidRelease; do
+              mapping=$(jq -r --arg v "$variant" '.modules["feature-name-1/data"][$v].mapping // ""' "$map")
+              [ -n "$mapping" ] || { echo "expected $variant to have a mapping"; exit 1; }
+              [ -f "$map_dir/$mapping" ] || { echo "$mapping is missing from $map_dir"; exit 1; }
+              jq -e --arg m "$mapping" --arg v "$variant" \
+                '.sources[$m] | endswith("/outputs/mapping/" + $v + "/mapping.txt")' "$map" > /dev/null \
+                || { echo "$variant is paired with a mapping built for another variant: $mapping"; exit 1; }
             done
-            echo "OK: all nested-module AARs exported and accounted for, provenance recorded"
+
+            # debug variants are not minified, so they must not borrow a mapping
+            jq -e '[.modules["feature-name-1/data"] | .freeDebug.mapping, .paidDebug.mapping] | all(. == null)' "$map" > /dev/null \
+              || { echo "a debug variant picked up a mapping file"; exit 1; }
+
+            # same-basename modules stay distinct, and the unflavored ones key on
+            # the build type alone
+            jq -e '.modules | has("feature-name-1/data") and has("feature-name-2/data") and has("presentation")' "$map" > /dev/null \
+              || { echo "expected disambiguated module keys"; exit 1; }
+            jq -e '.modules["feature-name-2/data"].release.aar == ["data-release.aar"] and .modules["presentation"].release.aar == ["presentation-release.aar"]' "$map" > /dev/null \
+              || { echo "expected build-type-only variants for the unflavored modules"; exit 1; }
+
+            # every AAR the map lists exists, and no archive was left unattributed
+            jq -e '[.modules[][] | (.aar // [])[]] | length == 8' "$map" > /dev/null \
+              || { echo "expected all 8 archives attributed to a variant"; exit 1; }
+            jq -e '.unmatched.aar == []' "$map" > /dev/null \
+              || { echo "expected no unattributed archives"; exit 1; }
+            echo "OK: library variants decoded, each archive paired with its own mapping"
 
   test_compose_r8:
     description: |-
@@ -758,7 +774,7 @@ workflows:
             # must exist next to the map file. jq runs first so its failure
             # fails the check (a process substitution's exit code would be
             # swallowed), with // [] guards against absent list fields.
-            refs=$(jq -r '(.modules[][] | (.mapping // empty), (.apk // [])[], (.aab // [])[]), (.module_aars // {} | .[][]), (.unmatched | (.apk // [])[], (.aab // [])[], (.mapping // [])[])' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH") \
+            refs=$(jq -r '(.modules[][] | (.mapping // empty), (.apk // [])[], (.aab // [])[], (.aar // [])[]), (.unmatched | (.apk // [])[], (.aab // [])[], (.aar // [])[], (.mapping // [])[])' "$BITRISE_ANDROID_ARTIFACT_MAP_PATH") \
               || { echo "failed to list the artifact map's file references"; exit 1; }
             map_dir=$(dirname "$BITRISE_ANDROID_ARTIFACT_MAP_PATH")
             while IFS= read -r name; do

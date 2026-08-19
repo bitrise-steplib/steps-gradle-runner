@@ -296,9 +296,16 @@ outputs:
               "aab": [],
               "apk": ["app-paid-release.apk"]
             }
+          },
+          "mylibrary": {
+            "freeRelease": {
+              "mapping": "mapping20260805121531.txt",
+              "aab": [],
+              "apk": [],
+              "aar": ["mylibrary-free-release.aar"]
+            }
           }
         },
-        "module_aars": { "mylibrary": ["mylibrary-release.aar"] },
         "unmatched": { "apk": [], "aab": [], "aar": [], "mapping": [] },
         "sources": {
           "mapping.txt": "/bitrise/src/app/build/outputs/mapping/demoRelease/mapping.txt"
@@ -306,5 +313,11 @@ outputs:
       }
       ```
 
+      Library modules share the same tree: their build variant comes from the AAR's file
+      name (AGP writes every variant into one `outputs/aar/` directory), and a library
+      that minifies itself pairs with its own `mapping.txt`. The `aar` list is omitted
+      for application modules.
+
       `unmatched` lists exported files whose module/variant could not be derived from
-      their build output path (for example artifacts written to non-standard locations).
+      their build output path (for example artifacts written to non-standard locations,
+      or an archive whose `archivesName` was customised).
