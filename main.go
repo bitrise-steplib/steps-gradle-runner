@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -87,7 +88,7 @@ func runGradleTask(
 		fmt.Println()
 
 		rawOutputLogPath := filepath.Join(destDir, rawGradleResultFileName)
-		cmdErr := cmd.Run()
+		cmdErr := nameSignal(cmd.Run())
 
 		return runAndExportOutput(logger, exporter, outBuffer.String(), rawOutputLogPath, bitriseGradleResultsTextEnvKey, 20, cmdErr)
 	}
@@ -105,13 +106,25 @@ func runGradleTask(
 	if err := cmd.Run(); err != nil {
 		var exitErr *command.ExitStatusError
 		if errors.As(err, &exitErr) {
-			return err
+			return nameSignal(err)
 		}
 
 		return fmt.Errorf("could not run gradlew command: %v", err)
 	}
 
 	return nil
+}
+
+// nameSignal names the signal behind an abnormal termination (e.g. a gradle
+// daemon the kernel OOM-killed): the wrapper reports a bare "exit status -1",
+// which reads like a gradle failure. Other errors pass through unchanged.
+func nameSignal(err error) error {
+	var execErr *exec.ExitError
+	if errors.As(err, &execErr) && execErr.ExitCode() == -1 {
+		return fmt.Errorf("gradle terminated abnormally (%s): %w", execErr.ProcessState.String(), err)
+	}
+
+	return err
 }
 
 // runAndExportOutput mirrors the v1 commandhelper.RunAndExportOutput behavior:
@@ -137,14 +150,14 @@ func runAndExportOutput(
 			logger.Infof(banner)
 		}
 
-		logger.Printf(lastLines)
+		logger.Printf("%s", lastLines)
 
 		if cmdErr != nil {
 			logger.Warnf("If you can't find the reason of the error in the log, please check the %s.", destinationPath)
 		}
 	}
 
-	logger.Infof(colorstring.Magenta(fmt.Sprintf(`The log file is stored in %s, and its full path is available in the $%s environment variable.`, destinationPath, envKey)))
+	logger.Infof("%s", colorstring.Magenta(fmt.Sprintf(`The log file is stored in %s, and its full path is available in the $%s environment variable.`, destinationPath, envKey)))
 
 	return cmdErr
 }

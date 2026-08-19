@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -106,4 +108,21 @@ func TestResolveGradlewPath(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNameSignal(t *testing.T) {
+	killErr := exec.Command("sh", "-c", "kill -9 $$").Run()
+	var execErr *exec.ExitError
+	require.True(t, errors.As(killErr, &execErr), "setup: expected an *exec.ExitError, got %v", killErr)
+	require.Equal(t, -1, execErr.ExitCode(), "setup: a signalled process should report exit code -1")
+
+	named := nameSignal(killErr)
+	require.Contains(t, named.Error(), "gradle terminated abnormally")
+	require.Contains(t, named.Error(), "killed")
+	require.ErrorIs(t, named, killErr, "the original error must stay unwrappable")
+
+	require.NoError(t, nameSignal(nil))
+
+	plain := exec.Command("sh", "-c", "exit 3").Run()
+	require.Equal(t, plain, nameSignal(plain), "an ordinary non-zero exit passes through unchanged")
 }
