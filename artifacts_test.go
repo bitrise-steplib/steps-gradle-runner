@@ -264,10 +264,10 @@ func Test_findArtifacts(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Default mapping file exclude pattern from step.yml",
+			name: "Default mapping file exclude patterns from step.yml",
 			patterns: filePatterns{
 				include: []string{"*/mapping.txt"},
-				exclude: []string{"*/tmp/*"},
+				exclude: []string{"*/tmp/*", "*/intermediates/*", "*compose-mapping.txt"},
 			},
 			filePaths: []string{
 				"app/build/outputs/mapping/release/mapping.txt",
@@ -275,6 +275,40 @@ func Test_findArtifacts(t *testing.T) {
 				"some/tmp/cache/mapping.txt",
 			},
 			want:    []string{"app/build/outputs/mapping/release/mapping.txt"},
+			wantErr: false,
+		},
+		{
+			// The R8 task keeps its own copy of the mapping file under
+			// intermediates. It has the same file name as the published one, so
+			// exporting both left BITRISE_MAPPING_PATH pointing at whichever copy
+			// the deploy dir renamed (SSW-3065).
+			name: "Default mapping filters keep only the published mapping file",
+			patterns: filePatterns{
+				include: []string{"*/mapping.txt"},
+				exclude: []string{"*/tmp/*", "*/intermediates/*", "*compose-mapping.txt"},
+			},
+			filePaths: []string{
+				"app/build/intermediates/mapping/productionRelease/minifyProductionReleaseWithR8/mapping.txt",
+				"app/build/outputs/mapping/productionRelease/mapping.txt",
+			},
+			want:    []string{"app/build/outputs/mapping/productionRelease/mapping.txt"},
+			wantErr: false,
+		},
+		{
+			// A widened include filter (the one the SSW-3065 reporter used) also
+			// matches the Compose mapping file, which is not an R8 mapping.
+			name: "Default mapping exclude filters drop the Compose mapping file",
+			patterns: filePatterns{
+				include: []string{"*mapping.txt"},
+				exclude: []string{"*/tmp/*", "*/intermediates/*", "*compose-mapping.txt"},
+			},
+			filePaths: []string{
+				"app/build/intermediates/compose_mapping/productionRelease/compose-mapping.txt",
+				"app/build/intermediates/mapping/productionRelease/minifyProductionReleaseWithR8/mapping.txt",
+				"app/build/outputs/mapping/productionRelease/mapping.txt",
+				"app/build/outputs/compose-mapping.txt",
+			},
+			want:    []string{"app/build/outputs/mapping/productionRelease/mapping.txt"},
 			wantErr: false,
 		},
 		{

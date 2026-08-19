@@ -177,14 +177,24 @@ inputs:
       ```
       *mapping.txt
       ```
-- mapping_file_exclude_filter: "*/tmp/*"
+- mapping_file_exclude_filter: |
+    */tmp/*
+    */intermediates/*
+    *compose-mapping.txt
   opts:
     category: Export Config
     title: Mapping file exclude filter
     description: |
-      The Step will **not** copy the generated mapping files that match this filter into the Bitrise deploy directory.
+      One filter per line. The Step will **not** copy the generated mapping files that match these filters into the Bitrise deploy directory.
       You can use this input to avoid moving a beta mapping file, for example.
       If you specify an empty filter, every mapping file (selected by `mapping_file_include_filter`) will be copied.
+
+      The default filters keep the mapping file Gradle publishes to `app/build/outputs/mapping/<variant>/mapping.txt` and skip the copies that are not meant to be exported:
+
+      `*/intermediates/*` skips the working copy the R8/ProGuard task leaves behind (for example `app/build/intermediates/mapping/productionRelease/minifyProductionReleaseWithR8/mapping.txt`). It has the same file name as the published one, so exporting both means one of them gets renamed (`mapping20260703072155.txt`) in the deploy directory, and `BITRISE_MAPPING_PATH` can end up pointing at either.
+
+      `*compose-mapping.txt` skips the Jetpack Compose mapping file, which is not an R8/ProGuard mapping.
+
       Example:
 
       Do not copy any mapping.txt file that is in a `beta` directoy:

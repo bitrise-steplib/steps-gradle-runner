@@ -201,6 +201,27 @@ workflows:
     - _common
     - _check_output_apk
 
+  # SSW-3065: gradle publishes the mapping file to build/outputs, but the R8 task
+  # leaves a working copy with the same file name under build/intermediates, and a
+  # Compose build adds a compose-mapping.txt next to it. Exporting all of them made
+  # the deploy directory rename the colliding copies, so BITRISE_MAPPING_PATH could
+  # end up pointing at a renamed file the reporter could not identify. The default
+  # mapping_file_exclude_filter has to keep the published file only.
+  test_mapping_file_layout:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/bitrise-android-sample.git
+    - TEST_APP_BRANCH: main
+    - CLONE_INTO_DIR: .
+    - GRADLE_TASK: exportMappingFileFixture
+    - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: --init-script $ORIG_BITRISE_SOURCE_DIR/e2e/fixtures/mapping-file-layout.gradle
+    # The reporter's own, widened include filter: it matches compose-mapping.txt too.
+    - MAPPING_FILE_INCLUDE_FILTER: "*mapping.txt"
+    - COLLECT_METRICS: "no"
+    after_run:
+    - _common
+    - _check_mapping_file_layout
+
   _common:
     steps:
     - set-java-version:
@@ -309,6 +330,64 @@ workflows:
               exit 1
             fi
             echo "APK found at '${BITRISE_APK_PATH}'"
+
+  _check_mapping_file_layout:
+    steps:
+    - script:
+        title: Check that only the published mapping file was exported
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -eo pipefail
+
+            mapping_path="${BITRISE_MAPPING_PATH:-}"
+            echo "[output] BITRISE_MAPPING_PATH: ${mapping_path}"
+            ls -alh "$BITRISE_DEPLOY_DIR"
+
+            if [ ! -f "$mapping_path" ]; then
+              echo "BITRISE_MAPPING_PATH is not a file: '${mapping_path}'"
+              exit 1
+            fi
+
+            # The deploy dir is shared with the other e2e workflows, so the fixture's
+            # own copies are identified by their content, not by their file name.
+            exported=$(grep -rlIF "fixture-source: app/build/" "$BITRISE_DEPLOY_DIR" || true)
+            echo "Fixture mapping files in the deploy dir:"
+            echo "$exported"
+
+            if [ "$(echo "$exported" | grep -c .)" -ne 1 ]; then
+              echo "Expected exactly 1 of the 3 fixture mapping files in the deploy dir"
+              exit 1
+            fi
+
+            if [ "$exported" != "$mapping_path" ]; then
+              echo "BITRISE_MAPPING_PATH does not point at the exported fixture file: ${exported}"
+              exit 1
+            fi
+
+            # No name collision means no rename: the reporter's BITRISE_MAPPING_PATH
+            # pointed at a mapping20260703072155.txt instead.
+            if [ "$(basename "$mapping_path")" != "mapping.txt" ]; then
+              echo "Expected the exported mapping file to keep its name, got $(basename "$mapping_path")"
+              exit 1
+            fi
+
+            # ...and the exported one is the file gradle published, not a task copy.
+            if ! grep -qF "fixture-source: app/build/outputs/mapping/productionRelease/mapping.txt" "$mapping_path"; then
+              echo "BITRISE_MAPPING_PATH points at the wrong mapping file:"
+              cat "$mapping_path"
+              exit 1
+            fi
+
+            if [ -e "$BITRISE_DEPLOY_DIR/compose-mapping.txt" ]; then
+              echo "The Compose mapping file was exported to the deploy dir"
+              exit 1
+            fi
+
+            echo "OK: only app/build/outputs/mapping/productionRelease/mapping.txt was exported, as ${mapping_path}"
+
+            envman add --key BITRISE_MAPPING_PATH --value ""
 
   _check_log_output:
     steps:
