@@ -218,6 +218,15 @@ workflows:
     # The reporter's own, widened include filter: it matches compose-mapping.txt too.
     - MAPPING_FILE_INCLUDE_FILTER: "*mapping.txt"
     - COLLECT_METRICS: "no"
+    # The other e2e workflows share the build's deploy dir and leave a mapping.txt
+    # there, which would rename this workflow's export whatever the filters do. Use
+    # a dedicated deploy dir, so that the exported file name means something.
+    - BITRISE_DEPLOY_DIR: $HOME/deploy-mapping-file-layout
+    steps:
+    - script:
+        title: recreate the dedicated deploy dir
+        inputs:
+        - content: rm -rf "$BITRISE_DEPLOY_DIR" && mkdir -p "$BITRISE_DEPLOY_DIR"
     after_run:
     - _common
     - _check_mapping_file_layout
@@ -350,8 +359,8 @@ workflows:
               exit 1
             fi
 
-            # The deploy dir is shared with the other e2e workflows, so the fixture's
-            # own copies are identified by their content, not by their file name.
+            # The fixture's own copies are identified by their content, so that a
+            # renamed copy is caught wherever it landed.
             exported=$(grep -rlIF "fixture-source: app/build/" "$BITRISE_DEPLOY_DIR" || true)
             echo "Fixture mapping files in the deploy dir:"
             echo "$exported"
