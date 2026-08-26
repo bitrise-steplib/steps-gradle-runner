@@ -7,6 +7,10 @@ app:
   - ORIG_BITRISE_SOURCE_DIR: $BITRISE_SOURCE_DIR
   - BUILD_ROOT_DIRECTORY: .
   - MAPPING_FILE_INCLUDE_FILTER: "*/release/mapping.txt"
+  - JAVA_VERSION: "17"
+  # only the workflows building a project with native sources need these
+  - NDK_VERSION: ""
+  - INIT_SUBMODULES: "false"
 
 workflows:
   test:
@@ -18,7 +22,6 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: --debug
-    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_output_apk
@@ -47,7 +50,6 @@ workflows:
     - GRADLE_TASK: nonexistentTask
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
-    - COLLECT_METRICS: "no"
     after_run:
     - _common
 
@@ -74,7 +76,6 @@ workflows:
     - GRADLE_TASK: nonexistentTask
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: --debug
-    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_log_output
@@ -88,7 +89,6 @@ workflows:
     - GRADLE_TASK: bundle
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
-    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_output_aab
@@ -102,7 +102,6 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: gradlew
     - GRADLE_OPTIONS: ""
-    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_output_apk
@@ -115,7 +114,6 @@ workflows:
     - GRADLE_TASK: assembleDebug assembleRelease
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
-    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_output_apk
@@ -130,7 +128,6 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
-    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_output_apk
@@ -143,7 +140,6 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ""
     - GRADLE_OPTIONS: ""
-    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_output_apk
@@ -157,7 +153,6 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
-    - COLLECT_METRICS: "no"
     after_run:
     - _common
 
@@ -169,7 +164,6 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
-    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_output_apk
@@ -182,7 +176,6 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: ""
-    - COLLECT_METRICS: "no"
     after_run:
     - _common
     - _check_output_apk
@@ -196,16 +189,69 @@ workflows:
     - GRADLE_TASK: assembleDebug
     - GRADLEW_PATH: ./gradlew
     - GRADLE_OPTIONS: --stacktrace
-    - COLLECT_METRICS: "yes"
     after_run:
     - _common
     - _check_output_apk
+
+  # SSW-3065 on the app that produced the report: two minified Compose flavors, so
+  # every variant has all three mapping files (published, R8 task copy, Compose) and
+  # they collide by name in the deploy dir. Heavy build, so it runs on one stack.
+  test_duckduckgo:
+    steps:
+    - script:
+        title: Run the DuckDuckGo e2e (latest Ubuntu stack only)
+        run_if: |-
+          {{ or (enveq "IS_LATEST_STACK_UBUNTU" "true") (not .IsCI) }}
+        inputs:
+        - content: bitrise run --config=./e2e/bitrise.yml utility_test_duckduckgo
+
+  utility_test_duckduckgo:
+    envs:
+    - TEST_APP_URL: https://github.com/bitrise-io/DuckDuckGo-Android.git
+    # enables R8 on release, uses a Bitrise-owned application id, dontwarns the
+    # leaked compile-only lint classes and sizes the gradle/kotlin daemon heap
+    - TEST_APP_BRANCH: SSW-3065-minified-fixture
+    - CLONE_INTO_DIR: .
+    - INIT_SUBMODULES: "true"
+    - JAVA_VERSION: "21"
+    - NDK_VERSION: 28.2.13676358
+    - GRADLE_TASK: assembleInternalRelease assemblePlayRelease
+    - GRADLEW_PATH: ./gradlew
+    - GRADLE_OPTIONS: -PuseProprietaryFont=false
+    # the reporter's own, widened include filter: it matches compose-mapping.txt too
+    - MAPPING_FILE_INCLUDE_FILTER: "*mapping.txt"
+    # the other e2e workflows share the build's deploy dir and leave a mapping.txt
+    # there, which would rename this workflow's exports whatever the filters do
+    - BITRISE_DEPLOY_DIR: $HOME/deploy-duckduckgo
+    steps:
+    - script:
+        title: recreate the dedicated deploy dir
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -euo pipefail
+            # fail loudly instead of wiping the build's shared deploy dir, should the
+            # workflow-level override above ever stop winning
+            case "$BITRISE_DEPLOY_DIR" in
+            */deploy-duckduckgo) ;;
+            *)
+              echo "BITRISE_DEPLOY_DIR is not the dedicated dir: ${BITRISE_DEPLOY_DIR}"
+              exit 1
+              ;;
+            esac
+            rm -rf "$BITRISE_DEPLOY_DIR"
+            mkdir -p "$BITRISE_DEPLOY_DIR"
+    - restore-gradle-cache@2:
+    after_run:
+    - _common
+    - _save_duckduckgo_gradle_cache
+    - _check_duckduckgo_mappings
 
   _common:
     steps:
     - set-java-version:
         inputs:
-        - set_java_version: "17"
+        - set_java_version: $JAVA_VERSION
     - script:
         title: recreate _tmp directory
         inputs:
@@ -224,6 +270,12 @@ workflows:
         - repository_url: $TEST_APP_URL
         - clone_into_dir: $CLONE_INTO_DIR
         - branch: $TEST_APP_BRANCH
+    - script:
+        title: Init git submodules
+        run_if: |-
+          {{ enveq "INIT_SUBMODULES" "true" }}
+        inputs:
+        - content: cd "$CLONE_INTO_DIR" && git submodule update --init --recursive --depth 1
     # Older fixture apps (e.g. sample-apps-android-sdk22) pin compileSdkVersion
     # to a platform that the current CI image does not pre-install. Run the
     # standard installer so gradle can resolve the requested platform/build-tools
@@ -231,6 +283,7 @@ workflows:
     - install-missing-android-tools@3:
         inputs:
         - gradlew_path: $CLONE_INTO_DIR/$GRADLEW_PATH
+        - ndk_version: $NDK_VERSION
     # Belt-and-braces: pre-install the legacy SDK platforms the e2e fixtures
     # pin. install-missing-android-tools' static parser doesn't always pick
     # up `compileSdkVersion 27` from every sample (e.g. sample-apps-android-
@@ -266,7 +319,6 @@ workflows:
         - gradlew_path: $GRADLEW_PATH
         - gradle_options: $GRADLE_OPTIONS
         - mapping_file_include_filter: $MAPPING_FILE_INCLUDE_FILTER
-        - collect_metrics: $COLLECT_METRICS
     - script:
         title: Log outputs
         is_always_run: true
@@ -309,6 +361,76 @@ workflows:
               exit 1
             fi
             echo "APK found at '${BITRISE_APK_PATH}'"
+
+  _save_duckduckgo_gradle_cache:
+    steps:
+    - save-gradle-cache@1:
+
+  _check_duckduckgo_mappings:
+    steps:
+    - script:
+        title: Check that only the published mapping files were exported
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -eo pipefail
+
+            mapping_path="${BITRISE_MAPPING_PATH:-}"
+            # cleared up front: a later workflow must not see this workflow's own
+            # deploy dir, not even when an assertion below fails
+            envman add --key BITRISE_MAPPING_PATH --value ""
+
+            echo "[output] BITRISE_MAPPING_PATH: ${mapping_path}"
+            ls -alh "$BITRISE_DEPLOY_DIR" || true
+
+            if [ ! -f "$mapping_path" ]; then
+              echo "BITRISE_MAPPING_PATH is not a file: '${mapping_path}'"
+              exit 1
+            fi
+
+            # Both flavors publish outputs/mapping/<flavor>Release/mapping.txt, so one
+            # of the two is collision-renamed. The R8 task's own copies and the Compose
+            # mapping files would show up here as further files.
+            mappings=$(find "$BITRISE_DEPLOY_DIR" -maxdepth 1 -name "*mapping*.txt" | sort)
+            echo "Exported mapping files:"
+            echo "$mappings"
+
+            if [ "$(printf '%s' "$mappings" | grep -c . || true)" -ne 2 ]; then
+              echo "Expected the 2 published mapping files, one per flavor"
+              exit 1
+            fi
+
+            # Every exported file is a real R8 mapping: a Compose mapping is not one.
+            while read -r file; do
+              head -1 "$file" | grep -q "compiler: R8" || {
+                echo "Not an R8 mapping: ${file}"
+                head -3 "$file"
+                exit 1
+              }
+            done <<< "$mappings"
+
+            # The two belong to different flavors. Exporting a variant's mapping twice
+            # (once as published, once from the R8 task dir) would make them identical.
+            distinct=$(while read -r file; do cksum < "$file"; done <<< "$mappings" | sort -u | grep -c .)
+            if [ "$distinct" -ne 2 ]; then
+              echo "The 2 exported mapping files have the same content"
+              exit 1
+            fi
+
+            # -ef, not string equality: the step's path went through filepath.Clean.
+            env_is_exported=false
+            while read -r file; do
+              if [ "$file" -ef "$mapping_path" ]; then
+                env_is_exported=true
+              fi
+            done <<< "$mappings"
+            if [ "$env_is_exported" != "true" ]; then
+              echo "BITRISE_MAPPING_PATH is not one of the exported mapping files"
+              exit 1
+            fi
+
+            echo "OK: only the 2 published R8 mapping files were exported"
 
   _check_log_output:
     steps:

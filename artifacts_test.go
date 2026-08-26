@@ -10,6 +10,12 @@ import (
 	"github.com/bitrise-io/go-utils/v2/log"
 )
 
+// Defaults of the exclude filter inputs in step.yml.
+var (
+	defaultMappingExcludeFilters = []string{"*/tmp/*", "*/intermediates/*", "*compose-mapping.txt"}
+	defaultTestAPKExcludeFilters = []string{"*/intermediates/*"}
+)
+
 func Test_findArtifacts(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -248,6 +254,19 @@ func Test_findArtifacts(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Default test APK filters from step.yml keep the published test APK only",
+			patterns: filePatterns{
+				include: []string{"*Test*.apk"},
+				exclude: defaultTestAPKExcludeFilters,
+			},
+			filePaths: []string{
+				"app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+				"app/build/intermediates/apk/androidTest/debug/app-debug-androidTest.apk",
+			},
+			want:    []string{"app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"},
+			wantErr: false,
+		},
+		{
 			name: "Default mapping file include pattern from step.yml",
 			patterns: filePatterns{
 				include: []string{"*/mapping.txt"},
@@ -264,17 +283,39 @@ func Test_findArtifacts(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Default mapping file exclude pattern from step.yml",
+			// The R8 task keeps its own copy of the mapping file under
+			// intermediates. It has the same file name as the published one, so
+			// exporting both left BITRISE_MAPPING_PATH pointing at whichever copy
+			// the deploy dir renamed (SSW-3065).
+			name: "Default mapping filters from step.yml keep the published mapping file only",
 			patterns: filePatterns{
 				include: []string{"*/mapping.txt"},
-				exclude: []string{"*/tmp/*"},
+				exclude: defaultMappingExcludeFilters,
 			},
 			filePaths: []string{
-				"app/build/outputs/mapping/release/mapping.txt",
+				"app/build/intermediates/mapping/productionRelease/minifyProductionReleaseWithR8/mapping.txt",
+				"app/build/outputs/mapping/productionRelease/mapping.txt",
 				"build/tmp/mapping/mapping.txt",
 				"some/tmp/cache/mapping.txt",
 			},
-			want:    []string{"app/build/outputs/mapping/release/mapping.txt"},
+			want:    []string{"app/build/outputs/mapping/productionRelease/mapping.txt"},
+			wantErr: false,
+		},
+		{
+			// The Compose mapping file is only reachable through a widened include
+			// filter, the one the SSW-3065 reporter used: its name is not mapping.txt.
+			name: "Widened include filter from the SSW-3065 report plus the default excludes",
+			patterns: filePatterns{
+				include: []string{"*mapping.txt"},
+				exclude: defaultMappingExcludeFilters,
+			},
+			filePaths: []string{
+				"app/build/intermediates/compose_mapping/productionRelease/compose-mapping.txt",
+				"app/build/intermediates/mapping/productionRelease/minifyProductionReleaseWithR8/mapping.txt",
+				"app/build/outputs/mapping/productionRelease/mapping.txt",
+				"app/build/outputs/compose-mapping.txt",
+			},
+			want:    []string{"app/build/outputs/mapping/productionRelease/mapping.txt"},
 			wantErr: false,
 		},
 		{

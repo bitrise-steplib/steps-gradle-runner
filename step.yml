@@ -151,7 +151,7 @@ inputs:
       ```
       *Test*.apk
       ```
-- test_apk_file_exclude_filter: ""
+- test_apk_file_exclude_filter: "*/intermediates/*"
   opts:
     category: Export Config
     title: Test APK file exclude filter
@@ -159,6 +159,9 @@ inputs:
       One filter per line. The Step will NOT copy the generated apk files that match this filters into the Bitrise deploy directory.
       You can use this filter to avoid moving unalinged and/or unsigned apk files.
       If you specify an empty filter, every APK file (selected by `apk_file_include_filter`) will be copied.
+
+      The default filter skips the working copies Gradle keeps under `build/intermediates/`, so only the test APKs published to `build/outputs/apk/androidTest/<variant>/` are exported. `app_file_exclude_filter` has skipped intermediates the same way since v2.0.1.
+
       Example:
       Do not copy the test APK file if its filename contains `unaligned`:
       ```
@@ -177,14 +180,24 @@ inputs:
       ```
       *mapping.txt
       ```
-- mapping_file_exclude_filter: "*/tmp/*"
+- mapping_file_exclude_filter: |
+    */tmp/*
+    */intermediates/*
+    *compose-mapping.txt
   opts:
     category: Export Config
     title: Mapping file exclude filter
     description: |
-      The Step will **not** copy the generated mapping files that match this filter into the Bitrise deploy directory.
+      One filter per line. The Step will **not** copy the generated mapping files that match these filters into the Bitrise deploy directory.
       You can use this input to avoid moving a beta mapping file, for example.
       If you specify an empty filter, every mapping file (selected by `mapping_file_include_filter`) will be copied.
+
+      The default filters keep the mapping file Gradle publishes to `app/build/outputs/mapping/<variant>/mapping.txt` and skip the copies that are not meant to be exported:
+
+      `*/intermediates/*` skips the working copy the R8/ProGuard task leaves behind (for example `app/build/intermediates/mapping/productionRelease/minifyProductionReleaseWithR8/mapping.txt`). It has the same file name as the published one, so exporting both means one of them gets renamed (`mapping20260703072155.txt`) in the deploy directory, and `BITRISE_MAPPING_PATH` can end up pointing at either.
+
+      `*compose-mapping.txt` skips the Jetpack Compose mapping file, which is not an R8/ProGuard mapping. It only matters if you widen the include filter to something like `*mapping.txt`, since the file name is not `mapping.txt`.
+
       Example:
 
       Do not copy any mapping.txt file that is in a `beta` directoy:
