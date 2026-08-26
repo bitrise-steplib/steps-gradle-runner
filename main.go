@@ -109,19 +109,25 @@ func runGradleTask(
 			return nameSignal(err)
 		}
 
-		return fmt.Errorf("could not run gradlew command: %v", err)
+		return fmt.Errorf("could not run gradlew command: %w", err)
 	}
 
 	return nil
 }
 
-// nameSignal names the signal behind an abnormal termination (e.g. a gradle
-// daemon the kernel OOM-killed): the wrapper reports a bare "exit status -1",
-// which reads like a gradle failure. Other errors pass through unchanged.
+// nameSignal replaces the bare "exit status -1" of a signalled process with a
+// message that names the signal. Go reports -1 when the process did not exit on
+// its own but was terminated, which on CI is usually the out-of-memory killer.
+//
+// It covers the process the step starts — gradlew, or the build cache CLI
+// wrapping it. When the out-of-memory killer takes the gradle *daemon* instead,
+// the client exits with an ordinary non-zero status and gradle's own "daemon
+// disappeared" output is what explains the failure. Other errors, including
+// those, pass through unchanged.
 func nameSignal(err error) error {
 	var execErr *exec.ExitError
 	if errors.As(err, &execErr) && execErr.ExitCode() == -1 {
-		return fmt.Errorf("gradle terminated abnormally (%s): %w", execErr.ProcessState.String(), err)
+		return fmt.Errorf("the gradle command was terminated (%s), which usually means the machine ran out of memory: %w", execErr.ProcessState, err)
 	}
 
 	return err
@@ -145,9 +151,9 @@ func runAndExportOutput(
 	if lines > 0 && len(lastLines) > 0 {
 		banner := "You can find the last couple of lines of output below.:"
 		if cmdErr != nil {
-			logger.Errorf(banner)
+			logger.Errorf("%s", banner)
 		} else {
-			logger.Infof(banner)
+			logger.Infof("%s", banner)
 		}
 
 		logger.Printf("%s", lastLines)

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/stretchr/testify/require"
 )
 
@@ -117,12 +118,23 @@ func TestNameSignal(t *testing.T) {
 	require.Equal(t, -1, execErr.ExitCode(), "setup: a signalled process should report exit code -1")
 
 	named := nameSignal(killErr)
-	require.Contains(t, named.Error(), "gradle terminated abnormally")
+	require.Contains(t, named.Error(), "the gradle command was terminated")
 	require.Contains(t, named.Error(), "killed")
 	require.ErrorIs(t, named, killErr, "the original error must stay unwrappable")
+
+	// the command factory never returns the *exec.ExitError itself, it returns
+	// this wrapper: naming the signal depends on its Unwrap
+	wrapped := command.NewExitStatusError(`./gradlew "assembleRelease"`, execErr, nil)
+	namedWrapped := nameSignal(wrapped)
+	require.Contains(t, namedWrapped.Error(), "the gradle command was terminated")
+	require.Contains(t, namedWrapped.Error(), "killed")
+	require.ErrorIs(t, namedWrapped, wrapped)
 
 	require.NoError(t, nameSignal(nil))
 
 	plain := exec.Command("sh", "-c", "exit 3").Run()
-	require.Equal(t, plain, nameSignal(plain), "an ordinary non-zero exit passes through unchanged")
+	var plainExitErr *exec.ExitError
+	require.True(t, errors.As(plain, &plainExitErr), "setup: expected an *exec.ExitError, got %v", plain)
+	require.Equal(t, 3, plainExitErr.ExitCode(), "setup: expected the shell to exit with 3")
+	require.Same(t, plain, nameSignal(plain), "an ordinary non-zero exit passes through unchanged")
 }
